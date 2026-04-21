@@ -32,14 +32,24 @@
 - 모델 추론 테스트 스크립트 포함
 
 📂 프로젝트 구조
-personal-ai-chatbot/
-- │── eval.json                 # 평가용 데이터
-- │── sample_augmented.jsonl     # 학습용 데이터
-- │── train.py                   # LoRA 학습 코드
-- │── test.py                    # 학습된 모델 테스트
-- │── app.py                     # FastAPI 기반 웹 API 서버
-- │── requirements.txt
-- │── README.md
+persona-ai/
+│── apps/
+│   ├── gw_assistant/
+│   ├── personal_agent/
+│   ├── rag_search/
+│   └── chatbot/
+│
+│── core/
+│   ├── llm/
+│   ├── prompts/
+│   ├── db/
+│   ├── vector/
+│   └── utils/
+│
+│── experiments/
+│── tests/
+│── pyproject.toml
+│── README.md
 
 - 
 ## 🛠 환경 설정
