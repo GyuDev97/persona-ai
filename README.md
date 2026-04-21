@@ -33,23 +33,23 @@
 
 📂 프로젝트 구조
 persona-ai/
-│── apps/
+├── apps/
 │   ├── gw_assistant/
 │   ├── personal_agent/
 │   ├── rag_search/
 │   └── chatbot/
 │
-│── core/
+├── core/
 │   ├── llm/
 │   ├── prompts/
 │   ├── db/
 │   ├── vector/
 │   └── utils/
 │
-│── experiments/
-│── tests/
-│── pyproject.toml
-│── README.md
+├── experiments/
+├── tests/
+├── pyproject.toml
+└── README.md
 
 - 
 ## 🛠 환경 설정
