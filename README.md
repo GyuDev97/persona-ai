@@ -32,24 +32,26 @@
 - 모델 추론 테스트 스크립트 포함
 
 
-persona-ai/
-├── apps/
-│   ├── gw_assistant/
-│   ├── personal_agent/
-│   ├── rag_search/
-│   └── chatbot/
-│
-├── core/
-│   ├── llm/
-│   ├── prompts/
-│   ├── db/
-│   ├── vector/
-│   └── utils/
-│
-├── experiments/
-├── tests/
-├── pyproject.toml
-└── README.md
+## 📁 폴더 구조
+
+- **apps/**
+  - **gw_assistant/** : 그룹웨어 AI 어시스턴트
+  - **personal_agent/** : 개인 비서형 AI
+  - **rag_search/** : 문서 검색 / RAG 시스템
+  - **chatbot/** : 챗봇 실험 프로젝트
+
+- **core/**
+  - **llm/** : 모델 로딩 / 추론 / 파인튜닝
+  - **prompts/** : 프롬프트 템플릿
+  - **db/** : DB 연결 / ORM / 저장소
+  - **vector/** : 임베딩 / 벡터DB / 검색
+  - **utils/** : 공통 유틸 함수
+
+- **pyproject.toml**  
+  Python 패키지 및 의존성 관리
+
+- **README.md**  
+  프로젝트 소개 문서
 
 - 
 ## 🛠 환경 설정
