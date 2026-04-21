@@ -31,7 +31,7 @@
 - FastAPI 기반 API 서버 제공
 - 모델 추론 테스트 스크립트 포함
 
-📂 프로젝트 구조
+
 persona-ai/
 ├── apps/
 │   ├── gw_assistant/
