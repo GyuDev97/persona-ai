@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mail Assistant MVP</title>
+    <style>
+        :root {
+            --bg: #f3efe7;
+            --panel: #fffdf9;
+            --line: #dccfbd;
+            --text: #271f18;
+            --muted: #756857;
+            --accent: #1d4ed8;
+            --accent-soft: #dbeafe;
+            --sidebar: #f6efe4;
+            --reply: #166534;
+            --ignore: #9a3412;
+            --review: #9f1239;
+            --shadow: rgba(72, 52, 25, 0.10);
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, #f7dfb2 0, transparent 22%),
+                linear-gradient(180deg, #f5f2eb 0%, #eee6d9 100%);
+        }
+
+        .page {
+            min-height: 100vh;
+            padding: 18px;
+        }
+
+        .app-shell {
+            display: grid;
+            grid-template-columns: 260px minmax(320px, 420px) minmax(420px, 1fr);
+            gap: 18px;
+            min-height: calc(100vh - 36px);
+        }
+
+        .sidebar,
+        .list-panel,
+        .detail-panel {
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            background: rgba(255, 253, 249, 0.88);
+            box-shadow: 0 18px 45px var(--shadow);
+            backdrop-filter: blur(8px);
+        }
+
+        .sidebar {
+            background: linear-gradient(180deg, #f8f1e7, #f4eadb);
+            padding: 22px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .brand {
+            padding: 8px 8px 0;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 28px;
+            line-height: 1.05;
+            letter-spacing: -0.03em;
+        }
+
+        .brand p {
+            margin: 10px 0 0;
+            font-size: 14px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .compose-button {
+            border: 0;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            padding: 15px 16px;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 14px 24px rgba(37, 99, 235, 0.24);
+        }
+
+        .nav-box {
+            padding: 14px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(220, 207, 189, 0.85);
+        }
+
+        .nav-title {
+            margin: 0 0 10px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 10px;
+            border-radius: 14px;
+            font-size: 15px;
+        }
+
+        .nav-item.active {
+            background: white;
+            font-weight: 700;
+        }
+
+        .nav-count {
+            min-width: 28px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: #efe6d8;
+            text-align: center;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .list-panel,
+        .detail-panel {
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 22px 22px 16px;
+            border-bottom: 1px solid rgba(220, 207, 189, 0.8);
+            background: rgba(255, 252, 247, 0.86);
+        }
+
+        .panel-title {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .panel-subtitle {
+            margin: 8px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .message-list {
+            padding: 14px;
+            display: grid;
+            gap: 10px;
+            overflow: auto;
+        }
+
+        .message-row {
+            width: 100%;
+            text-align: left;
+            border: 1px solid transparent;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.72);
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: 0.18s ease;
+        }
+
+        .message-row:hover,
+        .message-row.active {
+            border-color: #b8cdfc;
+            background: #ffffff;
+            box-shadow: 0 10px 20px rgba(29, 78, 216, 0.10);
+        }
+
+        .row-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .subject {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .sender {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .summary-preview {
+            color: #5c5145;
+            font-size: 14px;
+            line-height: 1.45;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .badge {
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            color: white;
+            white-space: nowrap;
+        }
+
+        .reply { background: var(--reply); }
+        .ignore { background: var(--ignore); }
+        .review { background: var(--review); }
+
+        .detail-content {
+            padding: 24px;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .detail-topline {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .detail-subject {
+            margin: 0;
+            font-size: 30px;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+        }
+
+        .detail-meta {
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .detail-card {
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            padding: 18px;
+            background: rgba(255, 255, 255, 0.66);
+        }
+
+        .section-title {
+            margin: 0 0 8px;
+            font-size: 13px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .body-preview, .draft {
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        .empty {
+            margin: 14px;
+            padding: 40px 20px;
+            border: 1px dashed var(--line);
+            border-radius: 18px;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .empty-detail {
+            height: 100%;
+            display: grid;
+            place-items: center;
+            text-align: center;
+            color: var(--muted);
+            padding: 40px;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 999px;
+            padding: 12px 18px;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .secondary {
+            background: #eee3d3;
+            color: var(--text);
+        }
+
+        .ghost {
+            background: #edf3ff;
+            color: #1d4ed8;
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(22, 17, 12, 0.42);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+        }
+
+        .overlay.open {
+            display: flex;
+        }
+
+        .modal {
+            width: min(720px, 100%);
+            border-radius: 26px;
+            border: 1px solid var(--line);
+            background: #fffdf9;
+            box-shadow: 0 30px 90px rgba(30, 24, 17, 0.24);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 22px 24px 14px;
+            border-bottom: 1px solid rgba(220, 207, 189, 0.8);
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .modal-header p {
+            margin: 8px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .modal-body {
+            padding: 20px 24px 24px;
+        }
+
+        label {
+            display: block;
+            margin: 0 0 14px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        input, textarea {
+            width: 100%;
+            margin-top: 8px;
+            padding: 12px 14px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: #fffdf9;
+            color: var(--text);
+            font: inherit;
+        }
+
+        textarea {
+            min-height: 180px;
+            resize: vertical;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        @media (max-width: 900px) {
+            .app-shell {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+
+            .sidebar {
+                order: 1;
+            }
+
+            .list-panel {
+                order: 2;
+                min-height: 320px;
+            }
+
+            .detail-panel {
+                order: 3;
+                min-height: 420px;
+            }
+        }
+
+        @media (max-width: 1200px) and (min-width: 901px) {
+            .app-shell {
+                grid-template-columns: 220px minmax(280px, 360px) 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="app-shell">
+            <aside class="sidebar">
+                <div class="brand">
+                    <h1>Mail<br />Assistant</h1>
+                    <p>실제 받은편지함처럼 보이도록 정리한 테스트용 메일 비서 화면입니다.</p>
+                </div>
+                <button class="compose-button" id="open-compose" type="button">새 쪽지 작성</button>
+                <div class="nav-box">
+                    <div class="nav-title">Mailbox</div>
+                    <div class="nav-item active">
+                        <span>받은 쪽지함</span>
+                        <span class="nav-count" id="inbox-count">0</span>
+                    </div>
+                </div>
+                <div class="nav-box">
+                    <div class="nav-title">Assistant Rules</div>
+                    <div class="nav-item">
+                        <span>답장 추천</span>
+                    </div>
+                    <div class="nav-item">
+                        <span>사람 확인</span>
+                    </div>
+                    <div class="nav-item">
+                        <span>답장 불필요</span>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="list-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">받은 쪽지함</h2>
+                    <p class="panel-subtitle">도착한 메시지를 고르고, 오른쪽에서 AI 판단과 초안을 확인하세요.</p>
+                </div>
+                <div id="message-list" class="message-list"></div>
+            </section>
+
+            <section class="detail-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">메시지 보기</h2>
+                    <p class="panel-subtitle">선택한 쪽지의 원문, 분류 이유, 답장 초안을 보여줍니다.</p>
+                </div>
+                <div id="detail-view" class="empty-detail">왼쪽 받은 쪽지함에서 메시지를 선택해 주세요.</div>
+            </section>
+        </div>
+    </div>
+
+    <div class="overlay" id="compose-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>새 쪽지 작성</h2>
+                <p>메일이 도착한 것처럼 메시지를 넣고 AI 판단 흐름을 테스트할 수 있습니다.</p>
+            </div>
+            <div class="modal-body">
+                <form id="message-form">
+                    <label>
+                        보낸 사람
+                        <input id="sender" placeholder="예: 김민수" required />
+                    </label>
+                    <label>
+                        제목
+                        <input id="subject" placeholder="예: 다음 주 미팅 일정 가능하실까요?" required />
+                    </label>
+                    <label>
+                        본문
+                        <textarea id="body" placeholder="테스트할 메시지 내용을 넣어주세요." required></textarea>
+                    </label>
+                    <div class="modal-actions">
+                        <div class="toolbar">
+                            <button class="ghost" type="button" id="sample-btn">샘플 채우기</button>
+                        </div>
+                        <div class="toolbar">
+                            <button class="secondary" type="button" id="close-compose">닫기</button>
+                            <button class="ghost" type="submit">분석해서 저장</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById("message-form");
+        const messageList = document.getElementById("message-list");
+        const detailView = document.getElementById("detail-view");
+        const inboxCount = document.getElementById("inbox-count");
+        const sampleBtn = document.getElementById("sample-btn");
+        const overlay = document.getElementById("compose-overlay");
+        const openCompose = document.getElementById("open-compose");
+        const closeCompose = document.getElementById("close-compose");
+        let currentMessages = [];
+        let selectedMessageId = null;
+
+        const actionLabel = {
+            reply: "답장 추천",
+            ignore: "답장 불필요",
+            review: "사람 확인",
+        };
+
+        function escapeHtml(value) {
+            return value
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;");
+        }
+
+        function openComposeModal() {
+            overlay.classList.add("open");
+        }
+
+        function closeComposeModal() {
+            overlay.classList.remove("open");
+        }
+
+        function renderDetail(message) {
+            if (!message) {
+                detailView.className = "empty-detail";
+                detailView.innerHTML = "왼쪽 받은 쪽지함에서 메시지를 선택해 주세요.";
+                return;
+            }
+
+            detailView.className = "detail-content";
+            detailView.innerHTML = `
+                <div class="detail-topline">
+                    <div>
+                        <h3 class="detail-subject">${escapeHtml(message.subject)}</h3>
+                        <div class="detail-meta">${escapeHtml(message.sender)} · ${escapeHtml(message.created_at)}</div>
+                    </div>
+                    <span class="badge ${message.analysis.action}">${actionLabel[message.analysis.action]}</span>
+                </div>
+                <section class="detail-card">
+                    <div class="section-title">요약</div>
+                    <div>${escapeHtml(message.analysis.summary)}</div>
+                </section>
+                <section class="detail-card">
+                    <div class="section-title">판단 이유</div>
+                    <div>${escapeHtml(message.analysis.reason)}</div>
+                </section>
+                <section class="detail-card">
+                    <div class="section-title">원문</div>
+                    <div class="body-preview">${escapeHtml(message.body)}</div>
+                </section>
+                <section class="detail-card">
+                    <div class="section-title">답장 초안</div>
+                    <div class="draft">${escapeHtml(message.analysis.draft_reply)}</div>
+                </section>
+            `;
+        }
+
+        function selectMessage(messageId) {
+            selectedMessageId = messageId;
+            const selected = currentMessages.find((message) => message.id === messageId) ?? null;
+            renderMessages(currentMessages);
+            renderDetail(selected);
+        }
+
+        function renderMessages(messages) {
+            inboxCount.textContent = String(messages.length);
+            if (!messages.length) {
+                messageList.innerHTML = "<div class='empty'>아직 저장된 쪽지가 없습니다.</div>";
+                renderDetail(null);
+                return;
+            }
+
+            messageList.innerHTML = messages.map((message) => `
+                <button class="message-row ${message.id === selectedMessageId ? "active" : ""}" type="button" data-id="${message.id}">
+                    <div class="row-top">
+                        <div>
+                            <div class="subject">${escapeHtml(message.subject)}</div>
+                            <div class="sender">${escapeHtml(message.sender)}</div>
+                        </div>
+                        <span class="badge ${message.analysis.action}">${actionLabel[message.analysis.action]}</span>
+                    </div>
+                    <div class="summary-preview">${escapeHtml(message.analysis.summary)}</div>
+                </button>
+            `).join("");
+
+            Array.from(messageList.querySelectorAll("[data-id]")).forEach((element) => {
+                element.addEventListener("click", () => {
+                    selectMessage(Number(element.dataset.id));
+                });
+            });
+        }
+
+        async function loadMessages() {
+            const response = await fetch("/api/inbox/messages");
+            const data = await response.json();
+            currentMessages = data.messages;
+
+            if (!currentMessages.length) {
+                selectedMessageId = null;
+            } else if (!currentMessages.some((message) => message.id === selectedMessageId)) {
+                selectedMessageId = currentMessages[0].id;
+            }
+
+            renderMessages(currentMessages);
+            const selected = currentMessages.find((message) => message.id === selectedMessageId) ?? null;
+            renderDetail(selected);
+        }
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const payload = {
+                sender: document.getElementById("sender").value.trim(),
+                subject: document.getElementById("subject").value.trim(),
+                body: document.getElementById("body").value.trim(),
+            };
+
+            await fetch("/api/inbox/messages", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            form.reset();
+            closeComposeModal();
+            await loadMessages();
+        });
+
+        sampleBtn.addEventListener("click", () => {
+            document.getElementById("sender").value = "박소연";
+            document.getElementById("subject").value = "다음 주 데모 일정 가능 여부 문의";
+            document.getElementById("body").value = "안녕하세요.\n다음 주 수요일 오후에 데모 미팅 가능하실지 확인 부탁드립니다.\n가능 시간 회신 주시면 일정 잡겠습니다.";
+        });
+
+        openCompose.addEventListener("click", openComposeModal);
+        closeCompose.addEventListener("click", closeComposeModal);
+        overlay.addEventListener("click", (event) => {
+            if (event.target === overlay) {
+                closeComposeModal();
+            }
+        });
+
+        loadMessages();
+    </script>
+</body>
+</html>

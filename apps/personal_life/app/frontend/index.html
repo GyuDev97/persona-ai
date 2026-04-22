@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Personal Life Assistant</title>
+  <style>
+    :root {
+      --bg-1: #f5efe3;
+      --bg-2: #edf3eb;
+      --panel: rgba(255, 251, 244, 0.92);
+      --panel-strong: rgba(255, 248, 238, 0.98);
+      --ink: #1f1b17;
+      --muted: #554b42;
+      --line: rgba(64, 52, 30, 0.12);
+      --accent: #d56534;
+      --accent-deep: #9f421b;
+      --accent-soft: rgba(213, 101, 52, 0.12);
+      --sage: #496148;
+      --sage-soft: rgba(73, 97, 72, 0.12);
+      --shadow: 0 24px 60px rgba(87, 61, 28, 0.12);
+      --radius-xxl: 34px;
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+      --font-display: "Malgun Gothic", "맑은 고딕", sans-serif;
+      --font-body: "Malgun Gothic", "맑은 고딕", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: var(--font-body);
+      background:
+        radial-gradient(circle at top left, rgba(231, 175, 126, 0.55), transparent 32%),
+        radial-gradient(circle at 85% 10%, rgba(171, 202, 191, 0.5), transparent 25%),
+        linear-gradient(145deg, var(--bg-1) 0%, #f6f0e8 45%, var(--bg-2) 100%);
+    }
+
+    .shell {
+      width: min(1080px, calc(100% - 24px));
+      margin: 18px auto 36px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .hero,
+    .panel,
+    .mini-card,
+    .brief-card,
+    .digest-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .hero,
+    .panel,
+    .mini-card,
+    .brief-card,
+    .digest-card {
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .hero {
+      border-radius: var(--radius-xxl);
+      padding: 22px;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-weight: 700;
+    }
+
+    h1 {
+      font-size: clamp(1.9rem, 4vw, 3.1rem);
+      line-height: 1.12;
+      max-width: 12ch;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .eyebrow {
+      margin: 0;
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent-deep);
+    }
+
+    .hero-grid,
+    .brief-grid,
+    .digest-grid,
+    .dashboard,
+    .brief-lists,
+    .tool-grid,
+    .chat-layout,
+    .stat-row {
+      display: grid;
+      gap: 12px;
+    }
+
+    .hero-grid {
+      grid-template-columns: 1.08fr 0.92fr;
+    }
+
+    .brief-grid {
+      grid-template-columns: 1.35fr 0.65fr;
+    }
+
+    .dashboard {
+      grid-template-columns: 0.98fr 1.02fr;
+      align-items: start;
+    }
+
+    .digest-grid,
+    .brief-lists,
+    .tool-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .chat-layout {
+      grid-template-columns: minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .hero-copy,
+    .panel-stack,
+    .mini-stack,
+    .assistant-stream,
+    .list,
+    .list-block {
+      display: grid;
+      gap: 10px;
+    }
+
+    .panel-stack {
+      align-content: start;
+    }
+
+    .chat-layout > * {
+      min-width: 0;
+    }
+
+    .chat-layout form {
+      align-content: start;
+    }
+
+    .chat-layout .tool-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .assistant-panel {
+      background: linear-gradient(155deg, rgba(255, 250, 243, 0.96), rgba(245, 233, 222, 0.92));
+      border: 1px solid rgba(159, 66, 27, 0.12);
+      border-radius: 26px;
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .assistant-header,
+    .panel-head,
+    .brief-top,
+    .item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 12px;
+    }
+
+    .tag,
+    .pill,
+    .status-badge,
+    .assistant-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .tag,
+    .assistant-badge {
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+    }
+
+    .status-badge {
+      background: var(--sage-soft);
+      color: var(--sage);
+    }
+
+    .status-badge.fallback,
+    .pill.pending {
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+    }
+
+    .pill.sent {
+      background: var(--sage-soft);
+      color: var(--sage);
+    }
+
+    .pill.dismissed {
+      background: rgba(64, 52, 30, 0.08);
+      color: var(--muted);
+    }
+
+    .bubble {
+      max-width: 94%;
+      border-radius: 18px;
+      padding: 14px 16px;
+      line-height: 1.6;
+      font-size: 0.98rem;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+    }
+
+    .bubble.assistant {
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(64, 52, 30, 0.08);
+    }
+
+    .bubble.user {
+      justify-self: end;
+      background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+      color: #fff8f0;
+    }
+
+    .brief-card {
+      background: linear-gradient(145deg, rgba(255, 249, 239, 0.98), rgba(250, 238, 223, 0.94));
+      border: 1px solid rgba(159, 66, 27, 0.12);
+      gap: 8px;
+    }
+
+    .brief-message {
+      font-size: 1rem;
+      line-height: 1.55;
+      color: var(--ink);
+    }
+
+    .stat-row {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .stat,
+    .concierge-card,
+    .item {
+      background: var(--panel-strong);
+      border: 1px solid rgba(64, 52, 30, 0.08);
+      border-radius: 18px;
+      padding: 12px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .stat strong {
+      font-size: 1.45rem;
+      color: var(--accent-deep);
+    }
+
+    .item-title {
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .item-meta,
+    .memory-note,
+    .status,
+    .empty,
+    .footer-note {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .item-meta,
+    .memory-note,
+    .status,
+    .footer-note {
+      white-space: pre-line;
+    }
+
+    .item-meta,
+    .memory-note,
+    .status,
+    .empty {
+      font-weight: 500;
+    }
+
+    form {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 0.92rem;
+    }
+
+    input,
+    textarea,
+    select,
+    button {
+      font: inherit;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(64, 52, 30, 0.12);
+      background: rgba(255, 255, 255, 0.8);
+      color: var(--ink);
+      outline: none;
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 11px 16px;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+      color: #fff9f1;
+      box-shadow: 0 12px 26px rgba(159, 66, 27, 0.22);
+    }
+
+    .secondary {
+      background: var(--sage-soft);
+      color: var(--sage);
+    }
+
+    .ghost {
+      background: rgba(255, 255, 255, 0.62);
+      color: var(--ink);
+      border: 1px solid rgba(64, 52, 30, 0.1);
+    }
+
+    .smart-input {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .smart-suggestions,
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .suggest-chip {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(64, 52, 30, 0.1);
+      background: rgba(255, 255, 255, 0.66);
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .empty {
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px dashed rgba(64, 52, 30, 0.16);
+      background: rgba(255, 255, 255, 0.35);
+      text-align: center;
+    }
+
+    .footer-note {
+      text-align: center;
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 1100px) {
+      .hero-grid,
+      .brief-grid,
+      .digest-grid,
+      .dashboard,
+      .brief-lists,
+      .tool-grid,
+      .chat-layout,
+      .stat-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .shell {
+        width: min(100% - 16px, 100%);
+        margin-top: 12px;
+      }
+
+      h1 {
+        font-size: clamp(1.85rem, 8vw, 2.6rem);
+        max-width: none;
+      }
+
+      .hero,
+      .panel,
+      .mini-card,
+      .brief-card,
+      .digest-card {
+        padding: 14px;
+      }
+
+      .smart-input {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Personal Concierge</p>
+          <h1>오늘 하루를<br />도와주는<br />개인비서</h1>
+          <p>기억, 일정, 할 일을 바탕으로 지금 뭐부터 보면 좋을지 자연스럽게 같이 정리해드리는 흐름으로 바꿔두었습니다.</p>
+          <div class="actions">
+            <div class="status-badge" id="assistantStatusBadge">AI 상태 확인 중</div>
+            <button class="ghost" id="refreshAllButton" type="button">전체 새로고침</button>
+            <button class="ghost" id="notificationButton" type="button">브라우저 알림 연결</button>
+          </div>
+        </div>
+
+        <aside class="assistant-panel">
+          <div class="assistant-header">
+            <div>
+              <h2>비서 대화창</h2>
+              <p>메모, 일정, 질문, 리마인드까지 한 줄로 말하면 알아서 나눠볼게요.</p>
+            </div>
+            <span class="assistant-badge">Conversation</span>
+          </div>
+
+          <div class="assistant-stream">
+            <div class="bubble assistant" id="assistantIntroBubble">오늘 뭐부터 하면 좋을지, 또는 잊지 말아야 할 게 있으면 편하게 말씀해주세요.</div>
+            <div class="bubble user" id="assistantEchoBubble" hidden></div>
+            <div class="bubble assistant" id="assistantReplyBubble" hidden></div>
+          </div>
+
+          <form id="naturalCommandForm">
+            <div class="smart-input">
+              <input name="text" placeholder="예: 내일 아침에 문단속하고 가라고 알려줘" />
+              <button class="primary" type="submit">비서에게 맡기기</button>
+            </div>
+            <div class="smart-suggestions">
+              <button class="suggest-chip" type="button" data-suggest="오늘 뭐부터 하면 좋을까?">우선순위 물어보기</button>
+              <button class="suggest-chip" type="button" data-suggest="내일 아침에 문단속하고 가라고 알려줘">리마인드 만들기</button>
+              <button class="suggest-chip" type="button" data-suggest="오늘 점심 12000원 결제">지출 기록</button>
+            </div>
+            <div class="status" id="naturalCommandStatus"></div>
+          </form>
+        </aside>
+      </div>
+
+      <div class="brief-grid">
+        <section class="brief-card">
+          <div class="brief-top">
+            <div>
+              <h2>오늘 브리핑</h2>
+              <p id="briefingMeta">오늘 흐름을 정리하는 중입니다.</p>
+            </div>
+            <span class="tag" id="todayLabel">-</span>
+          </div>
+          <div class="brief-message" id="briefingMessage">브리핑을 불러오는 중입니다.</div>
+          <div class="stat-row">
+            <div class="stat">
+              <span>열린 할 일</span>
+              <strong id="statTasks">0</strong>
+              <span>지금 붙잡을 항목</span>
+            </div>
+            <div class="stat">
+              <span>오늘 일정</span>
+              <strong id="statSchedules">0</strong>
+              <span>시간 고정된 약속</span>
+            </div>
+            <div class="stat">
+              <span>루틴 완료</span>
+              <strong id="statRoutines">0 / 0</strong>
+              <span>생활 리듬</span>
+            </div>
+          </div>
+        </section>
+
+        <div class="mini-stack">
+          <section class="mini-card">
+            <div class="panel-head">
+              <h3>지금 추천</h3>
+              <span class="tag">Suggestion</span>
+            </div>
+            <div class="list" id="suggestionList"></div>
+          </section>
+          <section class="mini-card">
+            <div class="panel-head">
+              <h3>리마인드 센터</h3>
+              <span class="tag">Reminder</span>
+            </div>
+            <div class="list" id="reminderList"></div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="digest-grid">
+      <section class="digest-card">
+        <div class="panel-head">
+          <h2>아침 브리핑</h2>
+          <span class="tag">Morning</span>
+        </div>
+        <div class="item-title" id="morningHeadline">아침 브리핑을 불러오는 중입니다.</div>
+        <div class="list" id="morningBullets"></div>
+      </section>
+
+      <section class="digest-card">
+        <div class="panel-head">
+          <h2>저녁 브리핑</h2>
+          <span class="tag">Evening</span>
+        </div>
+        <div class="item-title" id="eveningHeadline">저녁 브리핑을 불러오는 중입니다.</div>
+        <div class="list" id="eveningBullets"></div>
+      </section>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>재정 브리핑</h2>
+          <p>매달 보는 지출표와 현금 목표 시뮬레이션을 기준으로 이번 달 흐름을 같이 요약합니다.</p>
+        </div>
+        <span class="tag" id="financeSourceLabel">Finance</span>
+      </div>
+      <div class="item-title" id="financeHeadline">재정 브리핑을 불러오는 중입니다.</div>
+      <div class="brief-lists">
+        <div class="list-block">
+          <h3>핵심 수치</h3>
+          <div class="list" id="financeMetricList"></div>
+        </div>
+        <div class="list-block">
+          <h3>비서 메모</h3>
+          <div class="list" id="financeBulletList"></div>
+        </div>
+        <div class="list-block">
+          <h3>등록 자산</h3>
+          <div class="list" id="assetList"></div>
+        </div>
+        <div class="list-block">
+          <h3>자산 요약</h3>
+          <div class="list" id="assetSummaryList"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>비서가 보고 있는 것</h2>
+          <p>지금 판단할 때 필요한 정보만 먼저 꺼내둡니다.</p>
+        </div>
+        <button class="ghost" id="fillTodayButton" type="button">오늘 날짜 채우기</button>
+      </div>
+      <div class="brief-lists">
+        <div class="list-block">
+          <h3>우선 할 일</h3>
+          <div class="list" id="taskList"></div>
+        </div>
+        <div class="list-block">
+          <h3>오늘 일정</h3>
+          <div class="list" id="scheduleList"></div>
+        </div>
+        <div class="list-block">
+          <h3>메모리 인사이트</h3>
+          <div class="list" id="insightList"></div>
+        </div>
+        <div class="list-block">
+          <h3>최근 기억</h3>
+          <div class="list" id="captureList"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="dashboard">
+      <div class="panel-stack">
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>비서 제안</h2>
+              <p>지금 일정과 할 일을 같이 보고 옆에서 조용히 권하듯 정리해드립니다.</p>
+            </div>
+            <span class="tag">Concierge</span>
+          </div>
+          <div class="list" id="conciergeGrid"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>대화 히스토리</h2>
+              <p>아까 뭘 시켰고 비서가 뭐라고 답했는지 이어서 볼 수 있게 남겨둡니다.</p>
+            </div>
+            <span class="tag">History</span>
+          </div>
+          <div class="chat-layout">
+            <div class="list" id="conversationList"></div>
+            <form id="captureForm">
+              <h3>빠른 메모</h3>
+              <label>
+                메모 내용
+                <textarea name="content" placeholder="예: 오늘 병원 예약 메모, 이동 30분 잡기"></textarea>
+              </label>
+              <div class="tool-grid">
+                <label>
+                  기록 종류
+                  <select name="capture_type">
+                    <option value="note">note</option>
+                    <option value="expense">expense</option>
+                    <option value="idea">idea</option>
+                    <option value="journal">journal</option>
+                    <option value="routine">routine</option>
+                    <option value="task">task</option>
+                  </select>
+                </label>
+                <label>
+                  입력 출처
+                  <input name="source" value="manual" />
+                </label>
+              </div>
+              <div class="actions">
+                <button class="secondary" type="submit">메모 저장</button>
+              </div>
+              <div class="status" id="captureStatus"></div>
+            </form>
+          </div>
+        </section>
+      </div>
+
+      <div class="panel-stack">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>운영 패널</h2>
+            <span class="tag">Manual Tools</span>
+          </div>
+          <div class="tool-grid">
+            <form id="assetForm">
+              <h3>자산 데이터 관리</h3>
+              <input type="hidden" name="asset_id" />
+              <label>자산명<input name="asset_name" placeholder="예: 입출금 통장" /></label>
+              <label>카테고리<input name="category" placeholder="예: 현금, 예금, 투자" /></label>
+              <label>현재 금액<input type="number" name="current_value" min="0" placeholder="예: 9500000" /></label>
+              <label>기준일<input type="date" name="as_of_date" /></label>
+              <label>메모<textarea name="notes" placeholder="예: CMA 포함, 월말 기준"></textarea></label>
+              <div class="actions">
+                <button class="primary" type="submit">자산 저장</button>
+                <button class="ghost" id="assetResetButton" type="button">수정 취소</button>
+              </div>
+              <div class="status" id="assetStatus"></div>
+            </form>
+
+            <form id="taskForm">
+              <h3>할 일 추가</h3>
+              <label>제목<input name="title" placeholder="예: 보험 서류 정리" /></label>
+              <label>설명<textarea name="details" placeholder="예: 이번 주 안에 초안까지 완료"></textarea></label>
+              <label>마감일<input type="date" name="due_date" /></label>
+              <label>
+                우선순위
+                <select name="priority">
+                  <option value="1">1 - 가장 중요</option>
+                  <option value="2" selected>2 - 보통</option>
+                  <option value="3">3 - 여유 있음</option>
+                </select>
+              </label>
+              <div class="actions"><button class="primary" type="submit">할 일 저장</button></div>
+              <div class="status" id="taskStatus"></div>
+            </form>
+
+            <form id="scheduleForm">
+              <h3>일정 추가</h3>
+              <label>제목<input name="title" placeholder="예: 치과 방문" /></label>
+              <label>설명<textarea name="details" placeholder="예: 스케일링 문의"></textarea></label>
+              <label>날짜<input type="date" name="scheduled_for" /></label>
+              <label>시작 시간<input type="time" name="start_time" /></label>
+              <div class="actions"><button class="primary" type="submit">일정 저장</button></div>
+              <div class="status" id="scheduleStatus"></div>
+            </form>
+
+            <form id="routineForm">
+              <h3>루틴 추가</h3>
+              <label>루틴 이름<input name="name" placeholder="예: 아침 스트레칭" /></label>
+              <label>설명<textarea name="description" placeholder="예: 기상 후 10분"></textarea></label>
+              <label>빈도<input name="frequency" value="daily" /></label>
+              <div class="actions"><button class="primary" type="submit">루틴 저장</button></div>
+              <div class="status" id="routineStatus"></div>
+            </form>
+
+            <form id="routineCheckForm">
+              <h3>루틴 체크</h3>
+              <label>루틴<select name="routine_id" id="routineSelect"></select></label>
+              <label>날짜<input type="date" name="day" /></label>
+              <label>
+                상태
+                <select name="status">
+                  <option value="done">done</option>
+                  <option value="pending">pending</option>
+                  <option value="skipped">skipped</option>
+                </select>
+              </label>
+              <div class="actions"><button class="secondary" type="submit">루틴 체크 저장</button></div>
+              <div class="status" id="routineCheckStatus"></div>
+            </form>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <div class="footer-note">리마인드 예약, 대화 히스토리, 아침/저녁 브리핑까지 모두 같은 서버 API 위에서 동작합니다.</div>
+  </main>
+
+  <script>
+    const today = new Date().toISOString().slice(0, 10);
+    const browserReminderTimers = new Map();
+
+    const els = {
+      assistantStatusBadge: document.getElementById("assistantStatusBadge"),
+      assistantEchoBubble: document.getElementById("assistantEchoBubble"),
+      assistantReplyBubble: document.getElementById("assistantReplyBubble"),
+      todayLabel: document.getElementById("todayLabel"),
+      briefingMessage: document.getElementById("briefingMessage"),
+      briefingMeta: document.getElementById("briefingMeta"),
+      statTasks: document.getElementById("statTasks"),
+      statSchedules: document.getElementById("statSchedules"),
+      statRoutines: document.getElementById("statRoutines"),
+      suggestionList: document.getElementById("suggestionList"),
+      reminderList: document.getElementById("reminderList"),
+      conciergeGrid: document.getElementById("conciergeGrid"),
+      captureList: document.getElementById("captureList"),
+      taskList: document.getElementById("taskList"),
+      scheduleList: document.getElementById("scheduleList"),
+      insightList: document.getElementById("insightList"),
+      conversationList: document.getElementById("conversationList"),
+      financeSourceLabel: document.getElementById("financeSourceLabel"),
+      financeHeadline: document.getElementById("financeHeadline"),
+      financeMetricList: document.getElementById("financeMetricList"),
+      financeBulletList: document.getElementById("financeBulletList"),
+      assetList: document.getElementById("assetList"),
+      assetSummaryList: document.getElementById("assetSummaryList"),
+      routineSelect: document.getElementById("routineSelect"),
+      naturalInput: document.querySelector('#naturalCommandForm input[name="text"]'),
+      morningHeadline: document.getElementById("morningHeadline"),
+      morningBullets: document.getElementById("morningBullets"),
+      eveningHeadline: document.getElementById("eveningHeadline"),
+      eveningBullets: document.getElementById("eveningBullets")
+    };
+
+    function setText(el, value) {
+      if (el) el.textContent = value ?? "";
+    }
+
+    function setHtml(el, value) {
+      if (el) el.innerHTML = value ?? "";
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function setDefaultDates() {
+      const dueDate = document.querySelector('input[name="due_date"]');
+      const scheduledFor = document.querySelector('input[name="scheduled_for"]');
+      const routineDay = document.querySelector('#routineCheckForm input[name="day"]');
+      if (dueDate) dueDate.value = today;
+      if (scheduledFor) scheduledFor.value = today;
+      if (routineDay) routineDay.value = today;
+    }
+
+    async function request(url, options = {}) {
+      const response = await fetch(url, {
+        headers: { "Content-Type": "application/json" },
+        ...options
+      });
+      if (!response.ok) {
+        let message = "요청에 실패했습니다.";
+        try {
+          const data = await response.json();
+          message = data.detail || JSON.stringify(data);
+        } catch (error) {
+          message = await response.text();
+        }
+        throw new Error(message);
+      }
+      return response.json();
+    }
+
+    function renderEmpty(message) {
+      return `<div class="empty">${escapeHtml(message)}</div>`;
+    }
+
+    function renderBulletList(target, bullets) {
+      if (!bullets || !bullets.length) {
+        setHtml(target, renderEmpty("아직 표시할 내용이 없습니다."));
+        return;
+      }
+      setHtml(target, bullets.map((bullet) => `
+        <article class="item">
+          <div class="item-meta">${escapeHtml(bullet)}</div>
+        </article>
+      `).join(""));
+    }
+
+    function renderFinanceBriefing(finance) {
+      setText(els.financeSourceLabel, finance.source_month);
+      setText(els.financeHeadline, finance.headline);
+
+      const metrics = [
+        ["월급", `${Number(finance.monthly_income).toLocaleString("ko-KR")}원`],
+        ["저축", `${Number(finance.monthly_savings).toLocaleString("ko-KR")}원 (${(finance.savings_rate * 100).toFixed(1)}%)`],
+        ["실지출", `${Number(finance.monthly_spend_total).toLocaleString("ko-KR")}원 (${(finance.spending_rate * 100).toFixed(1)}%)`],
+        ["남는 돈", `${Number(finance.remaining_cash).toLocaleString("ko-KR")}원`],
+        ["신용카드", `${Number(finance.credit_card_spend).toLocaleString("ko-KR")}원 / 한도 ${Number(finance.credit_limit).toLocaleString("ko-KR")}원`],
+        ["3억 목표", finance.current_cash_goal_year ? `${finance.current_cash_goal_year}년 도달 예상` : "현재 범위 내 도달 시점 없음"]
+      ];
+
+      setHtml(els.financeMetricList, metrics.map(([label, value]) => `
+        <article class="item">
+          <div class="item-top">
+            <div class="item-title">${escapeHtml(label)}</div>
+          </div>
+          <div class="item-meta">${escapeHtml(value)}</div>
+        </article>
+      `).join(""));
+
+      renderBulletList(els.financeBulletList, finance.bullets || []);
+    }
+
+    function renderAssets(assets) {
+      if (!assets.length) {
+        setHtml(els.assetList, renderEmpty("등록된 자산 데이터가 아직 없어요."));
+        return;
+      }
+      setHtml(els.assetList, assets.map((asset) => `
+        <article class="item">
+          <div class="item-top">
+            <div class="item-title">${escapeHtml(asset.asset_name)}</div>
+            <span class="tag">${escapeHtml(asset.category)}</span>
+          </div>
+          <div class="item-meta">${Number(asset.current_value).toLocaleString("ko-KR")}원</div>
+          <div class="item-meta">${escapeHtml(asset.as_of_date || "기준일 없음")}</div>
+          <div class="item-meta">${escapeHtml(asset.notes || "메모 없음")}</div>
+          <div class="actions">
+            <button
+              class="ghost"
+              type="button"
+              data-asset-edit='${escapeHtml(JSON.stringify(asset))}'
+            >수정</button>
+          </div>
+        </article>
+      `).join(""));
+    }
+
+    function renderAssetSummary(summary) {
+      const items = [
+        `총 자산은 ${Number(summary.total_assets).toLocaleString("ko-KR")}원입니다.`,
+        summary.categories.length
+          ? `가장 비중이 큰 카테고리는 '${summary.categories[0].category}'로 ${(summary.categories[0].ratio * 100).toFixed(1)}%입니다.`
+          : "카테고리 비중은 아직 없습니다.",
+        summary.trend.length >= 2
+          ? `최근 증감은 ${Number(summary.latest_change_amount).toLocaleString("ko-KR")}원 (${(summary.latest_change_rate * 100).toFixed(1)}%)입니다.`
+          : "아직 스냅샷이 적어서 최근 증감은 더 쌓이면 보여드릴 수 있습니다."
+      ];
+      renderBulletList(els.assetSummaryList, items);
+    }
+
+    function renderTasks(tasks) {
+      if (!tasks.length) {
+        setHtml(els.taskList, renderEmpty("오늘 바로 처리할 할 일이 아직 없어요."));
+        return;
+      }
+      setHtml(els.taskList, tasks.map((task) => `
+        <article class="item">
+          <div class="item-top">
+            <div class="item-title">${escapeHtml(task.title)}</div>
+            <span class="tag">P${escapeHtml(task.priority)}</span>
+          </div>
+          <div class="item-meta">${escapeHtml(task.details || "설명 없음")}</div>
+          <div class="actions">
+            <span class="pill">${escapeHtml(task.due_date || "마감일 없음")}</span>
+            <button class="secondary" type="button" data-task-done="${task.id}">완료 처리</button>
+          </div>
+        </article>
+      `).join(""));
+    }
+
+    function renderSchedules(schedules) {
+      if (!schedules.length) {
+        setHtml(els.scheduleList, renderEmpty("오늘 일정이 아직 없어요."));
+        return;
+      }
+      setHtml(els.scheduleList, schedules.map((schedule) => `
+        <article class="item">
+          <div class="item-top">
+            <div class="item-title">${escapeHtml(schedule.title)}</div>
+            <span class="tag">${escapeHtml(schedule.start_time || "시간 미정")}</span>
+          </div>
+          <div class="item-meta">${escapeHtml(schedule.details || "설명 없음")}</div>
+        </article>
+      `).join(""));
+    }
+
+    function renderInsights(insights) {
+      if (!insights.length) {
+        setHtml(els.insightList, renderEmpty("아직 메모리 인사이트가 없어요."));
+        return;
+      }
+      setHtml(els.insightList, insights.map((insight) => `
+        <article class="item">
+          <div class="item-title">${escapeHtml(insight.title)}</div>
+          <div class="item-meta">${escapeHtml(insight.body)}</div>
+        </article>
+      `).join(""));
+    }
+
+    function renderCaptures(captures) {
+      if (!captures.length) {
+        setHtml(els.captureList, renderEmpty("최근 기억이 아직 없어요."));
+        return;
+      }
+      setHtml(els.captureList, captures.map((capture) => `
+        <article class="item">
+          <div class="item-top">
+            <div class="item-title">${escapeHtml(capture.content)}</div>
+            <span class="tag">${escapeHtml(capture.capture_type)}</span>
+          </div>
+          <div class="item-meta">${escapeHtml(capture.source)} · ${new Date(capture.created_at).toLocaleString("ko-KR")}</div>
+        </article>
+      `).join(""));
+    }
+
+    function renderConversations(items) {
+      if (!items.length) {
+        setHtml(els.conversationList, renderEmpty("아직 대화 기록이 없어요."));
+        return;
+      }
+      setHtml(els.conversationList, items.map((item) => `
+        <div class="bubble ${item.role === "user" ? "user" : "assistant"}">
+          ${escapeHtml(item.message)}
+        </div>
+      `).join(""));
+    }
+
+    function reminderTimeLabel(reminder) {
+      return reminder.remind_time ? `${reminder.remind_on} ${reminder.remind_time}` : reminder.remind_on;
+    }
+
+    function renderReminders(reminders) {
+      if (!reminders.length) {
+        setHtml(els.reminderList, renderEmpty("예정된 리마인드가 아직 없어요."));
+        return;
+      }
+      setHtml(els.reminderList, reminders.map((reminder) => `
+        <article class="item">
+          <div class="item-top">
+            <div class="item-title">${escapeHtml(reminder.title)}</div>
+            <span class="pill ${escapeHtml(reminder.status)}">${escapeHtml(reminder.status)}</span>
+          </div>
+          <div class="item-meta">${escapeHtml(reminder.details || "상세 메모 없음")}</div>
+          <div class="item-meta">${escapeHtml(reminderTimeLabel(reminder))}</div>
+        </article>
+      `).join(""));
+    }
+
+    function renderSuggestionList(briefing) {
+      const suggestions = [];
+      if (briefing.top_tasks.length) {
+        suggestions.push(`지금은 '${briefing.top_tasks[0].title}' 하나만 먼저 보면 좋겠습니다.`);
+      }
+      if (briefing.schedule_count_today > 0) {
+        suggestions.push(`오늘 일정 ${briefing.schedule_count_today}개는 시간순으로 한 번만 확인해두면 마음이 편해질 것 같아요.`);
+      }
+      if (briefing.total_routine_count > briefing.completed_routine_count) {
+        suggestions.push(`루틴은 남은 것 중 가장 짧은 항목 하나만 체크해도 흐름이 살아날 가능성이 큽니다.`);
+      }
+      if (!suggestions.length) {
+        suggestions.push("오늘은 무리해서 벌리기보다, 작은 한 가지로 흐름만 잡아두셔도 충분해 보여요.");
+      }
+      setHtml(els.suggestionList, suggestions.map((text) => `
+        <article class="item">
+          <div class="item-meta">${escapeHtml(text)}</div>
+        </article>
+      `).join(""));
+    }
+
+    function renderConciergeCards(briefing) {
+      if (!briefing.opinions || !briefing.opinions.length) {
+        setHtml(els.conciergeGrid, renderEmpty("비서 제안을 아직 만들지 못했어요."));
+        return;
+      }
+      setHtml(els.conciergeGrid, briefing.opinions.map((opinion) => `
+        <article class="concierge-card">
+          <h3>${escapeHtml(opinion.title)}</h3>
+          <p>${escapeHtml(opinion.body)}</p>
+          <div class="memory-note">${escapeHtml(opinion.reason)}</div>
+        </article>
+      `).join(""));
+    }
+
+    function populateRoutineSelect(routines) {
+      if (!routines.length) {
+        setHtml(els.routineSelect, '<option value="">루틴을 먼저 추가해주세요</option>');
+        return;
+      }
+      setHtml(els.routineSelect, routines.map((routine) => `
+        <option value="${routine.id}">${escapeHtml(routine.name)}</option>
+      `).join(""));
+    }
+
+    function scheduleBrowserNotifications(reminders) {
+      for (const timeoutId of browserReminderTimers.values()) {
+        clearTimeout(timeoutId);
+      }
+      browserReminderTimers.clear();
+
+      if (!("Notification" in window) || Notification.permission !== "granted") {
+        return;
+      }
+
+      reminders.forEach((reminder) => {
+        const when = new Date(`${reminder.remind_on}T${reminder.remind_time || "09:00"}:00`);
+        const delay = when.getTime() - Date.now();
+        if (delay <= 0 || delay > 2147483647) {
+          return;
+        }
+        const timeoutId = window.setTimeout(() => {
+          new Notification(`리마인드: ${reminder.title}`, {
+            body: reminder.details || "챙겨두셨던 항목을 확인해보세요."
+          });
+        }, delay);
+        browserReminderTimers.set(reminder.id, timeoutId);
+      });
+    }
+
+    async function loadAssistantStatus() {
+      const status = await request("/assistant/status");
+      if (status.ai_enabled) {
+        setText(els.assistantStatusBadge, `AI 해석 활성화 · ${status.model}`);
+        els.assistantStatusBadge?.classList.remove("fallback");
+      } else {
+        setText(els.assistantStatusBadge, "규칙 기반 fallback 모드");
+        els.assistantStatusBadge?.classList.add("fallback");
+      }
+    }
+
+    async function loadBriefing() {
+      const briefing = await request("/briefing/today");
+      setText(els.todayLabel, briefing.today);
+      setText(els.briefingMessage, briefing.message);
+      setText(els.briefingMeta, `완료한 할 일 ${briefing.completed_today_count}개, 오늘 기록 ${briefing.capture_count_today}개`);
+      setText(els.statTasks, briefing.open_task_count);
+      setText(els.statSchedules, briefing.schedule_count_today);
+      setText(els.statRoutines, `${briefing.completed_routine_count} / ${briefing.total_routine_count}`);
+
+      renderTasks(briefing.top_tasks);
+      renderSchedules(briefing.schedules);
+      renderInsights(briefing.insights || []);
+      renderSuggestionList(briefing);
+      renderConciergeCards(briefing);
+    }
+
+    async function loadDigests() {
+      const [morning, evening] = await Promise.all([
+        request("/briefing/morning"),
+        request("/briefing/evening")
+      ]);
+      setText(els.morningHeadline, morning.headline);
+      setText(els.eveningHeadline, evening.headline);
+      renderBulletList(els.morningBullets, morning.bullets);
+      renderBulletList(els.eveningBullets, evening.bullets);
+    }
+
+    async function loadCaptures() {
+      const captures = await request("/captures");
+      renderCaptures(captures);
+    }
+
+    async function loadRoutines() {
+      const routines = await request("/routines");
+      populateRoutineSelect(routines);
+    }
+
+    async function loadReminders() {
+      const reminders = await request("/reminders?status=scheduled&limit=20");
+      renderReminders(reminders);
+      scheduleBrowserNotifications(reminders);
+    }
+
+    async function loadFinanceBriefing() {
+      const finance = await request("/finance/briefing");
+      renderFinanceBriefing(finance);
+    }
+
+    async function loadAssets() {
+      const assets = await request("/assets?limit=100");
+      renderAssets(assets);
+    }
+
+    async function loadAssetSummary() {
+      const summary = await request("/assets/summary");
+      renderAssetSummary(summary);
+    }
+
+    async function loadConversations() {
+      const conversations = await request("/conversations?limit=14");
+      renderConversations(conversations);
+    }
+
+    async function refreshAll() {
+      await Promise.all([
+        loadAssistantStatus(),
+        loadBriefing(),
+        loadDigests(),
+        loadFinanceBriefing(),
+        loadAssets(),
+        loadAssetSummary(),
+        loadCaptures(),
+        loadRoutines(),
+        loadReminders(),
+        loadConversations()
+      ]);
+    }
+
+    function bindForm(formId, statusId, handler) {
+      const form = document.getElementById(formId);
+      const status = document.getElementById(statusId);
+      if (!form || !status) return;
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        setText(status, "저장 중...");
+        try {
+          const message = await handler(new FormData(form));
+          form.reset();
+          setDefaultDates();
+          setText(status, message || "저장되었습니다.");
+          await refreshAll();
+        } catch (error) {
+          setText(status, error.message);
+        }
+      });
+    }
+
+    function resetAssetForm() {
+      const form = document.getElementById("assetForm");
+      if (!form) return;
+      form.reset();
+      form.querySelector('input[name="asset_id"]').value = "";
+      setText(document.getElementById("assetStatus"), "");
+    }
+
+    function fillAssetForm(asset) {
+      const form = document.getElementById("assetForm");
+      if (!form) return;
+      form.querySelector('input[name="asset_id"]').value = asset.id ?? "";
+      form.querySelector('input[name="asset_name"]').value = asset.asset_name ?? "";
+      form.querySelector('input[name="category"]').value = asset.category ?? "";
+      form.querySelector('input[name="current_value"]').value = asset.current_value ?? 0;
+      form.querySelector('input[name="as_of_date"]').value = asset.as_of_date ?? "";
+      form.querySelector('textarea[name="notes"]').value = asset.notes ?? "";
+      setText(document.getElementById("assetStatus"), `자산 #${asset.id} 수정 중`);
+      form.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    bindForm("assetForm", "assetStatus", async (data) => {
+      const assetId = String(data.get("asset_id") || "").trim();
+      const payload = {
+        asset_name: data.get("asset_name"),
+        category: data.get("category"),
+        current_value: Number(data.get("current_value") || 0),
+        as_of_date: data.get("as_of_date") || null,
+        notes: data.get("notes") || ""
+      };
+
+      if (assetId) {
+        await request(`/assets/${assetId}`, {
+          method: "PUT",
+          body: JSON.stringify(payload)
+        });
+        return "자산 데이터를 수정했습니다.";
+      }
+
+      await request("/assets", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      return "자산 데이터를 추가했습니다.";
+    });
+
+    bindForm("captureForm", "captureStatus", async (data) => {
+      await request("/captures", {
+        method: "POST",
+        body: JSON.stringify({
+          capture_type: data.get("capture_type"),
+          content: data.get("content"),
+          source: data.get("source")
+        })
+      });
+      return "메모를 저장해두었습니다.";
+    });
+
+    bindForm("naturalCommandForm", "naturalCommandStatus", async (data) => {
+      const text = String(data.get("text") || "").trim();
+      if (!text) {
+        throw new Error("먼저 한 줄 입력해주세요.");
+      }
+
+      if (els.assistantEchoBubble) {
+        els.assistantEchoBubble.hidden = false;
+        setText(els.assistantEchoBubble, text);
+      }
+      if (els.assistantReplyBubble) {
+        els.assistantReplyBubble.hidden = false;
+        setText(els.assistantReplyBubble, "말씀하신 내용 정리하고 있어요...");
+      }
+
+      const result = await request("/commands/natural", {
+        method: "POST",
+        body: JSON.stringify({ text })
+      });
+
+      setText(els.assistantReplyBubble, result.summary);
+      return result.reminder_id
+        ? "대화 기록과 리마인드까지 같이 정리해두었습니다."
+        : "대화 기록과 함께 정리해두었습니다.";
+    });
+
+    bindForm("taskForm", "taskStatus", async (data) => {
+      await request("/tasks", {
+        method: "POST",
+        body: JSON.stringify({
+          title: data.get("title"),
+          details: data.get("details"),
+          due_date: data.get("due_date") || null,
+          priority: Number(data.get("priority"))
+        })
+      });
+      return "할 일을 추가했습니다.";
+    });
+
+    bindForm("scheduleForm", "scheduleStatus", async (data) => {
+      await request("/schedules", {
+        method: "POST",
+        body: JSON.stringify({
+          title: data.get("title"),
+          details: data.get("details"),
+          scheduled_for: data.get("scheduled_for"),
+          start_time: data.get("start_time") || null
+        })
+      });
+      return "일정을 추가했습니다.";
+    });
+
+    bindForm("routineForm", "routineStatus", async (data) => {
+      await request("/routines", {
+        method: "POST",
+        body: JSON.stringify({
+          name: data.get("name"),
+          description: data.get("description"),
+          frequency: data.get("frequency")
+        })
+      });
+      return "루틴을 등록했습니다.";
+    });
+
+    bindForm("routineCheckForm", "routineCheckStatus", async (data) => {
+      const routineId = data.get("routine_id");
+      if (!routineId) {
+        throw new Error("루틴을 먼저 추가해주세요.");
+      }
+      const day = encodeURIComponent(data.get("day"));
+      const status = encodeURIComponent(data.get("status"));
+      await request(`/routines/${routineId}/checkins?day=${day}&status=${status}`, {
+        method: "POST"
+      });
+      return "루틴 체크를 반영했습니다.";
+    });
+
+    document.addEventListener("click", async (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+
+      const taskId = target.getAttribute("data-task-done");
+      const suggestion = target.getAttribute("data-suggest");
+      const assetEdit = target.getAttribute("data-asset-edit");
+
+      if (suggestion && els.naturalInput) {
+        els.naturalInput.value = suggestion;
+        els.naturalInput.focus();
+        return;
+      }
+
+      if (assetEdit) {
+        fillAssetForm(JSON.parse(assetEdit));
+        return;
+      }
+
+      if (!taskId) return;
+
+      try {
+        await request(`/tasks/${taskId}/done`, { method: "POST" });
+        await refreshAll();
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+
+    document.getElementById("refreshAllButton")?.addEventListener("click", refreshAll);
+    document.getElementById("fillTodayButton")?.addEventListener("click", setDefaultDates);
+    document.getElementById("assetResetButton")?.addEventListener("click", resetAssetForm);
+    document.getElementById("notificationButton")?.addEventListener("click", async () => {
+      if (!("Notification" in window)) {
+        alert("이 브라우저는 알림을 지원하지 않습니다.");
+        return;
+      }
+      const permission = await Notification.requestPermission();
+      if (permission === "granted") {
+        await loadReminders();
+        alert("브라우저 알림을 허용했습니다.");
+      } else {
+        alert("알림 권한이 허용되지 않았습니다.");
+      }
+    });
+
+    setDefaultDates();
+    refreshAll().catch((error) => {
+      setText(els.briefingMessage, "데이터를 불러오지 못했습니다.");
+      setText(els.briefingMeta, error.message);
+    });
+  </script>
+</body>
+</html>
