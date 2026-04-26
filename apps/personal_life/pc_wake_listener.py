@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 import threading
 import time
 import urllib.error
@@ -37,6 +38,7 @@ WAKE_PHRASES = (
     "wake",
 )
 GREETING = os.getenv("GYUVIS_GREETING", "어서오세요 보스.")
+TTS_BACKEND = os.getenv("GYUVIS_TTS_BACKEND", "auto").lower()
 
 
 class GyuvisWakeListener:
@@ -241,9 +243,22 @@ class GyuvisWakeListener:
 
     def _speak(self, text: str) -> None:
         self._log(f"규비스: {text}")
-        self.tts.stop()
-        self.tts.say(text)
-        self.tts.runAndWait()
+        if TTS_BACKEND in ("powershell", "ps"):
+            if self._speak_with_powershell(text):
+                return
+            self._log("PowerShell TTS 재생에 실패해 pyttsx3로 fallback합니다.")
+
+        try:
+            self.tts.stop()
+            self.tts.say(text)
+            self.tts.runAndWait()
+        except Exception as error:
+            self._log(f"pyttsx3 재생 실패: {error}")
+            if TTS_BACKEND == "pyttsx3":
+                return
+            if self._speak_with_powershell(text):
+                return
+            self._log("PowerShell TTS fallback도 실패했습니다.")
 
     def _normalize_text(self, text: str) -> str:
         compact = text.lower().replace(" ", "")
@@ -265,6 +280,33 @@ class GyuvisWakeListener:
         samplerate = device.get("default_samplerate")
         details = [part for part in (name, f"{channels}ch" if channels else "", f"{int(samplerate)}Hz" if samplerate else "") if part]
         return " / ".join(details)
+
+    def _speak_with_powershell(self, text: str) -> bool:
+        escaped = text.replace("'", "''")
+        command = (
+            "Add-Type -AssemblyName System.Speech; "
+            "$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer; "
+            "$synth.SetOutputToDefaultAudioDevice(); "
+            f"$synth.Speak('{escaped}')"
+        )
+        try:
+            subprocess.run(
+                [
+                    "powershell",
+                    "-NoProfile",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-Command",
+                    command,
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            return True
+        except Exception as error:
+            self._log(f"PowerShell TTS 실패: {error}")
+            return False
 
     def _log(self, message: str) -> None:
         stamp = time.strftime("%H:%M:%S")
