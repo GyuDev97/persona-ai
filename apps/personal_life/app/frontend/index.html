@@ -25,7 +25,24 @@
     .brand-title{font-size:34px;font-weight:900;letter-spacing:-.04em}.brand-sub,.small,.muted,.status{color:var(--muted);line-height:1.55}.brand{padding:4px 4px 16px}
     .nav{display:grid;gap:7px}.nav a{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:center;text-decoration:none;color:var(--ink);padding:13px 12px;border-radius:15px;font-weight:700}
     .nav a.active,.nav a:hover{background:var(--accent-soft);color:var(--accent-deep)}
-    .side-assistant{display:grid;gap:14px;padding:16px;border-radius:24px;background:rgba(255,255,255,.66);border:1px solid var(--line);text-align:center}.bot-face{width:86px;height:86px;border-radius:50%;margin:0 auto;display:grid;place-items:center;background:linear-gradient(145deg,#fff,#f3e6d8);font-size:44px}
+    .side-assistant{display:grid;gap:14px;padding:16px;border-radius:24px;background:rgba(255,255,255,.66);border:1px solid var(--line);text-align:center}
+    .bot-face{width:132px;height:132px;border-radius:50%;margin:0 auto;display:grid;place-items:center;position:relative;background:radial-gradient(circle at center,rgba(18,54,50,.95),rgba(5,22,21,.98) 68%,rgba(2,11,10,.98));overflow:hidden;box-shadow:inset 0 0 28px rgba(104,255,238,.12),0 16px 36px rgba(13,72,66,.18);font-size:0}
+    .particle-core,.particle-core::before,.particle-core::after{content:"";position:absolute;inset:0;border-radius:50%}
+    .particle-core{display:block;animation:core-spin 14s linear infinite}
+    .particle-core::before{inset:16px;border:1px solid rgba(88,245,226,.24);box-shadow:0 0 20px rgba(67,233,214,.16)}
+    .particle-core::after{inset:42px;background:radial-gradient(circle,rgba(76,240,220,.9),rgba(76,240,220,.15) 42%,transparent 68%);box-shadow:0 0 22px rgba(76,240,220,.35)}
+    .particle-ring{position:absolute;inset:12px;border-radius:50%;filter:drop-shadow(0 0 8px rgba(77,240,219,.38));animation:core-spin-reverse 18s linear infinite}
+    .particle-ring span{position:absolute;top:50%;left:50%;width:5px;height:5px;border-radius:50%;background:rgba(107,255,241,.9);transform-origin:0 0}
+    .particle-ring span:nth-child(3n){width:4px;height:4px;background:rgba(90,239,255,.92)}
+    .particle-ring span:nth-child(4n){width:6px;height:6px;background:rgba(63,219,214,.88)}
+    .particle-ring span:nth-child(5n){opacity:.72}
+    body[data-core-state="listening"] .bot-face{box-shadow:inset 0 0 32px rgba(104,255,238,.2),0 18px 38px rgba(32,158,144,.22)}
+    body[data-core-state="speaking"] .bot-face,
+    body[data-core-state="busy"] .bot-face{animation:core-pulse .9s ease-in-out infinite}
+    body[data-core-state="speaking"] .particle-core::after{box-shadow:0 0 34px rgba(76,240,220,.48)}
+    @keyframes core-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+    @keyframes core-spin-reverse{from{transform:rotate(360deg)}to{transform:rotate(0deg)}}
+    @keyframes core-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
     .main,.right{display:grid;gap:18px;min-width:0}.right{position:sticky;top:18px}
     .topbar{display:grid;grid-template-columns:1fr auto auto auto;gap:14px;align-items:center}.command{height:56px;border-radius:18px;box-shadow:0 10px 28px rgba(69,48,27,.07)}
     .top-chip{height:46px;padding:0 14px;border-radius:18px;background:rgba(255,255,255,.72);border:1px solid var(--line);font-weight:800}
@@ -166,6 +183,8 @@ const today=new Date().toISOString().slice(0,10);const browserReminderTimers=new
 const $=(id)=>document.getElementById(id);
 const els={assistantStatusBadge:$("assistantStatusBadge"),assistantEchoBubble:$("assistantEchoBubble"),assistantReplyBubble:$("assistantReplyBubble"),naturalCommandForm:$("naturalCommandForm"),todayLabel:$("todayLabel"),briefingMessage:$("briefingMessage"),briefingMeta:$("briefingMeta"),statTasks:$("statTasks"),statSchedules:$("statSchedules"),statRoutines:$("statRoutines"),suggestionList:$("suggestionList"),reminderList:$("reminderList"),conciergeGrid:$("conciergeGrid"),captureList:$("captureList"),taskList:$("taskList"),scheduleList:$("scheduleList"),insightList:$("insightList"),conversationList:$("conversationList"),financeSourceLabel:$("financeSourceLabel"),financeHeadline:$("financeHeadline"),financeMetricList:$("financeMetricList"),financeBulletList:$("financeBulletList"),assetList:$("assetList"),assetSummaryList:$("assetSummaryList"),routineSelect:$("routineSelect"),naturalInput:document.querySelector('#naturalCommandForm input[name="text"]'),voiceInputButton:$("voiceInputButton"),voiceOutputButton:$("voiceOutputButton"),voiceAssistStatus:$("voiceAssistStatus"),morningHeadline:$("morningHeadline"),morningBullets:$("morningBullets"),eveningHeadline:$("eveningHeadline"),eveningBullets:$("eveningBullets")};
 const voiceState={recognition:null,listening:false,speechEnabled:false,speakNextReply:false};
+function setCoreState(state){document.body.dataset.coreState=state}
+function mountAssistantCore(){const core=document.querySelector('.bot-face');if(!core)return;core.innerHTML=`<span class="particle-core"></span><div class="particle-ring"><span style="transform:rotate(0deg) translateY(-50px)"></span><span style="transform:rotate(18deg) translateY(-48px)"></span><span style="transform:rotate(36deg) translateY(-46px)"></span><span style="transform:rotate(54deg) translateY(-49px)"></span><span style="transform:rotate(72deg) translateY(-47px)"></span><span style="transform:rotate(90deg) translateY(-50px)"></span><span style="transform:rotate(108deg) translateY(-46px)"></span><span style="transform:rotate(126deg) translateY(-48px)"></span><span style="transform:rotate(144deg) translateY(-49px)"></span><span style="transform:rotate(162deg) translateY(-47px)"></span><span style="transform:rotate(180deg) translateY(-50px)"></span><span style="transform:rotate(198deg) translateY(-46px)"></span><span style="transform:rotate(216deg) translateY(-48px)"></span><span style="transform:rotate(234deg) translateY(-50px)"></span><span style="transform:rotate(252deg) translateY(-47px)"></span><span style="transform:rotate(270deg) translateY(-49px)"></span><span style="transform:rotate(288deg) translateY(-46px)"></span><span style="transform:rotate(306deg) translateY(-48px)"></span><span style="transform:rotate(324deg) translateY(-49px)"></span><span style="transform:rotate(342deg) translateY(-47px)"></span></div>`}
 function setText(el,v){if(el)el.textContent=v??""}function setHtml(el,v){if(el)el.innerHTML=v??""}function escapeHtml(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;")}
 function setVoiceStatus(m){setText(els.voiceAssistStatus,m)}function updateVoiceButtons(){if(els.voiceInputButton)setText(els.voiceInputButton,voiceState.listening?"듣는 중 멈추기":"음성으로 말하기");if(els.voiceOutputButton)setText(els.voiceOutputButton,voiceState.speechEnabled?"답변 읽기 켜짐":"답변 읽기 꺼짐")}
 function initVoiceAssistant(){const R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R){if(els.voiceInputButton)els.voiceInputButton.disabled=true;setVoiceStatus("현재 브라우저에서는 음성 입력을 지원하지 않습니다.");return}const r=new R();r.lang="ko-KR";r.interimResults=false;r.maxAlternatives=1;r.onstart=()=>{voiceState.listening=true;setVoiceStatus("듣고 있어요.");updateVoiceButtons()};r.onend=()=>{voiceState.listening=false;updateVoiceButtons();if(!voiceState.speakNextReply)setVoiceStatus("음성 비서 대기 중입니다.")};r.onerror=e=>{voiceState.listening=false;updateVoiceButtons();setVoiceStatus(`음성 입력 오류: ${e.error||"알 수 없음"}`)};r.onresult=e=>{const t=Array.from(e.results||[]).map(x=>x?.[0]?.transcript||"").join(" ").trim();if(!t)return setVoiceStatus("잘 못 들었어요.");if(els.naturalInput)els.naturalInput.value=t;voiceState.speakNextReply=true;els.naturalCommandForm?.requestSubmit()};voiceState.recognition=r}
@@ -197,6 +216,71 @@ document.addEventListener("click",async e=>{const t=e.target;if(!(t instanceof H
 $("mainCommandInput")?.addEventListener("keydown",e=>{if(e.key!=="Enter")return;const text=e.target.value.trim();if(!text)return;if(els.naturalInput)els.naturalInput.value=text;e.target.value="";els.naturalCommandForm?.requestSubmit()});
 $("toggleToolsButton")?.addEventListener("click",()=>$("tools")?.classList.toggle("open"));$("refreshAllButton")?.addEventListener("click",refreshAll);$("fillTodayButton")?.addEventListener("click",setDefaultDates);$("voiceInputButton")?.addEventListener("click",()=>{if(!voiceState.recognition)return setVoiceStatus("이 브라우저는 음성 입력을 지원하지 않습니다.");voiceState.listening?voiceState.recognition.stop():voiceState.recognition.start()});$("voiceOutputButton")?.addEventListener("click",()=>{voiceState.speechEnabled=!voiceState.speechEnabled;updateVoiceButtons()});$("notificationButton")?.addEventListener("click",async()=>{if(!("Notification"in window))return alert("이 브라우저는 알림을 지원하지 않습니다.");const p=await Notification.requestPermission();alert(p==="granted"?"브라우저 알림을 허용했습니다.":"알림 권한이 허용되지 않았습니다.")});
 setDefaultDates();initVoiceAssistant();refreshAll().catch(err=>{setText(els.briefingMessage,"데이터를 불러오지 못했습니다.");setText(els.briefingMeta,err.message)});
+</script>
+<script>
+mountAssistantCore();
+setCoreState("idle");
+
+const __originalInitVoiceAssistant = initVoiceAssistant;
+initVoiceAssistant = function () {
+  __originalInitVoiceAssistant();
+  if (!voiceState.recognition) return;
+  const originalStart = voiceState.recognition.onstart;
+  const originalEnd = voiceState.recognition.onend;
+  const originalError = voiceState.recognition.onerror;
+  voiceState.recognition.onstart = () => {
+    setCoreState("listening");
+    originalStart && originalStart();
+  };
+  voiceState.recognition.onend = () => {
+    if (document.body.dataset.coreState !== "speaking") setCoreState("idle");
+    originalEnd && originalEnd();
+  };
+  voiceState.recognition.onerror = (event) => {
+    setCoreState("idle");
+    originalError && originalError(event);
+  };
+};
+if (voiceState.recognition) {
+  const originalStart = voiceState.recognition.onstart;
+  const originalEnd = voiceState.recognition.onend;
+  const originalError = voiceState.recognition.onerror;
+  voiceState.recognition.onstart = () => {
+    setCoreState("listening");
+    originalStart && originalStart();
+  };
+  voiceState.recognition.onend = () => {
+    if (document.body.dataset.coreState !== "speaking") setCoreState("idle");
+    originalEnd && originalEnd();
+  };
+  voiceState.recognition.onerror = (event) => {
+    setCoreState("idle");
+    originalError && originalError(event);
+  };
+}
+
+const __originalSpeakAssistantReply = speakAssistantReply;
+speakAssistantReply = function (text, force = false) {
+  if (!text || !("speechSynthesis" in window)) return;
+  if (!force && !voiceState.speechEnabled) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "ko-KR";
+  utterance.onstart = () => setCoreState("speaking");
+  utterance.onend = () => setCoreState("idle");
+  utterance.onerror = () => setCoreState("idle");
+  window.speechSynthesis.speak(utterance);
+};
+
+els.naturalCommandForm?.addEventListener("submit", () => setCoreState("busy"));
+if (els.assistantReplyBubble) {
+  new MutationObserver(() => {
+    if (!els.assistantReplyBubble.hidden && els.assistantReplyBubble.textContent?.trim() && !voiceState.speechEnabled) {
+      setCoreState("speaking");
+      setTimeout(() => setCoreState("idle"), 1400);
+    }
+  }).observe(els.assistantReplyBubble, { childList: true, subtree: true, characterData: true });
+}
 </script>
 </body>
 </html>

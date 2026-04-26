@@ -24,8 +24,13 @@
 ## 실행 방법
 
 ```bash
+venv실행
 pip install -r requirements.txt
 uvicorn main:app --reload
+또는 startup_python.bat실행
+
+pc에이전트 : python pc_agent_runner.py
+pc호출 : python pc_wake_listener.py
 ```
 
 기본 주소:
@@ -87,8 +92,3 @@ uvicorn main:app --reload
 }
 ```
 
-## 다음 추천 단계
-
-- 자연어 입력을 구조화하는 LLM 레이어 연결
-- 주간 리뷰 API 추가
-- 간단한 웹 대시보드 추가
