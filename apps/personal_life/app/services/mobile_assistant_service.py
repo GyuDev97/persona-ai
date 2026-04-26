@@ -9,15 +9,6 @@ from .natural_language_service import classify_natural_intent, process_natural_c
 def process_mobile_assistant_command(payload: MobileAssistantCommandCreate) -> MobileAssistantCommandResponse:
     natural_intent = classify_natural_intent(payload.text)
     print(f"[mobile] text={payload.text!r} intent={natural_intent}")
-    if natural_intent in {"assistant_chat", "self_state_question", "general_question"}:
-        response = process_natural_command(NaturalCommandCreate(text=payload.text))
-        return MobileAssistantCommandResponse(
-            mode="assistant_reply",
-            spoken_text=payload.text,
-            summary=response.summary,
-            task=None,
-        )
-
     task_type = _detect_agent_task_type(payload.text)
     if task_type is not None:
         log_conversation("user", payload.text, interpreted_as="mobile_command", created_type="mobile")
@@ -35,6 +26,15 @@ def process_mobile_assistant_command(payload: MobileAssistantCommandCreate) -> M
         )
         log_conversation("assistant", response.summary, interpreted_as="agent_task", created_type=task_type)
         return response
+
+    if natural_intent in {"assistant_chat", "self_state_question", "general_question"}:
+        response = process_natural_command(NaturalCommandCreate(text=payload.text))
+        return MobileAssistantCommandResponse(
+            mode="assistant_reply",
+            spoken_text=payload.text,
+            summary=response.summary,
+            task=None,
+        )
 
     response = process_natural_command(NaturalCommandCreate(text=payload.text))
     return MobileAssistantCommandResponse(
@@ -87,9 +87,17 @@ def _clean_search_query(text: str) -> str:
         r"(요새|요즘|최근|최신)\s*",
         r"(흐름이|흐름은|상황이|상황은)\s*",
         r"(어떻게 돼|어떻게 돼요|어떻게 되어가|어떻게 되어가요)\s*",
-        r"(어때|어떄|알려줘|알려 주|요약해줘|요약해 주|정리해줘|정리해 주)\s*",
-        r"(검색해줘|검색해 주|찾아봐줘|찾아봐 주|알아봐줘|알아봐 주)\s*",
-        r"(보여줘|보여 주|말해줘|말해 주)\s*",
+        r"(어때|어떄)\s*",
+        r"((알려|요약해|정리해|검색해|보여|말해)\s*줘)\s*",
+        r"((알려|요약해|정리해|검색해|보여|말해)\s*주)\s*",
+        r"((알려|요약해|정리해|검색해|보여|말해)\s*볼래)\s*",
+        r"((알려|요약해|정리해|검색해|보여|말해)\s*볼까)\s*",
+        r"((알려|요약해|정리해|검색해|보여|말해)\s*줄래)\s*",
+        r"((찾아봐|알아봐)\s*줘)\s*",
+        r"((찾아봐|알아봐)\s*주)\s*",
+        r"((찾아봐|알아봐)\s*볼래)\s*",
+        r"((찾아봐|알아봐)\s*줄래)\s*",
+        r"(요약\s*해\s*줘|정리\s*해\s*줘|검색\s*해\s*줘)\s*",
         r"(좀|한번|한 번|약간|지금)\s*",
         r"[?？！~!]+",
     ]

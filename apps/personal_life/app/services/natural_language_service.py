@@ -61,7 +61,7 @@ def process_natural_command(payload: NaturalCommandCreate) -> NaturalCommandResp
         return response
 
     if intent in {"assistant_chat", "self_state_question", "general_question"} or _should_force_answer_mode(stripped):
-        answer = _answer_question(stripped, settings.openai_model, settings.openai_api_key)
+        answer = _answer_question(stripped, settings.openai_model, settings.openai_api_key, intent=intent)
         response = NaturalCommandResponse(
             text=payload.text,
             interpreted_as="answer",
@@ -74,7 +74,7 @@ def process_natural_command(payload: NaturalCommandCreate) -> NaturalCommandResp
         return response
 
     if intent == "unknown":
-        answer = _answer_question(stripped, settings.openai_model, settings.openai_api_key)
+        answer = _answer_question(stripped, settings.openai_model, settings.openai_api_key, intent=intent)
         response = NaturalCommandResponse(
             text=payload.text,
             interpreted_as="answer",
@@ -350,13 +350,16 @@ def _parse_with_openai(text: str, model: str, api_key: str | None) -> ParsedComm
         return None
 
 
-def _answer_question(text: str, model: str, api_key: str | None) -> str:
+def _answer_question(text: str, model: str, api_key: str | None, intent: str | None = None) -> str:
     briefing = build_today_briefing()
     asset_summary = build_asset_summary()
     finance = build_finance_briefing()
     memory_context = list_memory_highlights(limit=5)
+    narrowing = _build_scope_narrowing_prompt(text)
+    if narrowing is not None:
+        return narrowing
 
-    if api_key:
+    if api_key and _should_try_openai_answer(text, intent):
         generated = _answer_question_with_openai(
             text=text,
             briefing=briefing,
@@ -370,6 +373,89 @@ def _answer_question(text: str, model: str, api_key: str | None) -> str:
             return generated
 
     return _answer_question_fallback(text, briefing, asset_summary, finance)
+
+
+def _build_scope_narrowing_prompt(text: str) -> str | None:
+    normalized = " ".join(text.strip().split())
+    if not normalized:
+        return None
+
+    broad_topic_words = [
+        "업계",
+        "산업",
+        "시장",
+        "분위기",
+        "흐름",
+        "동향",
+        "상황",
+        "전망",
+    ]
+    region_or_target_words = [
+        "한국",
+        "국내",
+        "해외",
+        "글로벌",
+        "미국",
+        "중국",
+        "유럽",
+        "삼성",
+        "하이닉스",
+        "엔비디아",
+        "tsmc",
+        "메모리",
+        "파운드리",
+        "장비",
+        "팹리스",
+    ]
+
+    if "반도체" in normalized and any(word in normalized for word in broad_topic_words):
+        if not any(word.lower() in normalized.lower() for word in region_or_target_words):
+            return (
+                "범위가 조금 넓습니다. 한국 반도체로 볼지, 글로벌 반도체로 볼지 먼저 정해주시면 바로 확인하겠습니다. "
+                "원하시면 메모리, 파운드리, 장비, 팹리스 중 하나로도 좁혀드릴 수 있습니다."
+            )
+
+    if any(word in normalized for word in ["업계", "산업", "시장"]) and any(
+        word in normalized for word in ["분위기", "흐름", "동향", "상황", "전망"]
+    ):
+        if not any(word.lower() in normalized.lower() for word in region_or_target_words):
+            return "범위가 넓습니다. 지역이나 기업, 또는 세부 분야를 하나 정해주시면 그 기준으로 바로 확인하겠습니다."
+
+    return None
+
+
+def _should_try_openai_answer(text: str, intent: str | None) -> bool:
+    normalized = " ".join(text.strip().split())
+    if not normalized:
+        return False
+
+    if intent in {"assistant_chat", "self_state_question"}:
+        return False
+
+    quick_question_signals = [
+        "뭐해",
+        "뭐함",
+        "어때",
+        "바쁘지",
+        "피곤",
+        "기분",
+        "상태",
+        "가능해",
+        "뭐야",
+        "누구야",
+        "어디까지",
+        "뭐부터",
+        "오늘 뭐",
+        "루틴 있나",
+        "재정 어때",
+    ]
+    if len(normalized) <= 18 and any(signal in normalized for signal in quick_question_signals):
+        return False
+
+    if len(normalized) <= 12 and (normalized.endswith("?") or _looks_like_question(normalized)):
+        return False
+
+    return True
 
 
 def _answer_question_with_openai(
@@ -399,6 +485,7 @@ def _answer_question_with_openai(
         "Avoid filler phrases and avoid overly cheerful wording.\n"
         "If you do not know, say clearly that you do not know yet.\n"
         "If the available data is insufficient, say what is missing or what should be checked next.\n"
+        "If the question is too broad, do not stop with a generic limitation message. Instead, narrow the scope by offering one or two concrete choices the user can pick from.\n"
         "Do not guess external facts, schedules, finances, memories, or intentions without support from the provided context.\n"
         "If the user asks about your mood, condition, or how your day is going, answer as an AI aide with a subtle personality.\n"
         "For self-state questions, answer very briefly in one or two short sentences.\n"

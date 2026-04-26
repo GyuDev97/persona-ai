@@ -342,7 +342,7 @@ Future<void> _startVoiceListening() async {
 
   void _startPollingTask(int taskId) {
     _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) => _pollTask(taskId));
+    _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) => _pollTask(taskId));
   }
 
   Future<void> _pollTask(int taskId) async {
@@ -625,13 +625,17 @@ void _handleSpeechStatus(String status) {
         .where((item) => item.isNotEmpty)
         .toList();
 
-    if (sentences.length > 4) {
-      value = '${sentences.take(4).join('. ')}.';
+    if (sentences.length > 2) {
+      value = '${sentences.take(2).join('. ')}.';
     } else {
       value = sentences.join('. ');
       if (!value.endsWith('.')) {
         value = '$value.';
       }
+    }
+
+    if (value.length > 140) {
+      value = '${value.substring(0, 140).trim()}...';
     }
 
     return value.replaceAll('..', '.').trim();
