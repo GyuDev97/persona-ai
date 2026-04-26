@@ -134,11 +134,13 @@ class GyuvisWakeListener:
 
         if not wake_text:
             self._log("호출어를 알아듣지 못했습니다.")
+            self._speak("호출어를 듣지 못했습니다.")
             return
 
         self._log(f"호출어 인식: {wake_text}")
         if not self._looks_like_wake_phrase(wake_text):
             self._log("호출어가 맞지 않아 다시 대기합니다.")
+            self._speak("호출어가 맞지 않습니다.")
             return
 
         self._speak(GREETING)
@@ -152,6 +154,7 @@ class GyuvisWakeListener:
 
         if not command_text:
             self._log("추가 명령을 인식하지 못했습니다.")
+            self._speak("명령을 듣지 못했습니다.")
             return
 
         self._log(f"추가 명령: {command_text}")
@@ -161,6 +164,7 @@ class GyuvisWakeListener:
                 self._speak(response_text)
         else:
             self._log("서버 연동이 꺼져 있어 추가 명령은 출력만 합니다.")
+            self._speak("서버 연동이 꺼져 있습니다.")
 
     def _record_audio(self, seconds: float) -> np.ndarray:
         recording = sd.rec(
