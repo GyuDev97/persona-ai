@@ -43,7 +43,7 @@ class AssistantHomePage extends StatefulWidget {
 }
 
 class _AssistantHomePageState extends State<AssistantHomePage> with SingleTickerProviderStateMixin {
-  final TextEditingController _serverController = TextEditingController(text: 'http://192.168.0.19:8000');
+  final TextEditingController _serverController = TextEditingController(text: 'http://192.168.0.26:8000');
   final TextEditingController _inputController = TextEditingController();
   final stt.SpeechToText _speechToText = stt.SpeechToText();
   final FlutterTts _tts = FlutterTts();
@@ -1011,7 +1011,7 @@ void _handleSpeechStatus(String status) {
                       unawaited(_refreshServerStatus());
                     },
                     style: const TextStyle(color: Color(0xFFE8FFF9)),
-                    decoration: _sheetInputDecoration('서버 주소', '예: http://192.168.0.19:8000'),
+                    decoration: _sheetInputDecoration('서버 주소', '예: http://192.168.0.26:8000'),
                   ),
                   const SizedBox(height: 12),
                   TextField(

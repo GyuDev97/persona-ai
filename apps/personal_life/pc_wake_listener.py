@@ -3,7 +3,6 @@ import os
 import threading
 import time
 import urllib.error
-import urllib.parse
 import urllib.request
 from collections import deque
 from typing import Any
@@ -16,17 +15,27 @@ import speech_recognition as sr
 
 SAMPLE_RATE = 16_000
 BLOCK_SECONDS = 0.08
-CLAP_THRESHOLD = float(os.getenv("GYUVIS_CLAP_THRESHOLD", "0.24"))
-CLAP_MIN_GAP_SECONDS = 0.12
-CLAP_MAX_WINDOW_SECONDS = 1.1
+CLAP_THRESHOLD = float(os.getenv("GYUVIS_CLAP_THRESHOLD", "0.11"))
+CLAP_MIN_GAP_SECONDS = 0.10
+CLAP_MAX_WINDOW_SECONDS = 1.6
 CLAP_COUNT_TO_WAKE = int(os.getenv("GYUVIS_CLAP_COUNT", "2"))
-WAKE_RECORD_SECONDS = float(os.getenv("GYUVIS_WAKE_RECORD_SECONDS", "2.8"))
+WAKE_RECORD_SECONDS = float(os.getenv("GYUVIS_WAKE_RECORD_SECONDS", "4.0"))
 FOLLOWUP_RECORD_SECONDS = float(os.getenv("GYUVIS_FOLLOWUP_RECORD_SECONDS", "6.0"))
 COOLDOWN_SECONDS = float(os.getenv("GYUVIS_WAKE_COOLDOWN_SECONDS", "2.2"))
 SERVER_URL = os.getenv("GYUVIS_SERVER_URL", "http://127.0.0.1:8000").rstrip("/")
 SEND_FOLLOWUP_TO_SERVER = os.getenv("GYUVIS_SEND_FOLLOWUP", "1") == "1"
 AUTO_LISTEN_FOLLOWUP = os.getenv("GYUVIS_AUTO_LISTEN_FOLLOWUP", "1") == "1"
-WAKE_PHRASES = ("일어나", "규비스", "보스", "깨어나", "wake up")
+DEBUG_AUDIO = os.getenv("GYUVIS_DEBUG_AUDIO", "0") == "1"
+WAKE_PHRASES = (
+    "일어나",
+    "일어",
+    "규비스",
+    "규비",
+    "보스",
+    "깨어",
+    "wake up",
+    "wake",
+)
 GREETING = os.getenv("GYUVIS_GREETING", "어서오세요 보스.")
 
 
@@ -34,17 +43,33 @@ class GyuvisWakeListener:
     def __init__(self) -> None:
         self.recognizer = sr.Recognizer()
         self.recognizer.dynamic_energy_threshold = False
+        self.recognizer.energy_threshold = 180
+        self.recognizer.pause_threshold = 0.8
+        self.recognizer.non_speaking_duration = 0.45
+
         self.tts = pyttsx3.init()
         self.tts.setProperty("rate", 185)
         self.tts.setProperty("volume", 1.0)
+
         self._clap_hits: deque[float] = deque()
         self._wake_event = threading.Event()
         self._cooldown_until = 0.0
         self._running = True
+        self._last_audio_debug_at = 0.0
 
     def run(self) -> None:
-        self._log("웨이크 모드를 시작합니다. 박수 두 번 후 '일어나'처럼 불러보세요.")
+        self._log("웨이크 모드를 시작합니다. 박수 두 번 뒤에 '일어나'처럼 불러보세요.")
         self._log(f"서버 연동: {'켜짐' if SEND_FOLLOWUP_TO_SERVER else '꺼짐'} ({SERVER_URL})")
+        self._log(
+            "감도 설정: "
+            f"clap_threshold={CLAP_THRESHOLD:.2f}, "
+            f"wake_record={WAKE_RECORD_SECONDS:.1f}s, "
+            f"followup_record={FOLLOWUP_RECORD_SECONDS:.1f}s"
+        )
+
+        device_label = self._describe_input_device()
+        if device_label:
+            self._log(f"입력 장치: {device_label}")
 
         blocksize = int(SAMPLE_RATE * BLOCK_SECONDS)
         with sd.InputStream(
@@ -66,7 +91,13 @@ class GyuvisWakeListener:
         self._running = False
         self._wake_event.set()
 
-    def _audio_callback(self, indata: np.ndarray, frames: int, time_info: Any, status: sd.CallbackFlags) -> None:
+    def _audio_callback(
+        self,
+        indata: np.ndarray,
+        frames: int,
+        time_info: Any,
+        status: sd.CallbackFlags,
+    ) -> None:
         if status:
             self._log(f"오디오 경고: {status}")
 
@@ -75,12 +106,17 @@ class GyuvisWakeListener:
             return
 
         rms = float(np.sqrt(np.mean(np.square(indata))))
+        if DEBUG_AUDIO and now - self._last_audio_debug_at >= 0.8:
+            self._last_audio_debug_at = now
+            self._log(f"[debug] mic rms={rms:.3f}")
+
         if rms < CLAP_THRESHOLD:
             return
 
         if self._clap_hits and now - self._clap_hits[-1] < CLAP_MIN_GAP_SECONDS:
             return
 
+        self._log(f"박수 후보 감지: rms={rms:.3f}")
         self._clap_hits.append(now)
         while self._clap_hits and now - self._clap_hits[0] > CLAP_MAX_WINDOW_SECONDS:
             self._clap_hits.popleft()
@@ -113,7 +149,7 @@ class GyuvisWakeListener:
         command_text = self._transcribe(command_audio)
 
         if not command_text:
-            self._log("추가 명령은 인식되지 않았습니다.")
+            self._log("추가 명령을 인식하지 못했습니다.")
             return
 
         self._log(f"추가 명령: {command_text}")
@@ -122,7 +158,7 @@ class GyuvisWakeListener:
             if response_text:
                 self._speak(response_text)
         else:
-            self._log("서버 연동이 꺼져 있어 추가 명령은 출력만 했습니다.")
+            self._log("서버 연동이 꺼져 있어 추가 명령은 출력만 합니다.")
 
     def _record_audio(self, seconds: float) -> np.ndarray:
         recording = sd.rec(
@@ -185,7 +221,7 @@ class GyuvisWakeListener:
             if status == "failed":
                 return str(detail.get("error_message") or "작업 처리 중 오류가 발생했습니다.")
 
-        return summary or "작업은 시작했습니다. 결과 확인이 조금 더 필요합니다."
+        return summary or "작업을 시작했습니다. 결과 확인에 조금 더 시간이 필요합니다."
 
     def _post_json(self, url: str, payload: dict[str, Any]) -> dict[str, Any]:
         data = json.dumps(payload).encode("utf-8")
@@ -211,9 +247,24 @@ class GyuvisWakeListener:
 
     def _normalize_text(self, text: str) -> str:
         compact = text.lower().replace(" ", "")
-        for token in ("?", "!", ".", ",", "~", "…", "“", "”", "\"", "'"):
+        for token in ("?", "!", ".", ",", "~", "…", "”", "“", "\"", "'"):
             compact = compact.replace(token, "")
         return compact
+
+    def _describe_input_device(self) -> str:
+        try:
+            device = sd.query_devices(kind="input")
+        except Exception:
+            return ""
+
+        if not isinstance(device, dict):
+            return ""
+
+        name = str(device.get("name", "")).strip()
+        channels = device.get("max_input_channels")
+        samplerate = device.get("default_samplerate")
+        details = [part for part in (name, f"{channels}ch" if channels else "", f"{int(samplerate)}Hz" if samplerate else "") if part]
+        return " / ".join(details)
 
     def _log(self, message: str) -> None:
         stamp = time.strftime("%H:%M:%S")
