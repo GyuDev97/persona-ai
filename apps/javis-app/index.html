@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Jarvis Gesture HUD</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <div id="topbar">
+    <div id="status">앱 준비 중...</div>
+    <div id="hint">
+      손 우/좌 스와이프: 모니터 이동 · 양손 펼치기: 최대화 · 주먹: 최소화 · 집기: 창 드래그 · V: 음성
+    </div>
+  </div>
+
+  <video id="video" autoplay playsinline muted></video>
+
+  <div id="voiceBox">
+    <span id="voiceState">음성 OFF</span>
+    <button id="voiceBtn">음성 켜기</button>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
