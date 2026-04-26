@@ -10,7 +10,7 @@
       --line:rgba(61,44,28,.10); --accent:#c5652f; --accent-deep:#924014;
       --accent-soft:rgba(197,101,47,.12); --green:#40ad71; --red:#e05243;
       --orange:#f4a21d; --shadow:0 18px 48px rgba(69,48,27,.10);
-      --radius-xl:28px; --radius-lg:22px; --font:"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;
+      --radius-xl:28px; --radius-lg:22px; --font:"Malgun Gothic","Nanum Gothic";
     }
     *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:var(--font);color:var(--ink);
       background:radial-gradient(circle at top left,rgba(245,187,126,.42),transparent 34%),
@@ -57,7 +57,45 @@
       <div>
         <div class="brand"><div class="brand-title">GyuOS</div><div class="brand-sub">Personal Concierge OS</div></div>
         <nav class="nav">
-          <a class="active" href="#home"><span>⌂</span><span>홈</span></a><a href="#brief"><span>◴</span><span>브리핑</span></a><a href="#schedule"><span>□</span><span>일정</span></a><a href="#money"><span>◉</span><span>돈 관리</span></a><a href="#drive"><span>▱</span><span>자동차</span></a><a href="#creator"><span>✍</span><span>Creator Studio</span></a><a href="#memory"><span>⌕</span><span>기억 검색</span></a><a href="#memo"><span>▤</span><span>메모</span></a><a href="#routine"><span>◎</span><span>루틴 & 목표</span></a><a href="#tools"><span>⚙</span><span>설정</span></a>
+          <a class="active" href="#home">
+            <span>⌂</span>
+            <span>홈</span></a>
+          <a href="briefing.html">
+            <span>◴</span>
+            <span>브리핑</span>
+          </a>
+          <a href="schedule.html">
+            <span>□</span>
+            <span>일정</span>
+          </a>
+          <a href="money.html">
+            <span>◉</span>
+            <span>돈 관리</span>
+          </a>
+          <a href="drive.html">
+            <span>▱</span>
+            <span>자동차</span>
+          </a>
+          <a href="creator.html">
+            <span>✍</span>
+            <span>Creator Studio</span>
+          </a>
+          <a href="memory.html">
+            <span>⌕</span>
+            <span>기억 검색</span>
+          </a>
+          <a href="memo.html">
+            <span>▤</span>
+            <span>메모</span>
+          </a>
+          <a href="routine.html">
+            <span>◎</span>
+            <span>루틴 & 목표</span>
+          </a>
+          <a href="settings.html">
+            <span>⚙</span>
+            <span>설정</span>
+          </a>
         </nav>
       </div>
       <div class="side-assistant"><div class="bot-face">🤖</div><strong>Gyu Assistant</strong><div class="small">무엇이든 물어보세요!</div><button class="primary" type="button" onclick="document.querySelector('#naturalCommandForm input[name=text]').focus()">AI와 대화</button></div>
@@ -96,7 +134,7 @@
 
       <section class="modules">
         <article class="card" id="money"><div class="head"><h2>소비 현황</h2><span class="tag" id="financeSourceLabel">이번 달</span></div><div class="big" id="financeHeadline">지출 정보를 불러오는 중입니다.</div><div class="up">지난 달 대비 +12%</div><div class="money"><div class="donut"><div>예산 대비<br>75%</div></div><div id="financeMetricList"><div class="mini-line"><span>식비</span><strong>168,000원</strong></div><div class="mini-line"><span>교통</span><strong>72,000원</strong></div></div></div><div id="financeBulletList"></div></article>
-        <article class="card" id="drive"><div class="head"><h2>자동차 관리</h2><span class="tag">Drive Center</span></div><div class="car"><div class="car-img">🚗</div><div><strong>KIA K5 2.0</strong><div class="small">2022년식 · 34,560km</div><div class="mini-line"><span>보험 만기</span><strong style="color:var(--red)">D-18</strong></div><div class="mini-line"><span>엔진오일</span><strong>1,800km</strong></div><div class="mini-line"><span>자동차 검사</span><strong>D-154</strong></div><div class="mini-line"><span>이번 달 주유비</span><strong>98,000원</strong></div></div></div><div class="cta">차량 상세 관리 ›</div></article>
+        <article class="card" id="drive"><div class="head"><h2>자동차 관리</h2><span class="tag">Drive Center</span></div><div class="car"><div class="car-img">🚗</div><div><strong>셀토스 /1.6 T-GDI</strong><div class="small">2022년식 · 34,560km</div><div class="mini-line"><span>보험 만기</span><strong style="color:var(--red)">D-18</strong></div><div class="mini-line"><span>엔진오일</span><strong>1,800km</strong></div><div class="mini-line"><span>자동차 검사</span><strong>D-154</strong></div><div class="mini-line"><span>이번 달 주유비</span><strong>98,000원</strong></div></div></div><div class="cta">차량 상세 관리 ›</div></article>
         <article class="card" id="creator"><div class="head"><h2>Creator Studio</h2><span class="tag">더보기 ›</span></div><div class="tabs"><button class="active">오늘의 뉴스</button><button>블로그 주제</button><button>유튜브 아이디어</button></div><div class="news"><div class="thumb">AI</div><div><strong>AI 에이전트 시대, 개발자의 역할 변화</strong><div class="small">IT · AI</div></div></div><div class="news"><div class="thumb">iOS</div><div><strong>애플, AI 기능 강화한 iOS 18 공개 임박</strong><div class="small">IT · 모바일</div></div></div><div class="news"><div class="thumb">GPT</div><div><strong>오픈AI, 새로운 모델 출시</strong><div class="small">AI · 모델</div></div></div><div class="cta">콘텐츠 작업실 열기 ›</div></article>
         <article class="card" id="schedule"><div class="head"><h2>일정</h2><span class="tag">전체 일정 ›</span></div><div class="schedule-row"><strong>10:00<br><span class="small">AM</span></strong><div><strong>팀 미팅</strong><div class="small">1시간 30분 후 · 회의실 A</div></div></div><div class="schedule-row"><strong>15:00<br><span class="small">PM</span></strong><div><strong>헬스장 운동</strong><div class="small">6시간 30분 후</div></div></div><div id="scheduleList"></div></article>
         <article class="card" id="memory"><div class="head"><h2>기억 검색</h2><span class="tag">Memory</span></div><input placeholder="기억하고 싶은 것을 검색해보세요..."><div class="memory-strip"><div class="memory-img">제주도</div><div class="memory-img">카페</div><div class="memory-img">Mac</div><div class="memory-img">노트</div></div><div id="captureList"></div><div class="cta">모든 기억 보기 ›</div></article>

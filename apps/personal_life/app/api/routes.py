@@ -59,13 +59,21 @@ from ..services.task_service import create_task, list_tasks, mark_task_done
 
 router = APIRouter()
 FRONTEND_PATH = Path(__file__).resolve().parents[1] / "frontend" / "index.html"
-
+FRONTEND_DIR = Path(__file__).resolve().parents[1] / "frontend"
 
 @router.get("/", include_in_schema=False)
 def frontend() -> FileResponse:
     return FileResponse(FRONTEND_PATH)
 
+@router.get("/{page_name}.html", include_in_schema=False)
+def frontend_pages(page_name: str):
+    file_path = FRONTEND_DIR / f"{page_name}.html"
 
+    if file_path.exists():
+        return FileResponse(file_path)
+
+    raise HTTPException(status_code=404, detail="Page not found")
+    
 @router.get("/health")
 def health_check() -> dict[str, str]:
     return {"status": "ok", "timestamp": datetime.now().isoformat()}

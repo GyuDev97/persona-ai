@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GyuOS 크리에이터스튜디오</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+    :root {
+      --bg:#f8f2ea;
+      --phone:#fffaf5;
+      --card:#ffffff;
+      --ink:#2b2019;
+      --muted:#9b9188;
+      --line:#efe6dd;
+      --brown:#a85f2a;
+      --brown-dark:#7b3e19;
+      --orange:#f39b30;
+      --green:#2fd5b2;
+      --blue:#75a7ff;
+      --purple:#a58bf2;
+      --red:#ef5147;
+      --shadow:0 18px 45px rgba(88,52,21,.08);
+      --soft:0 8px 22px rgba(72,45,24,.07);
+      --radius:24px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:radial-gradient(circle at 20% 5%,#fff 0,#f9f1e8 35%,#f5eadf 100%);
+      font-family:"Inter","Noto Sans KR",sans-serif;
+      color:var(--ink);
+    }
+    .board{max-width:1420px;margin:0 auto;padding:24px 22px 48px}
+    .grid{display:grid;grid-template-columns:repeat(3,390px);gap:26px;justify-content:center}
+    .phone{
+      width:390px;height:844px;border:1px solid #eadfd5;border-radius:28px;background:linear-gradient(160deg,#fffdf9,#fff8f1 60%,#fbf1e7);
+      overflow:hidden;position:relative;box-shadow:var(--shadow)
+    }
+    .status{height:40px;padding:14px 22px 0;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px}
+    .signal{display:flex;gap:5px;align-items:center}.dot{width:5px;height:5px;border-radius:50%;background:#111}.battery{width:22px;height:11px;border:2px solid #111;border-radius:3px;position:relative}.battery:after{content:"";position:absolute;right:-5px;top:2px;width:3px;height:5px;background:#111;border-radius:1px}.battery i{display:block;width:14px;height:5px;background:#111;margin:1px}
+    .content{padding:18px 22px 92px;height:calc(100% - 40px);overflow:hidden}
+    .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}.menu{font-size:25px;font-weight:800}.title{font-weight:800;font-size:20px}.iconbtn{width:34px;height:34px;border-radius:14px;background:#fff6ee;display:flex;align-items:center;justify-content:center;color:var(--brown);font-weight:800}
+    h1{font-size:27px;line-height:1.15;margin:16px 0 4px}.sub{font-size:14px;color:var(--muted);font-weight:600}.card{background:rgba(255,255,255,.88);border:1px solid rgba(239,230,221,.75);border-radius:var(--radius);box-shadow:var(--soft);padding:18px;margin-bottom:14px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.small{font-size:12px;color:var(--muted)}.strong{font-weight:800}.pill{font-size:12px;font-weight:800;color:var(--brown);background:#fbefe6;border-radius:999px;padding:7px 10px}.list{display:grid;gap:16px;margin-top:18px}.item{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;font-size:14px}.emoji{width:25px;height:25px;border-radius:10px;background:#f5efe8;display:flex;align-items:center;justify-content:center}.value{font-size:13px;color:#777}.btn{background:#f4ebe4;border-radius:15px;text-align:center;padding:12px;color:var(--brown-dark);font-weight:800;font-size:13px;margin-top:14px}
+    .cards2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.mini{height:98px}.bigNum{font-size:30px;font-weight:800;margin-top:6px}.bar{height:6px;background:#efe8df;border-radius:9px;overflow:hidden;margin-top:12px}.bar span{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--orange));border-radius:9px}.ring{width:48px;height:48px;border-radius:50%;background:conic-gradient(var(--orange) 66%,#eee2d8 0);position:relative}.ring:after{content:"";position:absolute;inset:7px;background:#fffaf5;border-radius:50%}.suggest{background:linear-gradient(120deg,#fff7ed,#fff);padding:15px 18px;border-radius:20px;border:1px solid #f1e4d8;margin-top:12px}.bottom{position:absolute;left:0;right:0;bottom:0;height:86px;background:rgba(255,251,247,.92);border-top:1px solid #efe3d8;display:flex;align-items:center;justify-content:space-around;padding:0 10px 14px;backdrop-filter:blur(12px)}.nav{font-size:11px;text-align:center;color:#8b8178;font-weight:700}.nav b{display:block;font-size:21px;margin-bottom:2px}.nav.active{color:var(--brown)}.mic{width:58px;height:58px;border-radius:50%;background:linear-gradient(160deg,#ca7b3b,#9d5425);box-shadow:0 10px 25px rgba(133,68,24,.28);color:#fff;display:flex;align-items:center;justify-content:center;font-size:27px;margin-top:-28px}
+    .avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#254e61,#e4a36a);border:3px solid #fff;box-shadow:var(--soft)}.bell{position:relative;font-size:26px}.badge{position:absolute;right:-4px;top:-5px;background:#e94843;color:#fff;border-radius:50%;font-size:10px;width:18px;height:18px;display:flex;align-items:center;justify-content:center;border:2px solid #fff}.cal{display:flex;justify-content:space-between;margin:16px 0 26px;color:#9d938b;font-size:12px;text-align:center;font-weight:700}.day.active{background:#f6eadf;color:var(--brown);border-radius:17px;padding:8px 11px;margin-top:-8px}.schedule{display:grid;gap:25px}.event{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:start}.time{font-size:18px;font-weight:700}.tag{font-size:11px;background:#eaf2ff;color:#5a94ef;border-radius:8px;padding:4px 7px;font-weight:800}.section{font-size:15px;font-weight:800;margin:26px 0 14px}.upcoming{display:grid;gap:15px}.moneyChart{display:flex;align-items:center;gap:22px}.donut{width:150px;height:150px;border-radius:50%;background:conic-gradient(#ef5147 0 32%,#c8b485 32% 50%,#ff9f2e 50% 66%,#7fd5df 66% 80%,#8ba4ff 80%);position:relative}.donut:after{content:"총 소비\A ₩1,280,000\A 예산 대비 64%";white-space:pre;position:absolute;inset:28px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;line-height:1.7;font-weight:800}.legend{display:grid;gap:12px;font-size:13px}.legend span:before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin-right:8px}.legend span:nth-child(2):before{background:#c8b485}.legend span:nth-child(3):before{background:#ff9f2e}.legend span:nth-child(4):before{background:#7fd5df}.legend span:nth-child(5):before{background:#8ba4ff}.carImg{height:116px;border-radius:20px;background:linear-gradient(120deg,#fff,#f0e7dc);position:relative;display:flex;align-items:center;justify-content:center;font-size:70px}.carImg:after{content:"KIA K3 1.6\A 160,280km";white-space:pre;position:absolute;right:22px;top:28px;font-size:12px;color:#b09c8d;font-weight:800}.studioTabs{display:flex;gap:16px;margin:2px 0 18px}.studioTabs span{font-size:13px;color:#b2aaa3;font-weight:800}.studioTabs .active{background:#f6eadf;color:var(--brown);padding:8px 13px;border-radius:999px;margin-top:-8px}.thumb{width:72px;height:72px;border-radius:15px;background:linear-gradient(135deg,#1b2d48,#c88a51);display:flex;align-items:end;padding:8px;color:#fff;font-size:11px;font-weight:800}.chatHead{display:flex;gap:14px;align-items:flex-start;margin:24px 0}.bot{width:38px;height:38px;border-radius:18px;background:linear-gradient(160deg,#f5fbff,#dfe5e7);display:flex;align-items:center;justify-content:center;box-shadow:var(--soft)}.bubble{background:#fff;border:1px solid #efe6dd;border-radius:18px;padding:13px 16px;font-size:14px;line-height:1.5}.action{background:#fff;border:1px solid #efe6dd;border-radius:18px;padding:16px;margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;font-weight:800;font-size:14px}.plus{width:28px;height:28px;border-radius:50%;background:#fff7ed;border:1px solid #eadccd;display:flex;align-items:center;justify-content:center;color:var(--brown);font-size:20px}.input{position:absolute;left:22px;right:22px;bottom:105px;background:#fff;border:1px solid #eee0d5;border-radius:22px;padding:16px 18px;color:#b0a8a1;display:flex;justify-content:space-between}.floatPlus{position:absolute;right:25px;bottom:115px;width:55px;height:55px;border-radius:50%;background:linear-gradient(160deg,#c67537,#8f481e);color:#fff;display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 13px 30px rgba(132,67,24,.26)}
+    .featureBand{max-width:1210px;margin:32px auto 0;background:rgba(255,255,255,.6);border:1px solid #eee2d7;border-radius:25px;padding:26px 34px;display:grid;grid-template-columns:1.25fr repeat(4,1fr);gap:22px;box-shadow:var(--soft)}.featureTitle{font-size:19px;font-weight:800}.feature{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start}.feature b{display:block;color:var(--brown);margin-bottom:6px}.feature p{margin:0;color:#7f746b;font-size:13px;line-height:1.5}
+    @media(max-width:1260px){.grid{grid-template-columns:repeat(2,390px)}.featureBand{grid-template-columns:1fr 1fr}}@media(max-width:860px){.board{padding:16px 0 32px}.grid{grid-template-columns:1fr;gap:18px}.phone{width:min(390px,100vw - 24px);margin:auto}.featureBand{width:min(390px,100vw - 24px);grid-template-columns:1fr;padding:22px}}
+  
+
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+.board{padding:0;margin:0;max-width:none;}
+.grid{display:block;}
+.phone{margin:0 auto;}
+</style>
+</head>
+<body><main class="board"><section class="grid"><article class="phone"><div class="status"><span>9:41</span><span class="signal"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="battery"><i></i></span></span></div><div class="content"><div class="top"><span class="menu">≡</span><span class="title">Creator Studio</span><span class="iconbtn">♢</span></div><div class="studioTabs"><span class="active">추천 콘텐츠</span><span>내 글</span><span>아이디어</span><span>분석</span></div><div class="card"><div class="row"><b style="color:var(--brown)">오늘의 추천 주제</b><span class="small">더보기 〉</span></div><div class="list"><div class="row"><div class="thumb">추천도 95%</div><div><b>아이폰 17 루머 총정리:<br>디자인부터 가격까지</b><div class="small">IT · 트렌드</div></div></div><div class="row"><div class="thumb" style="background:linear-gradient(135deg,#084b66,#6fc3e7)">추천도 92%</div><div><b>삼성 갤럭시 AI 기능<br>완전 가이드</b><div class="small">IT · 리뷰</div></div></div></div></div><div class="card"><b>내 콘텐츠 현황</b><div class="row" style="margin-top:20px;text-align:center"><div><div class="small">초안</div><b>2</b></div><div><div class="small">예약 발행</div><b>1</b></div><div><div class="small">알림 완료</div><b>12</b></div></div></div><div class="suggest"><div class="small strong" style="color:var(--brown)">✨ AI 아이디어 한 줄</div><div class="row" style="margin-top:10px"><b style="font-size:14px">“여행 필수 앱 7가지 소개” 글은<br>독자 반응이 좋을 것 같아요!</b><span>〉</span></div></div></div><nav class="bottom"><div class="nav"><b>⌂</b>홈</div><div class="nav"><b>▣</b>일정</div><div class="mic">🎙</div><div class="nav"><b>▤</b>돈 관리</div><div class="nav active"><b>•••</b>더보기</div></nav></article></section></main></body>
+</html>
