@@ -9,6 +9,7 @@ TaskStatus = Literal["open", "done"]
 RoutineStatus = Literal["pending", "done", "skipped"]
 ReminderStatus = Literal["scheduled", "sent", "dismissed"]
 ConversationRole = Literal["user", "assistant"]
+AgentTaskStatus = Literal["pending", "claimed", "completed", "failed"]
 
 
 class QuickCaptureCreate(BaseModel):
@@ -146,7 +147,7 @@ class NaturalCommandCreate(BaseModel):
 
 class NaturalCommandResponse(BaseModel):
     text: str
-    interpreted_as: Literal["task", "schedule", "capture", "answer"]
+    interpreted_as: Literal["task", "schedule", "capture", "answer", "desktop_action"]
     summary: str
     created_id: int
     created_type: str
@@ -213,6 +214,46 @@ class ConversationMessageResponse(BaseModel):
     interpreted_as: str | None
     created_type: str | None
     created_at: datetime
+
+
+class AgentTaskResponse(BaseModel):
+    id: int
+    source: str
+    command_text: str
+    task_type: str
+    search_query: str | None
+    status: AgentTaskStatus
+    device_label: str | None
+    claimed_at: datetime | None
+    completed_at: datetime | None
+    result_summary: str | None
+    result_payload: str | None
+    error_message: str | None
+    created_at: datetime
+
+
+class MobileAssistantCommandCreate(BaseModel):
+    text: str = Field(min_length=1, max_length=500)
+    source: str = Field(default="mobile", max_length=30)
+
+class MobileAssistantCommandResponse(BaseModel):
+    mode: Literal["assistant_reply", "agent_task"]
+    spoken_text: str
+    summary: str
+    task: AgentTaskResponse | None = None
+
+
+class AgentTaskClaimRequest(BaseModel):
+    device_label: str = Field(min_length=1, max_length=100)
+
+
+class AgentTaskCompleteRequest(BaseModel):
+    summary: str = Field(min_length=1, max_length=4000)
+    payload: dict = Field(default_factory=dict)
+
+
+class AgentTaskFailRequest(BaseModel):
+    error_message: str = Field(min_length=1, max_length=2000)
 
 
 class BriefingDigestResponse(BaseModel):

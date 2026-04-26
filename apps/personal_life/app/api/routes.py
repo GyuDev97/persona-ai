@@ -5,6 +5,10 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
 from ..domain.schemas import (
+    AgentTaskClaimRequest,
+    AgentTaskCompleteRequest,
+    AgentTaskFailRequest,
+    AgentTaskResponse,
     AssetCreate,
     AssetResponse,
     AssetSummaryResponse,
@@ -14,6 +18,8 @@ from ..domain.schemas import (
     BriefingResponse,
     ConversationMessageResponse,
     FinanceBriefingResponse,
+    MobileAssistantCommandCreate,
+    MobileAssistantCommandResponse,
     NaturalCommandCreate,
     NaturalCommandResponse,
     ProfileMemoryImportRequest,
@@ -30,6 +36,13 @@ from ..domain.schemas import (
     TaskCreate,
     TaskResponse,
 )
+from ..services.agent_task_service import (
+    claim_next_agent_task,
+    complete_agent_task,
+    fail_agent_task,
+    get_agent_task,
+    list_agent_tasks,
+)
 from ..config import get_settings
 from ..services.asset_service import build_asset_summary, create_asset, list_assets, update_asset
 from ..services.briefing_service import build_evening_briefing, build_morning_briefing, build_today_briefing
@@ -37,6 +50,7 @@ from ..services.capture_service import create_quick_capture, list_quick_captures
 from ..services.conversation_service import list_conversations
 from ..services.finance_service import build_finance_briefing
 from ..services.memory_service import import_profile_yaml, list_profile_memories
+from ..services.mobile_assistant_service import process_mobile_assistant_command
 from ..services.natural_language_service import process_natural_command
 from ..services.reminder_service import list_reminders
 from ..services.routine_service import create_routine, create_routine_checkin, list_routines
@@ -113,6 +127,39 @@ def put_asset(asset_id: int, payload: AssetUpdate) -> AssetResponse:
 @router.post("/commands/natural", response_model=NaturalCommandResponse)
 def post_natural_command(payload: NaturalCommandCreate) -> NaturalCommandResponse:
     return process_natural_command(payload)
+
+
+@router.post("/mobile/assistant/command", response_model=MobileAssistantCommandResponse)
+def post_mobile_assistant_command(payload: MobileAssistantCommandCreate) -> MobileAssistantCommandResponse:
+    return process_mobile_assistant_command(payload)
+
+
+@router.get("/agent/tasks", response_model=list[AgentTaskResponse])
+def get_agent_tasks(status: str | None = None, limit: int = 20) -> list[AgentTaskResponse]:
+    return list_agent_tasks(status=status, limit=limit)
+
+
+@router.get("/agent/tasks/{task_id}", response_model=AgentTaskResponse)
+def get_agent_task_detail(task_id: int) -> AgentTaskResponse:
+    try:
+        return get_agent_task(task_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.post("/agent/tasks/claim", response_model=AgentTaskResponse | None)
+def post_agent_task_claim(payload: AgentTaskClaimRequest) -> AgentTaskResponse | None:
+    return claim_next_agent_task(payload.device_label)
+
+
+@router.post("/agent/tasks/{task_id}/complete", response_model=AgentTaskResponse)
+def post_agent_task_complete(task_id: int, payload: AgentTaskCompleteRequest) -> AgentTaskResponse:
+    return complete_agent_task(task_id, payload.summary, payload.payload)
+
+
+@router.post("/agent/tasks/{task_id}/fail", response_model=AgentTaskResponse)
+def post_agent_task_fail(task_id: int, payload: AgentTaskFailRequest) -> AgentTaskResponse:
+    return fail_agent_task(task_id, payload.error_message)
 
 
 @router.get("/conversations", response_model=list[ConversationMessageResponse])

@@ -371,10 +371,21 @@
     }
 
     .smart-suggestions,
-    .actions {
+    .actions,
+    .voice-controls {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
+    }
+
+    .voice-controls {
+      align-items: center;
+    }
+
+    .voice-toggle.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+      color: #fff8f0;
+      border-color: transparent;
     }
 
     .suggest-chip {
@@ -472,10 +483,17 @@
               <input name="text" placeholder="예: 내일 아침에 문단속하고 가라고 알려줘" />
               <button class="primary" type="submit">비서에게 맡기기</button>
             </div>
+            <div class="voice-controls">
+              <button class="ghost" id="voiceInputButton" type="button">음성으로 말하기</button>
+              <button class="ghost voice-toggle" id="voiceOutputButton" type="button">답변 읽기 꺼짐</button>
+              <div class="status" id="voiceAssistStatus">음성 비서는 아직 대기 중입니다.</div>
+            </div>
             <div class="smart-suggestions">
               <button class="suggest-chip" type="button" data-suggest="오늘 뭐부터 하면 좋을까?">우선순위 물어보기</button>
               <button class="suggest-chip" type="button" data-suggest="내일 아침에 문단속하고 가라고 알려줘">리마인드 만들기</button>
               <button class="suggest-chip" type="button" data-suggest="오늘 점심 12000원 결제">지출 기록</button>
+              <button class="suggest-chip" type="button" data-suggest="메모장 열어줘">메모장 열기</button>
+              <button class="suggest-chip" type="button" data-suggest="지출표 열어줘">지출표 열기</button>
             </div>
             <div class="status" id="naturalCommandStatus"></div>
           </form>
@@ -751,6 +769,7 @@
       assistantStatusBadge: document.getElementById("assistantStatusBadge"),
       assistantEchoBubble: document.getElementById("assistantEchoBubble"),
       assistantReplyBubble: document.getElementById("assistantReplyBubble"),
+      naturalCommandForm: document.getElementById("naturalCommandForm"),
       todayLabel: document.getElementById("todayLabel"),
       briefingMessage: document.getElementById("briefingMessage"),
       briefingMeta: document.getElementById("briefingMeta"),
@@ -773,10 +792,20 @@
       assetSummaryList: document.getElementById("assetSummaryList"),
       routineSelect: document.getElementById("routineSelect"),
       naturalInput: document.querySelector('#naturalCommandForm input[name="text"]'),
+      voiceInputButton: document.getElementById("voiceInputButton"),
+      voiceOutputButton: document.getElementById("voiceOutputButton"),
+      voiceAssistStatus: document.getElementById("voiceAssistStatus"),
       morningHeadline: document.getElementById("morningHeadline"),
       morningBullets: document.getElementById("morningBullets"),
       eveningHeadline: document.getElementById("eveningHeadline"),
       eveningBullets: document.getElementById("eveningBullets")
+    };
+
+    const voiceState = {
+      recognition: null,
+      listening: false,
+      speechEnabled: false,
+      speakNextReply: false
     };
 
     function setText(el, value) {
@@ -794,6 +823,117 @@
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#39;");
+    }
+
+    function setVoiceStatus(message) {
+      setText(els.voiceAssistStatus, message);
+    }
+
+    function updateVoiceButtons() {
+      if (els.voiceInputButton) {
+        setText(els.voiceInputButton, voiceState.listening ? "듣는 중 멈추기" : "음성으로 말하기");
+      }
+      if (els.voiceOutputButton) {
+        els.voiceOutputButton.classList.toggle("active", voiceState.speechEnabled);
+        setText(els.voiceOutputButton, voiceState.speechEnabled ? "답변 읽기 켜짐" : "답변 읽기 꺼짐");
+      }
+    }
+
+    function speakAssistantReply(text, force = false) {
+      if (!text || !("speechSynthesis" in window)) return;
+      if (!force && !voiceState.speechEnabled) return;
+
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "ko-KR";
+      utterance.rate = 1;
+      utterance.pitch = 1;
+
+      const voices = window.speechSynthesis.getVoices?.() || [];
+      const koreanVoice = voices.find((voice) => String(voice.lang || "").toLowerCase().startsWith("ko"));
+      if (koreanVoice) {
+        utterance.voice = koreanVoice;
+      }
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function stopVoiceRecognition() {
+      if (!voiceState.recognition || !voiceState.listening) return;
+      voiceState.recognition.stop();
+    }
+
+    function startVoiceRecognition() {
+      if (!voiceState.recognition) {
+        setVoiceStatus("이 브라우저는 음성 입력을 지원하지 않습니다.");
+        return;
+      }
+      try {
+        voiceState.recognition.start();
+      } catch (error) {
+        setVoiceStatus("마이크 시작에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      }
+    }
+
+    function initVoiceAssistant() {
+      const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!Recognition) {
+        if (els.voiceInputButton) {
+          els.voiceInputButton.disabled = true;
+        }
+        setVoiceStatus("현재 브라우저에서는 음성 입력을 지원하지 않습니다.");
+        updateVoiceButtons();
+        return;
+      }
+
+      const recognition = new Recognition();
+      recognition.lang = "ko-KR";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        voiceState.listening = true;
+        setVoiceStatus("듣고 있어요. 편하게 말씀해주세요.");
+        updateVoiceButtons();
+      };
+
+      recognition.onend = () => {
+        voiceState.listening = false;
+        updateVoiceButtons();
+        if (!voiceState.speakNextReply) {
+          setVoiceStatus("음성 비서 대기 중입니다.");
+        }
+      };
+
+      recognition.onerror = (event) => {
+        voiceState.listening = false;
+        updateVoiceButtons();
+        setVoiceStatus(`음성 입력 오류: ${event.error || "알 수 없음"}`);
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results || [])
+          .map((result) => result?.[0]?.transcript || "")
+          .join(" ")
+          .trim();
+
+        if (!transcript) {
+          setVoiceStatus("잘 못 들었어요. 한 번만 더 말씀해주세요.");
+          return;
+        }
+
+        if (els.naturalInput) {
+          els.naturalInput.value = transcript;
+        }
+        voiceState.speakNextReply = true;
+        setVoiceStatus(`"${transcript}" 이렇게 들었어요.`);
+        els.naturalCommandForm?.requestSubmit();
+      };
+
+      voiceState.recognition = recognition;
+      setVoiceStatus("음성 비서 대기 중입니다.");
+      updateVoiceButtons();
     }
 
     function setDefaultDates() {
@@ -1174,6 +1314,10 @@
           setText(status, message || "저장되었습니다.");
           await refreshAll();
         } catch (error) {
+          if (formId === "naturalCommandForm") {
+            voiceState.speakNextReply = false;
+            setVoiceStatus("요청 처리 중 문제가 생겼습니다. 한 번만 다시 말씀해주세요.");
+          }
           setText(status, error.message);
         }
       });
@@ -1258,6 +1402,11 @@
       });
 
       setText(els.assistantReplyBubble, result.summary);
+      if (voiceState.speechEnabled || voiceState.speakNextReply) {
+        speakAssistantReply(result.summary, true);
+      }
+      voiceState.speakNextReply = false;
+      setVoiceStatus(result.created_type === "desktop_action" ? "프로그램 실행까지 마쳤습니다." : "음성 비서 대기 중입니다.");
       return result.reminder_id
         ? "대화 기록과 리마인드까지 같이 정리해두었습니다."
         : "대화 기록과 함께 정리해두었습니다.";
@@ -1346,6 +1495,25 @@
     document.getElementById("refreshAllButton")?.addEventListener("click", refreshAll);
     document.getElementById("fillTodayButton")?.addEventListener("click", setDefaultDates);
     document.getElementById("assetResetButton")?.addEventListener("click", resetAssetForm);
+    document.getElementById("voiceInputButton")?.addEventListener("click", () => {
+      if (voiceState.listening) {
+        stopVoiceRecognition();
+        return;
+      }
+      startVoiceRecognition();
+    });
+    document.getElementById("voiceOutputButton")?.addEventListener("click", () => {
+      voiceState.speechEnabled = !voiceState.speechEnabled;
+      updateVoiceButtons();
+      setVoiceStatus(
+        voiceState.speechEnabled
+          ? "이제 비서 답변을 음성으로도 읽어드릴게요."
+          : "이제부터는 텍스트로만 답변드릴게요."
+      );
+      if (!voiceState.speechEnabled && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    });
     document.getElementById("notificationButton")?.addEventListener("click", async () => {
       if (!("Notification" in window)) {
         alert("이 브라우저는 알림을 지원하지 않습니다.");
@@ -1361,6 +1529,7 @@
     });
 
     setDefaultDates();
+    initVoiceAssistant();
     refreshAll().catch((error) => {
       setText(els.briefingMessage, "데이터를 불러오지 못했습니다.");
       setText(els.briefingMeta, error.message);
