@@ -1,8 +1,10 @@
 import json
 import os
+import pathlib
 import subprocess
 import threading
 import time
+import uuid
 import urllib.error
 import urllib.request
 from collections import deque
@@ -27,6 +29,7 @@ SERVER_URL = os.getenv("GYUVIS_SERVER_URL", "http://127.0.0.1:8000").rstrip("/")
 SEND_FOLLOWUP_TO_SERVER = os.getenv("GYUVIS_SEND_FOLLOWUP", "1") == "1"
 AUTO_LISTEN_FOLLOWUP = os.getenv("GYUVIS_AUTO_LISTEN_FOLLOWUP", "1") == "1"
 DEBUG_AUDIO = os.getenv("GYUVIS_DEBUG_AUDIO", "0") == "1"
+STAY_AWAKE_AFTER_WAKE = os.getenv("GYUVIS_STAY_AWAKE", "1") == "1"
 WAKE_PHRASES = (
     "일어나",
     "일어",
@@ -39,6 +42,9 @@ WAKE_PHRASES = (
 )
 GREETING = os.getenv("GYUVIS_GREETING", "어서오세요 보스.")
 TTS_BACKEND = os.getenv("GYUVIS_TTS_BACKEND", "auto").lower()
+EDGE_TTS_VOICE = os.getenv("GYUVIS_EDGE_TTS_VOICE", "ko-KR-SunHiNeural")
+TEMP_AUDIO_DIR = pathlib.Path(os.getenv("GYUVIS_TEMP_AUDIO_DIR", os.path.join(os.getcwd(), ".tmp_tts")))
+SLEEP_PHRASES = ("잘자", "대기", "꺼져", "수면 모드", "sleep")
 
 
 class GyuvisWakeListener:
@@ -49,15 +55,20 @@ class GyuvisWakeListener:
         self.recognizer.pause_threshold = 0.8
         self.recognizer.non_speaking_duration = 0.45
 
-        self.tts = pyttsx3.init()
-        self.tts.setProperty("rate", 185)
-        self.tts.setProperty("volume", 1.0)
+        self.tts = None
+        try:
+            self.tts = pyttsx3.init()
+            self.tts.setProperty("rate", 185)
+            self.tts.setProperty("volume", 1.0)
+        except Exception:
+            self.tts = None
 
         self._clap_hits: deque[float] = deque()
         self._wake_event = threading.Event()
         self._cooldown_until = 0.0
         self._running = True
         self._last_audio_debug_at = 0.0
+        self._stay_awake = False
 
     def run(self) -> None:
         self._log("웨이크 모드를 시작합니다. 박수 두 번 뒤에 '일어나'처럼 불러보세요.")
@@ -68,6 +79,7 @@ class GyuvisWakeListener:
             f"wake_record={WAKE_RECORD_SECONDS:.1f}s, "
             f"followup_record={FOLLOWUP_RECORD_SECONDS:.1f}s"
         )
+        self._log(f"상시 듣기 유지: {'켜짐' if STAY_AWAKE_AFTER_WAKE else '꺼짐'}")
 
         device_label = self._describe_input_device()
         if device_label:
@@ -82,6 +94,10 @@ class GyuvisWakeListener:
             callback=self._audio_callback,
         ):
             while self._running:
+                if self._stay_awake and AUTO_LISTEN_FOLLOWUP:
+                    self._handle_followup_only()
+                    continue
+
                 if not self._wake_event.wait(timeout=0.2):
                     continue
 
@@ -144,20 +160,31 @@ class GyuvisWakeListener:
             return
 
         self._speak(GREETING)
+        if STAY_AWAKE_AFTER_WAKE:
+            self._stay_awake = True
+            self._log("규비스가 깨어 있습니다. 이제 박수 없이 바로 명령을 들을게요.")
 
         if not AUTO_LISTEN_FOLLOWUP:
             return
 
-        self._log("이어서 명령을 듣는 중입니다...")
+        self._handle_followup_only()
+
+    def _handle_followup_only(self) -> None:
+        self._log("명령을 듣는 중입니다...")
         command_audio = self._record_audio(FOLLOWUP_RECORD_SECONDS)
         command_text = self._transcribe(command_audio)
 
         if not command_text:
-            self._log("추가 명령을 인식하지 못했습니다.")
-            self._speak("명령을 듣지 못했습니다.")
+            self._log("명령이 들리지 않았습니다. 계속 대기합니다.")
             return
 
         self._log(f"추가 명령: {command_text}")
+        if self._looks_like_sleep_phrase(command_text):
+            self._stay_awake = False
+            self._speak("대기 모드로 돌아갑니다.")
+            self._log("대기 모드로 돌아갑니다. 다시 깨우려면 박수와 호출어가 필요합니다.")
+            return
+
         if SEND_FOLLOWUP_TO_SERVER:
             response_text = self._send_followup_to_server(command_text)
             if response_text:
@@ -189,6 +216,10 @@ class GyuvisWakeListener:
     def _looks_like_wake_phrase(self, text: str) -> bool:
         normalized = self._normalize_text(text)
         return any(self._normalize_text(phrase) in normalized for phrase in WAKE_PHRASES)
+
+    def _looks_like_sleep_phrase(self, text: str) -> bool:
+        normalized = self._normalize_text(text)
+        return any(self._normalize_text(phrase) in normalized for phrase in SLEEP_PHRASES)
 
     def _send_followup_to_server(self, text: str) -> str:
         try:
@@ -247,12 +278,19 @@ class GyuvisWakeListener:
 
     def _speak(self, text: str) -> None:
         self._log(f"규비스: {text}")
+        if TTS_BACKEND in ("auto", "edge", "edge-tts"):
+            if self._speak_with_edge_tts(text):
+                return
+            self._log("edge-tts 재생에 실패해 다음 엔진으로 넘어갑니다.")
+
         if TTS_BACKEND in ("powershell", "ps"):
             if self._speak_with_powershell(text):
                 return
             self._log("PowerShell TTS 재생에 실패해 pyttsx3로 fallback합니다.")
 
         try:
+            if self.tts is None:
+                raise RuntimeError("pyttsx3 is unavailable")
             self.tts.stop()
             self.tts.say(text)
             self.tts.runAndWait()
@@ -311,6 +349,58 @@ class GyuvisWakeListener:
         except Exception as error:
             self._log(f"PowerShell TTS 실패: {error}")
             return False
+
+    def _speak_with_edge_tts(self, text: str) -> bool:
+        try:
+            import pygame
+        except Exception as error:
+            self._log(f"pygame import 실패: {error}")
+            return False
+
+        TEMP_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+        media_path = TEMP_AUDIO_DIR / f"gyuvis_{uuid.uuid4().hex}.mp3"
+
+        try:
+            subprocess.run(
+                [
+                    os.sys.executable,
+                    "-m",
+                    "edge_tts",
+                    "--voice",
+                    EDGE_TTS_VOICE,
+                    "--text",
+                    text,
+                    "--write-media",
+                    str(media_path),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except Exception as error:
+            self._log(f"edge-tts 생성 실패: {error}")
+            return False
+
+        try:
+            if not pygame.mixer.get_init():
+                pygame.mixer.init()
+            pygame.mixer.music.load(str(media_path))
+            pygame.mixer.music.play()
+            while pygame.mixer.music.get_busy():
+                time.sleep(0.1)
+            return True
+        except Exception as error:
+            self._log(f"edge-tts 재생 실패: {error}")
+            return False
+        finally:
+            try:
+                pygame.mixer.music.unload()
+            except Exception:
+                pass
+            try:
+                media_path.unlink(missing_ok=True)
+            except Exception:
+                pass
 
     def _log(self, message: str) -> None:
         stamp = time.strftime("%H:%M:%S")
