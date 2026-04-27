@@ -28,10 +28,7 @@ let lastMaximize = 0;
 let lastDrag = 0;
 let voiceOn = false;
 let recognition = null;
-let shouldKeepListening = true;
-let isSpeakingResponse = false;
-let pendingRecognitionRestart = false;
-let lastGreetingAt = 0;
+let hasWelcomedBoss = false;
 let lastSeenAt = 0;
 let gestureLockUntil = performance.now() + 3200;
 const trackedHands = [];
@@ -206,58 +203,24 @@ function setStatus(message) {
 
 jarvis.onStatus((msg) => setStatus(msg));
 
-function updateVoiceUi(message) {
-  voiceState.textContent = message;
-  voiceBtn.textContent = shouldKeepListening ? "음성 대기 끄기" : "음성 대기 켜기";
-}
-
-function startVoiceRecognition() {
-  if (!recognition || voiceOn || isSpeakingResponse || !shouldKeepListening) return;
-  try {
-    recognition.start();
-  } catch (_error) {
-  }
-}
-
-function speakGreeting() {
+function speakWelcomeGreeting() {
+  if (hasWelcomedBoss) return;
   const synth = window.speechSynthesis;
-  if (!synth) return;
+  if (!synth) {
+    setStatus("음성 합성을 지원하지 않는 환경입니다.");
+    return;
+  }
 
-  const now = Date.now();
-  if (now - lastGreetingAt < 2500) return;
-  lastGreetingAt = now;
-
+  hasWelcomedBoss = true;
   const utterance = new SpeechSynthesisUtterance("어서오세요 보스");
   utterance.lang = "ko-KR";
   utterance.rate = 1;
   utterance.pitch = 0.92;
-
-  isSpeakingResponse = true;
-  pendingRecognitionRestart = shouldKeepListening;
-
   utterance.onstart = () => {
-    updateVoiceUi("자비스 응답 중");
-    if (voiceOn && recognition) {
-      try {
-        recognition.stop();
-      } catch (_error) {
-      }
-    }
+    setStatus("어서오세요 보스");
   };
-
-  utterance.onend = () => {
-    isSpeakingResponse = false;
-    updateVoiceUi(shouldKeepListening ? "음성 ON / 항상 대기" : "음성 OFF");
-    if (pendingRecognitionRestart) {
-      pendingRecognitionRestart = false;
-      setTimeout(() => startVoiceRecognition(), 250);
-    }
-  };
-
   utterance.onerror = () => {
-    isSpeakingResponse = false;
-    pendingRecognitionRestart = false;
-    updateVoiceUi(shouldKeepListening ? "음성 ON / 항상 대기" : "음성 OFF");
+    setStatus("음성 재생을 시작하지 못했습니다.");
   };
 
   synth.cancel();
@@ -916,7 +879,7 @@ function setupVoice() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
   if (!SpeechRecognition) {
-    updateVoiceUi("음성 미지원");
+    voiceState.textContent = "음성 미지원";
     voiceBtn.disabled = true;
     return;
   }
@@ -928,36 +891,23 @@ function setupVoice() {
 
   recognition.onstart = () => {
     voiceOn = true;
-    updateVoiceUi("음성 ON / 항상 대기");
-    setStatus("음성 인식이 항상 대기 중입니다.");
+    voiceState.textContent = "음성 ON / 대기 중";
+    setStatus("음성 인식이 활성화되었습니다.");
   };
 
   recognition.onend = () => {
     voiceOn = false;
-    if (isSpeakingResponse) return;
-    updateVoiceUi(shouldKeepListening ? "음성 재연결 중..." : "음성 OFF");
-    if (shouldKeepListening) {
-      setTimeout(() => startVoiceRecognition(), 350);
-    }
+    voiceState.textContent = "음성 OFF";
   };
 
   recognition.onerror = (event) => {
     setStatus(`음성 인식 오류: ${event.error}`);
-    if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-      shouldKeepListening = false;
-      updateVoiceUi("마이크 권한 필요");
-      return;
-    }
-    if (shouldKeepListening && !isSpeakingResponse) {
-      setTimeout(() => startVoiceRecognition(), 800);
-    }
   };
 
   recognition.onresult = (event) => {
     const last = event.results[event.results.length - 1];
     const text = last[0].transcript.trim().toLowerCase();
     setStatus(`음성: ${text}`);
-    if (text) speakGreeting();
 
     if (text.includes("오른쪽") || text.includes("다음")) jarvis.moveMonitor("right");
     if (text.includes("왼쪽") || text.includes("이전")) jarvis.moveMonitor("left");
@@ -969,35 +919,16 @@ function setupVoice() {
 
   voiceBtn.addEventListener("click", () => {
     if (!recognition) return;
-    shouldKeepListening = !shouldKeepListening;
-    if (!shouldKeepListening) {
-      pendingRecognitionRestart = false;
-      if (voiceOn) recognition.stop();
-      else updateVoiceUi("음성 OFF");
-      setStatus("음성 상시 대기를 중지했습니다.");
-      return;
-    }
-
-    updateVoiceUi("음성 연결 중...");
-    setStatus("음성 상시 대기를 다시 시작합니다.");
-    startVoiceRecognition();
+    if (voiceOn) recognition.stop();
+    else recognition.start();
   });
 
   window.addEventListener("keydown", (e) => {
     if (e.key.toLowerCase() === "v") {
-      voiceBtn.click();
+      if (voiceOn) recognition.stop();
+      else recognition.start();
     }
   });
-
-  window.addEventListener("focus", () => {
-    if (shouldKeepListening && !voiceOn && !isSpeakingResponse) {
-      startVoiceRecognition();
-    }
-  });
-
-  updateVoiceUi("음성 연결 중...");
-  setStatus("마이크 상시 대기를 시작합니다.");
-  startVoiceRecognition();
 }
 
 window.addEventListener("keydown", (e) => {
@@ -1015,3 +946,9 @@ window.addEventListener("keydown", (e) => {
 draw();
 setupHands();
 setupVoice();
+
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    speakWelcomeGreeting();
+  }, 700);
+});

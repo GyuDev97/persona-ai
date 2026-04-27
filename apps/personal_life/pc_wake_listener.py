@@ -15,6 +15,8 @@ import pyttsx3
 import sounddevice as sd
 import speech_recognition as sr
 
+from app.services.jarvis_hud_service import launch_jarvis_hud
+
 
 SAMPLE_RATE = 16_000
 BLOCK_SECONDS = 0.08
@@ -25,11 +27,15 @@ CLAP_COUNT_TO_WAKE = int(os.getenv("GYUVIS_CLAP_COUNT", "2"))
 WAKE_RECORD_SECONDS = float(os.getenv("GYUVIS_WAKE_RECORD_SECONDS", "4.0"))
 FOLLOWUP_RECORD_SECONDS = float(os.getenv("GYUVIS_FOLLOWUP_RECORD_SECONDS", "6.0"))
 COOLDOWN_SECONDS = float(os.getenv("GYUVIS_WAKE_COOLDOWN_SECONDS", "2.2"))
+VOICE_ONLY_WAKE = os.getenv("GYUVIS_VOICE_ONLY_WAKE", "1") == "1"
 SERVER_URL = os.getenv("GYUVIS_SERVER_URL", "http://127.0.0.1:8000").rstrip("/")
 SEND_FOLLOWUP_TO_SERVER = os.getenv("GYUVIS_SEND_FOLLOWUP", "1") == "1"
 AUTO_LISTEN_FOLLOWUP = os.getenv("GYUVIS_AUTO_LISTEN_FOLLOWUP", "1") == "1"
 DEBUG_AUDIO = os.getenv("GYUVIS_DEBUG_AUDIO", "0") == "1"
 STAY_AWAKE_AFTER_WAKE = os.getenv("GYUVIS_STAY_AWAKE", "1") == "1"
+OPEN_JARVIS_HUD_ON_WAKE = os.getenv("GYUVIS_OPEN_JARVIS_HUD", "1") == "1"
+JARVIS_HUD_COOLDOWN_SECONDS = float(os.getenv("GYUVIS_JARVIS_HUD_COOLDOWN_SECONDS", "15"))
+VOICE_WAKE_TARGET = os.getenv("GYUVIS_VOICE_WAKE_TARGET", "\uc77c\uc5b4\ub098")
 WAKE_PHRASES = (
     "일어나",
     "일어",
@@ -44,6 +50,13 @@ GREETING = os.getenv("GYUVIS_GREETING", "어서오세요 보스.")
 TTS_BACKEND = os.getenv("GYUVIS_TTS_BACKEND", "auto").lower()
 EDGE_TTS_VOICE = os.getenv("GYUVIS_EDGE_TTS_VOICE", "ko-KR-SunHiNeural")
 TEMP_AUDIO_DIR = pathlib.Path(os.getenv("GYUVIS_TEMP_AUDIO_DIR", os.path.join(os.getcwd(), ".tmp_tts")))
+EXTRA_SLEEP_PHRASES = (
+    "\uc7a0\uae50\uae30\ub2e4\ub824\uc918",
+    "\uc7a0\uae50\ub9cc\uae30\ub2e4\ub824\uc918",
+    "\uc870\uae08\uc774\ub2e4\uae30\ub2e4\ub824\uc918",
+    "\uae30\ub2e4\ub824\uc918",
+)
+SLEEP_ACKNOWLEDGEMENT = os.getenv("GYUVIS_SLEEP_ACK", "\ub124 \uc54c\uaca0\uc2b5\ub2c8\ub2e4.")
 SLEEP_PHRASES = ("잘자", "대기", "꺼져", "수면 모드", "sleep")
 
 
@@ -69,6 +82,7 @@ class GyuvisWakeListener:
         self._running = True
         self._last_audio_debug_at = 0.0
         self._stay_awake = False
+        self._last_hud_launch_at = 0.0
 
     def run(self) -> None:
         self._log("웨이크 모드를 시작합니다. 박수 두 번 뒤에 '일어나'처럼 불러보세요.")
@@ -84,6 +98,15 @@ class GyuvisWakeListener:
         device_label = self._describe_input_device()
         if device_label:
             self._log(f"입력 장치: {device_label}")
+
+        if VOICE_ONLY_WAKE:
+            self._log("Voice-only wake mode enabled. Say the wake phrase directly.")
+            while self._running:
+                if self._stay_awake and AUTO_LISTEN_FOLLOWUP:
+                    self._handle_followup_only()
+                    continue
+                self._handle_voice_wake_only()
+            return
 
         blocksize = int(SAMPLE_RATE * BLOCK_SECONDS)
         with sd.InputStream(
@@ -143,6 +166,34 @@ class GyuvisWakeListener:
             self._clap_hits.clear()
             self._wake_event.set()
 
+    def _handle_voice_wake_only(self) -> None:
+        now = time.monotonic()
+        if now < self._cooldown_until:
+            time.sleep(0.2)
+            return
+
+        self._log("Listening for wake phrase...")
+        wake_audio = self._record_audio(WAKE_RECORD_SECONDS)
+        wake_text = self._transcribe(wake_audio)
+
+        if not wake_text:
+            return
+
+        self._log(f"Wake phrase heard: {wake_text}")
+        if not self._looks_like_wake_phrase(wake_text):
+            return
+
+        self._cooldown_until = time.monotonic() + COOLDOWN_SECONDS
+        self._launch_hud_if_needed()
+        self._speak(GREETING)
+        if STAY_AWAKE_AFTER_WAKE:
+            self._stay_awake = True
+
+        if not AUTO_LISTEN_FOLLOWUP:
+            return
+
+        self._handle_followup_only()
+
     def _handle_wake_cycle(self) -> None:
         self._log("박수 패턴을 감지했습니다. 호출어를 듣는 중입니다...")
         wake_audio = self._record_audio(WAKE_RECORD_SECONDS)
@@ -159,6 +210,7 @@ class GyuvisWakeListener:
             self._speak("호출어가 맞지 않습니다.")
             return
 
+        self._launch_hud_if_needed()
         self._speak(GREETING)
         if STAY_AWAKE_AFTER_WAKE:
             self._stay_awake = True
@@ -181,6 +233,9 @@ class GyuvisWakeListener:
         self._log(f"추가 명령: {command_text}")
         if self._looks_like_sleep_phrase(command_text):
             self._stay_awake = False
+            self._speak(SLEEP_ACKNOWLEDGEMENT)
+            self._log("Pause command acknowledged. Returning to standby mode.")
+            return
             self._speak("대기 모드로 돌아갑니다.")
             self._log("대기 모드로 돌아갑니다. 다시 깨우려면 박수와 호출어가 필요합니다.")
             return
@@ -192,6 +247,21 @@ class GyuvisWakeListener:
         else:
             self._log("서버 연동이 꺼져 있어 추가 명령은 출력만 합니다.")
             self._speak("서버 연동이 꺼져 있습니다.")
+
+    def _launch_hud_if_needed(self) -> None:
+        if not OPEN_JARVIS_HUD_ON_WAKE:
+            return
+
+        now = time.monotonic()
+        if now - self._last_hud_launch_at < JARVIS_HUD_COOLDOWN_SECONDS:
+            return
+
+        try:
+            target = launch_jarvis_hud()
+            self._last_hud_launch_at = now
+            self._log(f"Jarvis HUD opened: {target}")
+        except Exception as error:
+            self._log(f"Jarvis HUD open failed: {error}")
 
     def _record_audio(self, seconds: float) -> np.ndarray:
         recording = sd.rec(
@@ -215,11 +285,14 @@ class GyuvisWakeListener:
 
     def _looks_like_wake_phrase(self, text: str) -> bool:
         normalized = self._normalize_text(text)
-        return any(self._normalize_text(phrase) in normalized for phrase in WAKE_PHRASES)
+        return self._normalize_text(VOICE_WAKE_TARGET) in normalized
 
     def _looks_like_sleep_phrase(self, text: str) -> bool:
         normalized = self._normalize_text(text)
-        return any(self._normalize_text(phrase) in normalized for phrase in SLEEP_PHRASES)
+        return any(
+            self._normalize_text(phrase) in normalized
+            for phrase in SLEEP_PHRASES + EXTRA_SLEEP_PHRASES
+        )
 
     def _send_followup_to_server(self, text: str) -> str:
         try:
@@ -359,6 +432,7 @@ class GyuvisWakeListener:
 
         TEMP_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
         media_path = TEMP_AUDIO_DIR / f"gyuvis_{uuid.uuid4().hex}.mp3"
+        normalized_text = " ".join(text.replace("\r", " ").replace("\n", " ").split())
 
         try:
             subprocess.run(
@@ -369,7 +443,7 @@ class GyuvisWakeListener:
                     "--voice",
                     EDGE_TTS_VOICE,
                     "--text",
-                    text,
+                    normalized_text,
                     "--write-media",
                     str(media_path),
                 ],

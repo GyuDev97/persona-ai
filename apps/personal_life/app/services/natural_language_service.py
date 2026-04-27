@@ -1,5 +1,6 @@
 import json
 import re
+import webbrowser
 from dataclasses import dataclass
 from datetime import date, timedelta
 
@@ -41,6 +42,42 @@ def process_natural_command(payload: NaturalCommandCreate) -> NaturalCommandResp
     log_conversation("user", stripped)
     intent = classify_natural_intent(stripped)
     print(f"[natural] text={stripped!r} intent={intent}")
+
+    if _looks_like_briefing_request(stripped):
+        summary = _build_voice_briefing_summary()
+        response = NaturalCommandResponse(
+            text=payload.text,
+            interpreted_as="briefing",
+            summary=summary,
+            created_id=0,
+            created_type="briefing",
+            reminder_id=None,
+        )
+        log_conversation(
+            "assistant",
+            response.summary,
+            interpreted_as=response.interpreted_as,
+            created_type=response.created_type,
+        )
+        return response
+
+    if _looks_like_dashboard_request(stripped):
+        webbrowser.open("http://127.0.0.1:8000/")
+        response = NaturalCommandResponse(
+            text=payload.text,
+            interpreted_as="desktop_action",
+            summary="personal_life dashboard를 열어둘게요.",
+            created_id=0,
+            created_type="desktop_action",
+            reminder_id=None,
+        )
+        log_conversation(
+            "assistant",
+            response.summary,
+            interpreted_as=response.interpreted_as,
+            created_type=response.created_type,
+        )
+        return response
 
     desktop_action = maybe_run_desktop_action(stripped)
     if desktop_action is not None:
@@ -228,6 +265,57 @@ def _should_force_answer_mode(text: str) -> bool:
     has_question_signal = any(token in normalized for token in question_signals) or normalized.endswith("?")
     has_save_signal = any(token in normalized for token in save_signals)
     return has_question_signal and not has_save_signal
+
+
+def _looks_like_dashboard_request(text: str) -> bool:
+    normalized = " ".join(text.strip().split())
+    lowered = normalized.lower()
+    has_target = "dashboard" in lowered or "\ub300\uc2dc\ubcf4\ub4dc" in normalized
+    has_open = any(
+        token in lowered or token in normalized
+        for token in ("open", "show", "launch", "\ubcf4\uc5ec", "\uc5f4\uc5b4", "\uc2e4\ud589")
+    )
+    return has_target and has_open
+
+
+def _looks_like_briefing_request(text: str) -> bool:
+    normalized = " ".join(text.strip().split())
+    lowered = normalized.lower()
+    has_briefing = "briefing" in lowered or "\ube0c\ub9ac\ud551" in normalized
+    has_request = any(
+        token in lowered or token in normalized
+        for token in ("show", "tell", "give", "\ud574\ubd10", "\ud574\uc918", "\ub9d0\ud574", "\ubcf4\uc5ec")
+    )
+    return has_briefing and has_request
+
+
+def _build_voice_briefing_summary() -> str:
+    briefing = build_today_briefing()
+    finance = build_finance_briefing()
+
+    if briefing.schedules:
+        top_schedule = briefing.schedules[0]
+        schedule_bits = [top_schedule.title]
+        if top_schedule.start_time:
+            schedule_bits.append(top_schedule.start_time)
+        schedule_summary = "오늘 주요 일정은 " + " ".join(schedule_bits) + "입니다."
+    elif briefing.top_tasks:
+        schedule_summary = f"오늘 일정은 여유 있는 편이고, 우선 할 일은 {briefing.top_tasks[0].title}입니다."
+    else:
+        schedule_summary = "오늘 등록된 주요 일정은 아직 없습니다."
+
+    if finance.remaining_cash >= 0:
+        finance_summary = (
+            f"재정 상태는 이번 달 예상 잔액이 {finance.remaining_cash:,}원 정도로 보이고, "
+            f"지출은 수입 대비 {finance.spending_rate * 100:.1f}% 수준입니다."
+        )
+    else:
+        finance_summary = (
+            f"재정 상태는 현재 {-finance.remaining_cash:,}원 정도 초과 지출로 보이고, "
+            f"지출은 수입 대비 {finance.spending_rate * 100:.1f}% 수준입니다."
+        )
+
+    return f"{schedule_summary} {finance_summary}"
 
 
 def _maybe_create_reminder_for_task(task_id: int, parsed: ParsedCommand, original_text: str):

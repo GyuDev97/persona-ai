@@ -16,6 +16,7 @@ class DesktopActionResult:
 
 _OPEN_VERBS = ["열어", "켜", "실행", "띄워", "보여", "launch", "open"]
 _BROWSER_URL = "http://127.0.0.1:8000/"
+_DASHBOARD_KEYWORDS = ("dashboard", "\ub300\uc2dc\ubcf4\ub4dc")
 _CHROME_CANDIDATES = [
     Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe"),
     Path(r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"),
