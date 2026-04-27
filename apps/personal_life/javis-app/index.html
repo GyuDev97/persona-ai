@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Jarvis Gesture HUD</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <div id="topbar">
+    <div id="status">카메라 준비 중...</div>
+    <div id="hint">
+      손을 왼쪽 공간으로 가져가면 그래프가 반응하고, 집으면 창을 끌 수 있어요.
+    </div>
+  </div>
+
+  <video id="video" autoplay playsinline muted></video>
+
+  <div id="rightPanel">
+    <div class="eyebrow">JARVIS NEURAL INTERFACE</div>
+    <h1>Gesture<br />Command<br />Matrix</h1>
+    <div class="panelMeta">
+      <span>mode: armored assistant</span>
+      <span>tracking: fingertip locked</span>
+      <span>hud field: online</span>
+    </div>
+  </div>
+
+  <div id="voiceBox">
+    <span id="voiceState">음성 OFF</span>
+    <button id="voiceBtn">음성 켜기</button>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

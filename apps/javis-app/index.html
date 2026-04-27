@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -12,17 +12,27 @@
   <canvas id="c"></canvas>
 
   <div id="topbar">
-    <div id="status">앱 준비 중...</div>
+    <div id="status">카메라 준비 중...</div>
     <div id="hint">
-      손 우/좌 스와이프: 모니터 이동 · 양손 펼치기: 최대화 · 주먹: 최소화 · 집기: 창 드래그 · V: 음성
+      손을 왼쪽 공간으로 가져가면 그래프가 반응하고, 집으면 창을 끌 수 있어요.
     </div>
   </div>
 
   <video id="video" autoplay playsinline muted></video>
 
+  <div id="rightPanel">
+    <div class="eyebrow">JARVIS NEURAL INTERFACE</div>
+    <h1>Gesture<br />Command<br />Matrix</h1>
+    <div class="panelMeta">
+      <span>mode: armored assistant</span>
+      <span>tracking: fingertip locked</span>
+      <span>hud field: online</span>
+    </div>
+  </div>
+
   <div id="voiceBox">
-    <span id="voiceState">음성 OFF</span>
-    <button id="voiceBtn">음성 켜기</button>
+    <span id="voiceState">음성 준비 중</span>
+    <button id="voiceBtn">음성 대기 끄기</button>
   </div>
 
   <script src="renderer.js"></script>
