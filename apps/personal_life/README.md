@@ -1,4 +1,4 @@
-# GyuOS (규OS)
+# GyuVIS (규비스)
 
 > 나를 대신 운영하는 **Personal Concierge OS**  
 > 일정 · 루틴 · 자산 · 메모리 · 브리핑 · AI 명령을 하나의 시스템으로 연결하는 개인 운영 플랫폼
