@@ -281,12 +281,43 @@ def _looks_like_dashboard_request(text: str) -> bool:
 def _looks_like_briefing_request(text: str) -> bool:
     normalized = " ".join(text.strip().split())
     lowered = normalized.lower()
-    has_briefing = "briefing" in lowered or "\ube0c\ub9ac\ud551" in normalized
+    compact = re.sub(r"[\s?!.,~]+", "", normalized)
+    has_briefing = "briefing" in lowered or "\ube0c\ub9ac\ud551" in normalized or "\ubcf4\uace0" in normalized
     has_request = any(
         token in lowered or token in normalized
-        for token in ("show", "tell", "give", "\ud574\ubd10", "\ud574\uc918", "\ub9d0\ud574", "\ubcf4\uc5ec")
+        for token in (
+            "show",
+            "tell",
+            "give",
+            "\ud574\ubd10",
+            "\ud574\uc918",
+            "\ud574\uc8fc\uc138\uc694",
+            "\ud558\uc138\uc694",
+            "\uc9c4\ud589",
+            "\uc2dc\uc791",
+            "\ubd80\ud0c1",
+            "\ub9d0\ud574",
+            "\ubcf4\uc5ec",
+            "\uc54c\ub824",
+            "\ub4e4\ub824",
+            "\uc815\ub9ac",
+        )
     )
-    return has_briefing and has_request
+    compact_request = any(
+        token in compact
+        for token in (
+            "\ube0c\ub9ac\ud551\uc9c4\ud589",
+            "\ube0c\ub9ac\ud551\ud574\uc918",
+            "\ube0c\ub9ac\ud551\ud574\uc8fc\uc138\uc694",
+            "\ube0c\ub9ac\ud551\ud558\uc138\uc694",
+            "\ube0c\ub9ac\ud551\uc2dc\uc791",
+            "\uc624\ub298\ube0c\ub9ac\ud551",
+            "\uc800\ub141\ube0c\ub9ac\ud551",
+            "\uc544\uce68\ube0c\ub9ac\ud551",
+            "\uc624\ud6c4\ube0c\ub9ac\ud551",
+        )
+    )
+    return (has_briefing and has_request) or compact_request
 
 
 def _build_voice_briefing_summary() -> str:
@@ -620,6 +651,44 @@ def _answer_question_with_openai(
 
 def _answer_question_fallback(text: str, briefing, asset_summary, finance) -> str:
     lowered = text.lower()
+    compact = re.sub(r"[\s?!.,~]+", "", text)
+
+    if any(
+        token in compact
+        for token in [
+            "계속진행",
+            "진행하면될",
+            "그대로진행",
+            "그렇게해",
+            "그렇게하",
+            "오케이진행",
+            "좋아진행",
+            "그걸로해",
+            "그걸로가",
+            "괜찮아진행",
+        ]
+    ):
+        return "네 보스. 현재 흐름대로 계속 진행하겠습니다."
+
+    if any(token in compact for token in ["나힘들", "힘들다", "힘들어", "지쳤", "피곤해", "피곤하다", "번아웃"]):
+        return (
+            "고생 많으셨습니다 보스.\n\n"
+            "오늘은 무리해서 전부 정리하려 하기보다, 가장 무거운 것 하나만 내려놓아도 충분합니다. "
+            "필요하시면 제가 일정과 할 일을 가볍게 줄여서 정리해드리겠습니다."
+        )
+
+    if any(token in compact for token in ["우울", "속상", "짜증", "멘탈", "오늘별로", "오늘안좋", "최악", "죽겠", "빡세", "버거", "힘든하루"]):
+        return (
+            "그런 하루였군요, 보스.\n\n"
+            "지금은 해결책부터 찾기보다 잠깐 숨을 고르는 게 먼저일 수 있습니다. "
+            "제가 옆에서 필요한 것부터 하나씩 정리하겠습니다."
+        )
+
+    if any(token in compact for token in ["오늘좋", "기분좋", "잘됐", "행복", "뿌듯", "괜찮았", "나쁘지않"]):
+        return (
+            "다행입니다 보스.\n\n"
+            "좋은 흐름은 기록해두면 다음에도 다시 꺼내 쓰기 좋습니다. 오늘 잘된 점 하나만 남겨두셔도 좋겠습니다."
+        )
 
     if _is_self_state_question(text):
         if briefing.open_task_count == 0 and briefing.schedule_count_today == 0:

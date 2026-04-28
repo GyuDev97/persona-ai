@@ -940,6 +940,7 @@
     let agentsCache = [];
     let presentingIndex = 0;
     let serverActiveAgentId = null;
+    let lastDetailRequestedAt = null;
     let lastSpreadAt = 0;
     let gestureCanvasW = innerWidth;
     let gestureCanvasH = innerHeight;
@@ -1073,6 +1074,13 @@
         const presentedAgent = getPresentedAgent();
         agents.forEach((agent) => renderAgentCard(agent, presentedAgent));
         renderAgentDetail(presentedAgent);
+        if (state.detail_agent_id && state.detail_requested_at && state.detail_requested_at !== lastDetailRequestedAt) {
+          const detailAgent = agents.find((agent) => agent.id === state.detail_agent_id);
+          lastDetailRequestedAt = state.detail_requested_at;
+          showReport(detailAgent);
+        } else if (!state.detail_agent_id) {
+          lastDetailRequestedAt = null;
+        }
       } catch {
         statusSubEl.textContent = "Agent telemetry offline. Retrying...";
       }

@@ -44,7 +44,7 @@ from ..services.agent_task_service import (
     get_agent_task,
     list_agent_tasks,
 )
-from ..services.agent_standby_service import focus_agent, get_agent_standby_status
+from ..services.agent_standby_service import focus_agent, get_agent_standby_status, open_agent_detail
 from ..config import get_settings
 from ..services.asset_service import build_asset_summary, create_asset, list_assets, update_asset
 from ..services.briefing_service import build_evening_briefing, build_morning_briefing, build_today_briefing
@@ -196,6 +196,11 @@ def get_agent_standby_status_route() -> dict:
 @router.post("/agent/standby-status/focus/{agent_id}")
 def post_agent_standby_focus(agent_id: int) -> dict:
     return focus_agent(agent_id if agent_id > 0 else None)
+
+
+@router.post("/agent/standby-status/detail/{agent_id}")
+def post_agent_standby_detail(agent_id: int) -> dict:
+    return open_agent_detail(agent_id if agent_id > 0 else None)
 
 
 @router.get("/assistant/subtitles")

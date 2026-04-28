@@ -1,6 +1,7 @@
 import re
 
 from ..domain.schemas import MobileAssistantCommandCreate, MobileAssistantCommandResponse, NaturalCommandCreate
+from .agent_standby_service import open_agent_detail
 from .agent_task_service import create_agent_task
 from .conversation_service import log_conversation
 from .natural_language_service import classify_natural_intent, process_natural_command
@@ -9,6 +10,16 @@ from .natural_language_service import classify_natural_intent, process_natural_c
 def process_mobile_assistant_command(payload: MobileAssistantCommandCreate) -> MobileAssistantCommandResponse:
     natural_intent = classify_natural_intent(payload.text)
     print(f"[mobile] text={payload.text!r} intent={natural_intent}")
+    detail_agent_id = _detect_agent_detail_id(payload.text)
+    if detail_agent_id is not None:
+        open_agent_detail(detail_agent_id)
+        return MobileAssistantCommandResponse(
+            mode="assistant_reply",
+            spoken_text=payload.text,
+            summary=f"네 보스. 에이전트 {detail_agent_id}번 상세 화면을 열겠습니다.",
+            task=None,
+        )
+
     task_type = _detect_agent_task_type(payload.text)
     if task_type is not None:
         log_conversation("user", payload.text, interpreted_as="mobile_command", created_type="mobile")
@@ -57,6 +68,37 @@ def _detect_agent_task_type(text: str) -> str | None:
         return "weather_briefing"
     if any(keyword in normalized for keyword in ["검색", "찾아봐", "알아봐", "웹에서", "인터넷"]):
         return "web_search"
+    return None
+
+
+def _detect_agent_detail_id(text: str) -> int | None:
+    compact = re.sub(r"[\s?!.,~]+", "", text.strip().lower())
+    if "에이전트" not in compact and "agent" not in compact:
+        return None
+    if not any(token in compact for token in ["열어", "보여", "상세", "확대", "펼쳐", "띄워", "확인"]):
+        return None
+
+    digit_match = re.search(r"([1-4])번?", compact)
+    if digit_match:
+        return int(digit_match.group(1))
+
+    word_numbers = {
+        "일": 1,
+        "한": 1,
+        "첫": 1,
+        "이": 2,
+        "두": 2,
+        "둘": 2,
+        "삼": 3,
+        "세": 3,
+        "셋": 3,
+        "사": 4,
+        "네": 4,
+        "넷": 4,
+    }
+    for token, value in word_numbers.items():
+        if f"{token}번" in compact or f"{token}번째" in compact:
+            return value
     return None
 
 

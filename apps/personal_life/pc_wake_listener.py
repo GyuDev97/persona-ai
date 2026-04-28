@@ -1,6 +1,7 @@
 import json
 import os
 import pathlib
+import re
 import subprocess
 import threading
 import time
@@ -47,7 +48,9 @@ WAKE_PHRASES = tuple(
     for phrase in os.getenv("GYUVIS_WAKE_PHRASES", "일어나,규비스").split(",")
     if phrase.strip()
 )
-GREETING = os.getenv("GYUVIS_GREETING", "어서오세요 보스.")
+MORNING_GREETING = os.getenv("GYUVIS_MORNING_GREETING", "좋은 하루에요 보스. 아침 브리핑을 진행해드릴까요?")
+AFTERNOON_GREETING = os.getenv("GYUVIS_AFTERNOON_GREETING", "좋은 오후에요 보스. 오후 브리핑을 진행해드릴까요?")
+GREETING = os.getenv("GYUVIS_GREETING", AFTERNOON_GREETING)
 EVENING_GREETING = os.getenv(
     "GYUVIS_EVENING_GREETING",
     "안녕하세요 보스. 오늘 하루도 고생하셨습니다. 저녁 브리핑을 진행해드릴까요?",
@@ -71,10 +74,13 @@ AFFIRMATIVE_PHRASES = (
     "응",
     "좋아",
     "진행해",
+    "진행하",
     "부탁해",
     "그래",
     "해줘",
+    "해주세요",
     "시작해",
+    "시작하",
 )
 SHORT_AFFIRMATIVE_PHRASES = ("어", "응", "네")
 SOCIAL_CLOSE_PHRASES = (
@@ -88,10 +94,28 @@ SOCIAL_CLOSE_PHRASES = (
     "그만",
     "쉬어",
 )
-EVENING_BRIEFING_ACK = os.getenv("GYUVIS_EVENING_BRIEFING_ACK", "네 알겠습니다 보스.")
+BRIEFING_ACK = os.getenv("GYUVIS_BRIEFING_ACK", os.getenv("GYUVIS_EVENING_BRIEFING_ACK", "네 알겠습니다 보스."))
+EVENING_BRIEFING_ACK = BRIEFING_ACK
 SOCIAL_CLOSE_ACK = os.getenv("GYUVIS_SOCIAL_CLOSE_ACK", "네 보스. 감사합니다. 필요하시면 언제든 다시 부르십시오.")
 SLEEP_ACKNOWLEDGEMENT = os.getenv("GYUVIS_SLEEP_ACK", "\ub124 \uc54c\uaca0\uc2b5\ub2c8\ub2e4.")
 SLEEP_PHRASES = ("잘자", "대기", "꺼져", "수면 모드", "sleep")
+GYUVIS_WELLBEING_REPLY = os.getenv(
+    "GYUVIS_WELLBEING_REPLY",
+    "저는 안정적으로 대기 중입니다, 보스. 보스의 하루를 돕는 것이 제 상태를 가장 좋게 만듭니다.",
+)
+USER_TIRED_REPLY = os.getenv(
+    "GYUVIS_USER_TIRED_REPLY",
+    "고생 많으셨습니다 보스. 오늘은 무리해서 정리하려 하기보다, 가장 무거운 것 하나만 내려놓아도 충분합니다. 제가 옆에서 천천히 도와드리겠습니다.",
+)
+USER_BAD_DAY_REPLY = os.getenv(
+    "GYUVIS_USER_BAD_DAY_REPLY",
+    "그런 하루였군요, 보스. 지금은 해결책부터 찾기보다 잠깐 숨을 고르는 게 먼저일 수 있습니다. 필요하시면 제가 일정이나 할 일을 가볍게 정리해드리겠습니다.",
+)
+USER_GOOD_DAY_REPLY = os.getenv(
+    "GYUVIS_USER_GOOD_DAY_REPLY",
+    "다행입니다 보스. 좋은 흐름은 기록해두면 다음에도 다시 꺼내 쓰기 좋습니다. 오늘 잘된 점 하나만 남겨둘까요?",
+)
+SOFT_CONFIRM_ACK = os.getenv("GYUVIS_SOFT_CONFIRM_ACK", "네 보스. 현재 흐름대로 계속 진행하겠습니다.")
 
 
 class GyuvisWakeListener:
@@ -118,7 +142,7 @@ class GyuvisWakeListener:
         self._last_audio_debug_at = 0.0
         self._stay_awake = False
         self._last_hud_launch_at = 0.0
-        self._awaiting_evening_briefing = False
+        self._pending_briefing_period: str | None = None
 
     def run(self) -> None:
         self._log("웨이크 모드를 시작합니다. 박수 두 번 뒤에 '일어나'처럼 불러보세요.")
@@ -272,7 +296,7 @@ class GyuvisWakeListener:
         self._publish_subtitle(input_text=command_text)
         if self._looks_like_sleep_phrase(command_text):
             self._stay_awake = False
-            self._awaiting_evening_briefing = False
+            self._pending_briefing_period = None
             self._speak(SLEEP_ACKNOWLEDGEMENT)
             self._log("Pause command acknowledged. Returning to standby mode.")
             return
@@ -282,20 +306,33 @@ class GyuvisWakeListener:
 
         if self._looks_like_social_close(command_text):
             self._stay_awake = False
-            self._awaiting_evening_briefing = False
+            self._pending_briefing_period = None
             self._speak(SOCIAL_CLOSE_ACK)
             self._log("Social close acknowledged. Returning to standby mode.")
             return
 
-        if self._awaiting_evening_briefing:
+        if self._pending_briefing_period:
             if self._looks_like_affirmative(command_text):
-                self._awaiting_evening_briefing = False
-                self._speak(EVENING_BRIEFING_ACK)
-                briefing_text = self._build_evening_briefing_text()
+                briefing_period = self._pending_briefing_period
+                self._pending_briefing_period = None
+                self._speak(BRIEFING_ACK)
+                briefing_text = self._build_briefing_text(briefing_period)
                 self._speak(briefing_text)
                 return
 
-            self._awaiting_evening_briefing = False
+            self._pending_briefing_period = None
+
+        if self._handle_agent_detail_command(command_text):
+            return
+
+        if self._handle_briefing_command(command_text):
+            return
+
+        if self._handle_soft_confirmation(command_text):
+            return
+
+        if self._handle_social_dialogue(command_text):
+            return
 
         if self._handle_browser_command(command_text):
             return
@@ -309,12 +346,27 @@ class GyuvisWakeListener:
             self._speak("서버 연동이 꺼져 있습니다.")
 
     def _build_wake_greeting(self) -> str:
-        if EVENING_BRIEFING_ENABLED and datetime.now().hour >= EVENING_START_HOUR:
-            self._awaiting_evening_briefing = True
+        current_hour = datetime.now().hour
+        if EVENING_BRIEFING_ENABLED and current_hour >= EVENING_START_HOUR:
+            self._pending_briefing_period = "evening"
             return EVENING_GREETING
 
-        self._awaiting_evening_briefing = False
+        if current_hour < 12:
+            self._pending_briefing_period = "morning"
+            return MORNING_GREETING
+        if current_hour < EVENING_START_HOUR:
+            self._pending_briefing_period = "afternoon"
+            return AFTERNOON_GREETING
+        self._pending_briefing_period = None
         return GREETING
+
+    def _get_current_briefing_period(self) -> str:
+        current_hour = datetime.now().hour
+        if current_hour >= EVENING_START_HOUR:
+            return "evening"
+        if current_hour < 12:
+            return "morning"
+        return "afternoon"
 
     def _looks_like_affirmative(self, text: str) -> bool:
         normalized = self._normalize_text(text)
@@ -325,6 +377,127 @@ class GyuvisWakeListener:
     def _looks_like_social_close(self, text: str) -> bool:
         normalized = self._normalize_text(text)
         return any(self._normalize_text(phrase) in normalized for phrase in SOCIAL_CLOSE_PHRASES)
+
+    def _handle_agent_detail_command(self, text: str) -> bool:
+        normalized = self._normalize_text(text)
+        if "에이전트" not in normalized and "agent" not in normalized:
+            return False
+        if not any(token in normalized for token in ("열어", "보여", "상세", "확대", "펼쳐", "띄워", "확인")):
+            return False
+
+        agent_id = self._extract_agent_id(text)
+        if agent_id is None:
+            self._speak("어떤 에이전트를 열지 번호를 말씀해주시면 바로 표시하겠습니다.")
+            return True
+        if agent_id not in {1, 2, 3, 4}:
+            self._speak("현재 표시 가능한 에이전트는 1번부터 4번까지입니다.")
+            return True
+
+        try:
+            self._post_json(f"{SERVER_URL}/agent/standby-status/detail/{agent_id}", {})
+            self._speak(f"네 보스. 에이전트 {agent_id}번 상세 화면을 열겠습니다.")
+        except Exception as error:
+            self._log(f"에이전트 상세 화면 요청 실패: {error}")
+            self._speak("에이전트 상세 화면을 여는 중 문제가 발생했습니다.")
+        return True
+
+    def _extract_agent_id(self, text: str) -> int | None:
+        normalized = self._normalize_text(text)
+        digit_match = re.search(r"([1-4])번?", normalized)
+        if digit_match:
+            return int(digit_match.group(1))
+
+        word_numbers = {
+            "일": 1,
+            "한": 1,
+            "첫": 1,
+            "첫번째": 1,
+            "이": 2,
+            "두": 2,
+            "둘": 2,
+            "두번째": 2,
+            "삼": 3,
+            "세": 3,
+            "셋": 3,
+            "세번째": 3,
+            "사": 4,
+            "네": 4,
+            "넷": 4,
+            "네번째": 4,
+            "오": 5,
+        }
+        for token, value in word_numbers.items():
+            if f"{token}번" in normalized or f"{token}번째" in normalized:
+                return value
+        return None
+
+    def _handle_briefing_command(self, text: str) -> bool:
+        normalized = self._normalize_text(text)
+        briefing_targets = ("브리핑", "보고", "오늘정리", "하루정리", "상황정리")
+        if not any(target in normalized for target in briefing_targets):
+            return False
+
+        command_tokens = (
+            "진행",
+            "시작",
+            "해줘",
+            "해주세요",
+            "하세요",
+            "부탁",
+            "들려",
+            "알려",
+            "보여",
+            "말해",
+            "정리",
+            "보고",
+        )
+        if not any(token in normalized for token in command_tokens):
+            return False
+
+        briefing_period = self._pending_briefing_period or self._get_current_briefing_period()
+        self._pending_briefing_period = None
+        self._speak(BRIEFING_ACK)
+        self._speak(self._build_briefing_text(briefing_period))
+        return True
+
+    def _handle_soft_confirmation(self, text: str) -> bool:
+        normalized = self._normalize_text(text)
+        confirmation_tokens = (
+            "계속진행",
+            "진행하면될",
+            "그대로진행",
+            "그렇게해",
+            "그렇게하",
+            "오케이진행",
+            "좋아진행",
+            "그걸로해",
+            "그걸로가",
+            "괜찮아진행",
+        )
+        if any(token in normalized for token in confirmation_tokens):
+            self._speak(SOFT_CONFIRM_ACK)
+            return True
+        return False
+
+    def _handle_social_dialogue(self, text: str) -> bool:
+        normalized = self._normalize_text(text)
+        if any(token in normalized for token in ("너오늘어때", "규비스오늘어때", "기분어때", "상태어때", "괜찮아")):
+            self._speak(GYUVIS_WELLBEING_REPLY)
+            return True
+
+        if any(token in normalized for token in ("나힘들", "힘들다", "힘들어", "지쳤", "피곤해", "피곤하다", "번아웃")):
+            self._speak(USER_TIRED_REPLY)
+            return True
+
+        if any(token in normalized for token in ("우울", "속상", "짜증", "멘탈", "오늘별로", "오늘안좋", "최악", "죽겠", "빡세", "버거", "힘든하루")):
+            self._speak(USER_BAD_DAY_REPLY)
+            return True
+
+        if any(token in normalized for token in ("오늘좋", "기분좋", "잘됐", "행복", "뿌듯", "괜찮았", "나쁘지않")):
+            self._speak(USER_GOOD_DAY_REPLY)
+            return True
+
+        return False
 
     def _handle_browser_command(self, text: str) -> bool:
         normalized = self._normalize_text(text)
@@ -362,6 +535,46 @@ class GyuvisWakeListener:
 
     def _open_url(self, url: str) -> None:
         webbrowser.open(url)
+
+    def _build_briefing_text(self, period: str) -> str:
+        if period == "evening":
+            return self._build_evening_briefing_text()
+
+        endpoint = "morning" if period == "morning" else "today"
+        fallback = (
+            "오늘 등록된 일정은 모두 마무리되었습니다."
+            if period == "afternoon"
+            else "오늘은 크게 급한 건 없어 보입니다. 일정 확인만 하고 차분히 시작하시면 좋겠습니다."
+        )
+
+        try:
+            briefing = self._get_json(f"{SERVER_URL}/briefing/{endpoint}")
+        except Exception as error:
+            self._log(f"{period} briefing fetch failed: {error}")
+            return fallback
+
+        if endpoint == "morning":
+            headline = str(briefing.get("headline", "")).strip()
+            bullets = briefing.get("bullets") or []
+            bullet_text = " ".join(str(item).strip() for item in bullets if str(item).strip())
+            return " ".join(part for part in (headline, bullet_text) if part) or fallback
+
+        message = str(briefing.get("message", "")).strip()
+        schedules = briefing.get("schedules") or []
+        top_tasks = briefing.get("top_tasks") or []
+        schedule_text = ""
+        task_text = ""
+        if schedules:
+            first_schedule = schedules[0]
+            title = str(first_schedule.get("title", "")).strip()
+            start_time = str(first_schedule.get("start_time", "") or "").strip()
+            schedule_text = f"남은 주요 일정은 {title} {start_time}입니다.".strip()
+        else:
+            schedule_text = "오늘 등록된 일정은 모두 마무리되었습니다."
+        if top_tasks:
+            title = str(top_tasks[0].get("title", "")).strip()
+            task_text = f"확인할 할 일은 {title}부터 보시면 좋겠습니다."
+        return " ".join(part for part in (message, schedule_text, task_text) if part) or fallback
 
     def _build_evening_briefing_text(self) -> str:
         try:

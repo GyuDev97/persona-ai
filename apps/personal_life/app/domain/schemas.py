@@ -147,7 +147,7 @@ class NaturalCommandCreate(BaseModel):
 
 class NaturalCommandResponse(BaseModel):
     text: str
-    interpreted_as: Literal["task", "schedule", "capture", "answer", "desktop_action"]
+    interpreted_as: Literal["task", "schedule", "capture", "answer", "desktop_action", "briefing"]
     summary: str
     created_id: int
     created_type: str
