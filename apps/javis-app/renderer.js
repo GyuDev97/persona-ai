@@ -31,6 +31,7 @@ let recognition = null;
 let hasWelcomedBoss = false;
 let lastSeenAt = 0;
 let gestureLockUntil = performance.now() + 3200;
+const handMarkerHoldMs = 720;
 const trackedHands = [];
 const handConnections = [
   [0, 1], [1, 2], [2, 3], [3, 4],
@@ -40,6 +41,8 @@ const handConnections = [
   [13, 17], [17, 18], [18, 19], [19, 20],
   [0, 17]
 ];
+const fingertipLandmarkIndexes = new Set([4, 8, 12, 16, 20]);
+const palmLandmarkIndexes = [0, 5, 9, 13, 17];
 let graphFollowX = graphCenter.x;
 let graphFollowY = graphCenter.y;
 let graphScale = 1;
@@ -115,67 +118,67 @@ const particles = Array.from({ length: 220 }, () => ({
 }));
 
 const clusterLabels = [
-  { text: "gesture input", detail: "hand motion vector", angle: -1.28, radius: 0.68, dx: -34, dy: -12, align: "left", nodeIndex: 5 },
-  { text: "jarvis core", detail: "assistant kernel", angle: -0.52, radius: 0.42, dx: 18, dy: -18, align: "left", nodeIndex: 0 },
-  { text: "window control", detail: "desktop action bus", angle: 0.28, radius: 0.82, dx: 52, dy: 4, align: "left", nodeIndex: 7 },
-  { text: "voice layer", detail: "speech interface", angle: 1.12, radius: 0.52, dx: -18, dy: 24, align: "left", nodeIndex: 3 },
-  { text: "signal mesh", detail: "particle network", angle: 2.38, radius: 0.7, dx: -56, dy: 18, align: "right", nodeIndex: 6 },
-  { text: "tracking field", detail: "fingertip locked", angle: 3.02, radius: 0.62, dx: -54, dy: -12, align: "right", nodeIndex: 4 }
+  { text: "대화 인터페이스", detail: "음성 · 텍스트 · TTS 응답", angle: -1.28, radius: 0.68, dx: -34, dy: -12, align: "left", nodeIndex: 5 },
+  { text: "개인 운영 비서", detail: "브리핑 · 일정 · 루틴 체크", angle: -0.52, radius: 0.42, dx: 18, dy: -18, align: "left", nodeIndex: 0 },
+  { text: "PC 에이전트", detail: "브라우저 · 검색 · 결과 요약", angle: 0.28, radius: 0.82, dx: 52, dy: 4, align: "left", nodeIndex: 7 },
+  { text: "리마인드 / 실행", detail: "예약 · 할 일 · 빠른 메모", angle: 1.12, radius: 0.52, dx: -18, dy: 24, align: "left", nodeIndex: 3 },
+  { text: "재정 비서", detail: "지출 · 자산 · 소비 흐름", angle: 2.38, radius: 0.7, dx: -56, dy: 18, align: "right", nodeIndex: 6 },
+  { text: "개인 기억", detail: "성향 · 맥락 · 메모 기록", angle: 3.02, radius: 0.62, dx: -54, dy: -12, align: "right", nodeIndex: 4 }
 ];
 
 const detailPanels = {
-  "gesture input": {
-    title: "Gesture Input",
-    subtitle: "Hand motion vector analysis",
+  "대화 인터페이스": {
+    title: "대화 인터페이스",
+    subtitle: "음성 · 텍스트 · TTS 응답",
     lines: [
-      "Tracks fingertip position, pinch state, and palm spread.",
-      "Feeds graph follow, drag interaction, and zoom gestures.",
-      "Primary mode: index-tip anchor with low-latency smoothing."
+      "음성 입력과 텍스트 입력을 함께 처리합니다.",
+      "TTS 응답과 대화 히스토리를 연결합니다.",
+      "애매한 질문에는 선택지를 제안합니다."
     ]
   },
-  "jarvis core": {
-    title: "JARVIS Core",
-    subtitle: "Assistant kernel",
+  "개인 운영 비서": {
+    title: "개인 운영 비서",
+    subtitle: "브리핑 · 일정 · 루틴 체크",
     lines: [
-      "Coordinates HUD state, node physics, and gesture routing.",
-      "Keeps the interaction field stable while preserving motion.",
-      "Acts as the orchestration layer for visual modules."
+      "오늘, 아침, 저녁 브리핑을 정리합니다.",
+      "할 일 추천과 일정 정리를 지원합니다.",
+      "루틴 체크로 하루 운영을 돕습니다."
     ]
   },
-  "window control": {
-    title: "Window Control",
-    subtitle: "Desktop action bus",
+  "PC 에이전트": {
+    title: "PC 에이전트",
+    subtitle: "브라우저 · 검색 · 결과 요약",
     lines: [
-      "Routes swipe gestures to monitor movement actions.",
-      "Supports pinch-drag for window nudging and repositioning.",
-      "Two-hand spread can be remapped to contextual commands."
+      "브라우저 열기와 웹 검색을 실행합니다.",
+      "뉴스, 날씨, 일반 검색 결과를 요약합니다.",
+      "PC에서 반복 작업을 대행합니다."
     ]
   },
-  "voice layer": {
-    title: "Voice Layer",
-    subtitle: "Speech interface",
+  "리마인드 / 실행": {
+    title: "리마인드 / 실행",
+    subtitle: "예약 · 할 일 · 빠른 메모",
     lines: [
-      "Maintains Korean speech recognition and command triggers.",
-      "Can be extended into wake-word driven assistant mode.",
-      "Shares status feedback with the main HUD channel."
+      "리마인드를 예약하고 오늘 할 일을 안내합니다.",
+      "일정과 할 일을 자동으로 분류합니다.",
+      "빠른 메모를 즉시 저장합니다."
     ]
   },
-  "signal mesh": {
-    title: "Signal Mesh",
-    subtitle: "Particle network",
+  "재정 비서": {
+    title: "재정 비서",
+    subtitle: "지출 · 자산 · 소비 흐름",
     lines: [
-      "Displays distributed particle flow around the active cluster.",
-      "Reacts to hand proximity with repulsion and drift changes.",
-      "Designed to make the field feel alive rather than static."
+      "지출 브리핑과 자산 관리를 제공합니다.",
+      "자산 비중과 소비 흐름을 요약합니다.",
+      "현금 목표 시뮬레이션을 지원합니다."
     ]
   },
-  "tracking field": {
-    title: "Tracking Field",
-    subtitle: "Fingertip lock",
+  "개인 기억": {
+    title: "개인 기억",
+    subtitle: "성향 · 맥락 · 메모 기록",
     lines: [
-      "Indexes the nearest label and supports grab-to-reposition.",
-      "Uses card distance and anchor distance for selection.",
-      "Expanded mode can expose deeper per-node diagnostics."
+      "사용자 성향과 생활 패턴을 기억합니다.",
+      "대화 맥락과 메모 기록을 연결합니다.",
+      "개인화된 응답에 필요한 기억을 불러옵니다."
     ]
   }
 };
@@ -241,6 +244,51 @@ function isPinch(lm) {
 
 function pinchAmount(lm) {
   return clamp(dist(lm[4], lm[8]), 0.02, 0.24);
+}
+
+function getLandmarkBounds(lm) {
+  return lm.reduce((bounds, point) => ({
+    minX: Math.min(bounds.minX, point.x),
+    maxX: Math.max(bounds.maxX, point.x),
+    minY: Math.min(bounds.minY, point.y),
+    maxY: Math.max(bounds.maxY, point.y)
+  }), {
+    minX: Infinity,
+    maxX: -Infinity,
+    minY: Infinity,
+    maxY: -Infinity
+  });
+}
+
+function isLikelyHand(lm, handedness) {
+  if (!lm || lm.length < 21) return false;
+
+  const bounds = getLandmarkBounds(lm);
+  const width = (bounds.maxX - bounds.minX) * W;
+  const height = (bounds.maxY - bounds.minY) * H;
+  const diagonal = Math.hypot(width, height);
+  const score = handedness?.score ?? 1;
+  const wrist = lm[0];
+  const fingertips = [lm[4], lm[8], lm[12], lm[16], lm[20]];
+  const spread = fingertips.reduce((sum, point) => sum + dist(wrist, point), 0);
+
+  return score >= 0.72 && diagonal >= 58 && spread >= 0.2;
+}
+
+function toTrackedHand(handLm) {
+  const palm = handLm[0];
+  const fingertips = [handLm[4], handLm[8], handLm[12], handLm[16], handLm[20]];
+  const spread = fingertips.reduce((sum, point) => sum + dist(palm, point), 0);
+  const fingertip = handLm[8];
+
+  return {
+    x: (1 - fingertip.x) * W,
+    y: fingertip.y * H,
+    radius: clamp(spread * 260, 110, 220),
+    pinch: isPinch(handLm),
+    landmarks: handLm,
+    pinchDistance: pinchAmount(handLm)
+  };
 }
 
 function distanceToRect(px, py, rect) {
@@ -548,28 +596,84 @@ function drawHandSkeletons() {
   trackedHands.forEach((hand) => {
     if (!hand.landmarks) return;
 
-    ctx.strokeStyle = "rgba(125, 247, 255, 0.96)";
-    ctx.lineWidth = 1.9;
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = "rgba(65, 221, 255, 0.42)";
+    const points = hand.landmarks.map((point) => ({
+      x: (1 - point.x) * W,
+      y: point.y * H
+    }));
+
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = "rgba(72, 235, 255, 0.56)";
+    ctx.strokeStyle = "rgba(91, 241, 255, 0.18)";
+    ctx.lineWidth = 8;
 
     handConnections.forEach(([a, b]) => {
-      const p1 = hand.landmarks[a];
-      const p2 = hand.landmarks[b];
+      const p1 = points[a];
+      const p2 = points[b];
       ctx.beginPath();
-      ctx.moveTo((1 - p1.x) * W, p1.y * H);
-      ctx.lineTo((1 - p2.x) * W, p2.y * H);
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
       ctx.stroke();
     });
 
-    hand.landmarks.forEach((point, index) => {
-      const x = (1 - point.x) * W;
-      const y = point.y * H;
+    ctx.shadowBlur = 14;
+    ctx.strokeStyle = "rgba(126, 247, 255, 0.96)";
+    ctx.lineWidth = 2.2;
+
+    handConnections.forEach(([a, b]) => {
+      const p1 = points[a];
+      const p2 = points[b];
       ctx.beginPath();
-      ctx.fillStyle = index === 8 || index === 4 ? "rgba(228, 255, 255, 0.98)" : "rgba(103, 244, 255, 0.86)";
-      ctx.arc(x, y, index === 8 || index === 4 ? 4.5 : 2.6, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
     });
+
+    ctx.shadowBlur = 18;
+    ctx.fillStyle = "rgba(18, 60, 66, 0.24)";
+    ctx.strokeStyle = "rgba(167, 251, 255, 0.42)";
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    palmLandmarkIndexes.forEach((index, palmIndex) => {
+      const point = points[index];
+      if (palmIndex === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    });
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    points.forEach((point, index) => {
+      const isFingertip = fingertipLandmarkIndexes.has(index);
+      const isControlTip = index === 8 || index === 4;
+      const radius = isControlTip ? 6.2 : isFingertip ? 4.8 : 3;
+
+      ctx.beginPath();
+      ctx.fillStyle = isControlTip ? "rgba(244, 255, 255, 0.98)" : "rgba(114, 246, 255, 0.9)";
+      ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.strokeStyle = isControlTip ? "rgba(255, 255, 255, 0.92)" : "rgba(161, 249, 255, 0.62)";
+      ctx.lineWidth = isControlTip ? 1.7 : 1.1;
+      ctx.arc(point.x, point.y, radius + (isControlTip ? 8 : 3.5), 0, Math.PI * 2);
+      ctx.stroke();
+    });
+
+    if (hand.pinch) {
+      const thumb = points[4];
+      const index = points[8];
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.86)";
+      ctx.lineWidth = 1.4;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(thumb.x, thumb.y);
+      ctx.lineTo(index.x, index.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
   });
   ctx.restore();
 }
@@ -729,7 +833,7 @@ function drawDetailPanel() {
 
   ctx.fillStyle = "rgba(150, 242, 255, 0.72)";
   ctx.font = '13px "Segoe UI", "Noto Sans KR", sans-serif';
-  ctx.fillText("Two-hand expand opened this node detail.", x + 24, y + height - 20);
+  ctx.fillText("양손 벌리기로 이 노드의 상세 정보를 열었습니다.", x + 24, y + height - 20);
   ctx.restore();
 }
 
@@ -739,11 +843,8 @@ function draw() {
   stepGraph();
   drawParticles();
   drawClusterLabels();
-  drawGraph();
   drawHandSkeletons();
   drawHands();
-  drawDetailPanel();
-  drawMiniTopology();
   drawFrameMarks();
   drawScanlines();
 }
@@ -756,51 +857,37 @@ function setupHands() {
   hands.setOptions({
     maxNumHands: 2,
     modelComplexity: 1,
-    minDetectionConfidence: 0.62,
-    minTrackingConfidence: 0.62
+    minDetectionConfidence: 0.74,
+    minTrackingConfidence: 0.74
   });
 
   hands.onResults((results) => {
-    trackedHands.length = 0;
+    const now = performance.now();
 
-    if (!results.multiHandLandmarks || !results.multiHandLandmarks.length) {
+    const handsArr = (results.multiHandLandmarks || [])
+      .filter((handLm, index) => isLikelyHand(handLm, results.multiHandedness?.[index]));
+
+    if (!handsArr.length) {
       prevPalm = null;
-      if (performance.now() - lastSeenAt > 1600) {
+      if (now - lastSeenAt > handMarkerHoldMs) {
+        trackedHands.length = 0;
+      }
+      if (now - lastSeenAt > 1600) {
         setStatus("손을 화면에 보여주면 그래프가 반응합니다.");
       }
       return;
     }
 
-    lastSeenAt = performance.now();
-    const handsArr = results.multiHandLandmarks;
+    trackedHands.length = 0;
+    lastSeenAt = now;
     const lm = handsArr[0];
     const palm = lm[0];
-    const thumb = lm[4];
-    const index = lm[8];
-    const middle = lm[12];
-    const ring = lm[16];
-    const pinky = lm[20];
-    const spread =
-      dist(palm, thumb) +
-      dist(palm, index) +
-      dist(palm, middle) +
-      dist(palm, ring) +
-      dist(palm, pinky);
 
-    const now = performance.now();
     const primaryPinchDistance = pinchAmount(lm);
     gestureScaleBoost = clamp(0.75 + ((primaryPinchDistance - 0.02) / 0.22) * 1.55, 0.72, 2.4);
 
     handsArr.forEach((handLm) => {
-      const fingertip = handLm[8];
-      trackedHands.push({
-        x: (1 - fingertip.x) * W,
-        y: fingertip.y * H,
-        radius: clamp(spread * 260, 110, 220),
-        pinch: isPinch(handLm),
-        landmarks: handLm,
-        pinchDistance: pinchAmount(handLm)
-      });
+      trackedHands.push(toTrackedHand(handLm));
     });
 
     updateLabelInteraction(trackedHands[0]);
@@ -846,8 +933,8 @@ function setupHands() {
 
       if (twoHandDist > 0.28 && ((detailTargetIndex !== -1 && now - lastDetailExpand > 1100) || (detailTargetIndex === -1 && now - lastMaximize > 2200))) {
         if (detailTargetIndex !== -1) {
-          expandedDetailIndex = detailTargetIndex;
-          setStatus(`${clusterLabels[detailTargetIndex].text} 상세 패널 열림`);
+          selectedLabelIndex = detailTargetIndex;
+          setStatus(`${clusterLabels[detailTargetIndex].text} 노드 선택됨`);
           lastDetailExpand = now;
         } else {
           jarvis.maximize();
@@ -939,7 +1026,7 @@ window.addEventListener("keydown", (e) => {
   if (e.key.toLowerCase() === "t") jarvis.toggleAlwaysOnTop();
   if (e.key === "Escape") {
     expandedDetailIndex = -1;
-    setStatus("상세 패널 닫힘");
+    setStatus("선택 상태 초기화");
   }
 });
 
