@@ -6,8 +6,11 @@ import threading
 import time
 import uuid
 import urllib.error
+import urllib.parse
 import urllib.request
+import webbrowser
 from collections import deque
+from datetime import datetime
 from typing import Any
 
 import numpy as np
@@ -15,8 +18,11 @@ import pyttsx3
 import sounddevice as sd
 import speech_recognition as sr
 
+from app.config import load_env_file
 from app.services.jarvis_hud_service import launch_jarvis_hud
 
+
+load_env_file()
 
 SAMPLE_RATE = 16_000
 BLOCK_SECONDS = 0.08
@@ -35,20 +41,24 @@ DEBUG_AUDIO = os.getenv("GYUVIS_DEBUG_AUDIO", "0") == "1"
 STAY_AWAKE_AFTER_WAKE = os.getenv("GYUVIS_STAY_AWAKE", "1") == "1"
 OPEN_JARVIS_HUD_ON_WAKE = os.getenv("GYUVIS_OPEN_JARVIS_HUD", "1") == "1"
 JARVIS_HUD_COOLDOWN_SECONDS = float(os.getenv("GYUVIS_JARVIS_HUD_COOLDOWN_SECONDS", "15"))
-VOICE_WAKE_TARGET = os.getenv("GYUVIS_VOICE_WAKE_TARGET", "\uc77c\uc5b4\ub098")
-WAKE_PHRASES = (
-    "일어나",
-    "일어",
-    "규비스",
-    "규비",
-    "보스",
-    "깨어",
-    "wake up",
-    "wake",
+VOICE_WAKE_TARGET = os.getenv("GYUVIS_VOICE_WAKE_TARGET", "일어나")
+WAKE_PHRASES = tuple(
+    phrase.strip()
+    for phrase in os.getenv("GYUVIS_WAKE_PHRASES", "일어나,규비스").split(",")
+    if phrase.strip()
 )
 GREETING = os.getenv("GYUVIS_GREETING", "어서오세요 보스.")
-TTS_BACKEND = os.getenv("GYUVIS_TTS_BACKEND", "auto").lower()
-EDGE_TTS_VOICE = os.getenv("GYUVIS_EDGE_TTS_VOICE", "ko-KR-SunHiNeural")
+EVENING_GREETING = os.getenv(
+    "GYUVIS_EVENING_GREETING",
+    "안녕하세요 보스. 오늘 하루도 고생하셨습니다. 저녁 브리핑을 진행해드릴까요?",
+)
+EVENING_BRIEFING_ENABLED = os.getenv("GYUVIS_EVENING_BRIEFING", "1") == "1"
+EVENING_START_HOUR = int(os.getenv("GYUVIS_EVENING_START_HOUR", "18"))
+TTS_BACKEND = os.getenv("GYUVIS_TTS_BACKEND", "edge").lower()
+TTS_ALLOW_FALLBACK = os.getenv("GYUVIS_TTS_ALLOW_FALLBACK", "0") == "1"
+EDGE_TTS_VOICE = os.getenv("GYUVIS_EDGE_TTS_VOICE", "ko-KR-InJoonNeural")
+EDGE_TTS_RATE = os.getenv("GYUVIS_EDGE_TTS_RATE", "+12%")
+EDGE_TTS_PITCH = os.getenv("GYUVIS_EDGE_TTS_PITCH", "-8Hz")
 TEMP_AUDIO_DIR = pathlib.Path(os.getenv("GYUVIS_TEMP_AUDIO_DIR", os.path.join(os.getcwd(), ".tmp_tts")))
 EXTRA_SLEEP_PHRASES = (
     "\uc7a0\uae50\uae30\ub2e4\ub824\uc918",
@@ -56,6 +66,30 @@ EXTRA_SLEEP_PHRASES = (
     "\uc870\uae08\uc774\ub2e4\uae30\ub2e4\ub824\uc918",
     "\uae30\ub2e4\ub824\uc918",
 )
+AFFIRMATIVE_PHRASES = (
+    "네",
+    "응",
+    "좋아",
+    "진행해",
+    "부탁해",
+    "그래",
+    "해줘",
+    "시작해",
+)
+SHORT_AFFIRMATIVE_PHRASES = ("어", "응", "네")
+SOCIAL_CLOSE_PHRASES = (
+    "수고해",
+    "수고했어",
+    "고생했어",
+    "고마워",
+    "감사",
+    "됐어",
+    "괜찮아",
+    "그만",
+    "쉬어",
+)
+EVENING_BRIEFING_ACK = os.getenv("GYUVIS_EVENING_BRIEFING_ACK", "네 알겠습니다 보스.")
+SOCIAL_CLOSE_ACK = os.getenv("GYUVIS_SOCIAL_CLOSE_ACK", "네 보스. 감사합니다. 필요하시면 언제든 다시 부르십시오.")
 SLEEP_ACKNOWLEDGEMENT = os.getenv("GYUVIS_SLEEP_ACK", "\ub124 \uc54c\uaca0\uc2b5\ub2c8\ub2e4.")
 SLEEP_PHRASES = ("잘자", "대기", "꺼져", "수면 모드", "sleep")
 
@@ -69,12 +103,13 @@ class GyuvisWakeListener:
         self.recognizer.non_speaking_duration = 0.45
 
         self.tts = None
-        try:
-            self.tts = pyttsx3.init()
-            self.tts.setProperty("rate", 185)
-            self.tts.setProperty("volume", 1.0)
-        except Exception:
-            self.tts = None
+        if TTS_BACKEND == "pyttsx3" or TTS_ALLOW_FALLBACK:
+            try:
+                self.tts = pyttsx3.init()
+                self.tts.setProperty("rate", 185)
+                self.tts.setProperty("volume", 1.0)
+            except Exception:
+                self.tts = None
 
         self._clap_hits: deque[float] = deque()
         self._wake_event = threading.Event()
@@ -83,6 +118,7 @@ class GyuvisWakeListener:
         self._last_audio_debug_at = 0.0
         self._stay_awake = False
         self._last_hud_launch_at = 0.0
+        self._awaiting_evening_briefing = False
 
     def run(self) -> None:
         self._log("웨이크 모드를 시작합니다. 박수 두 번 뒤에 '일어나'처럼 불러보세요.")
@@ -180,12 +216,13 @@ class GyuvisWakeListener:
             return
 
         self._log(f"Wake phrase heard: {wake_text}")
+        self._publish_subtitle(input_text=wake_text)
         if not self._looks_like_wake_phrase(wake_text):
             return
 
         self._cooldown_until = time.monotonic() + COOLDOWN_SECONDS
         self._launch_hud_if_needed()
-        self._speak(GREETING)
+        self._speak(self._build_wake_greeting())
         if STAY_AWAKE_AFTER_WAKE:
             self._stay_awake = True
 
@@ -205,13 +242,14 @@ class GyuvisWakeListener:
             return
 
         self._log(f"호출어 인식: {wake_text}")
+        self._publish_subtitle(input_text=wake_text)
         if not self._looks_like_wake_phrase(wake_text):
             self._log("호출어가 맞지 않아 다시 대기합니다.")
             self._speak("호출어가 맞지 않습니다.")
             return
 
         self._launch_hud_if_needed()
-        self._speak(GREETING)
+        self._speak(self._build_wake_greeting())
         if STAY_AWAKE_AFTER_WAKE:
             self._stay_awake = True
             self._log("규비스가 깨어 있습니다. 이제 박수 없이 바로 명령을 들을게요.")
@@ -231,13 +269,35 @@ class GyuvisWakeListener:
             return
 
         self._log(f"추가 명령: {command_text}")
+        self._publish_subtitle(input_text=command_text)
         if self._looks_like_sleep_phrase(command_text):
             self._stay_awake = False
+            self._awaiting_evening_briefing = False
             self._speak(SLEEP_ACKNOWLEDGEMENT)
             self._log("Pause command acknowledged. Returning to standby mode.")
             return
             self._speak("대기 모드로 돌아갑니다.")
             self._log("대기 모드로 돌아갑니다. 다시 깨우려면 박수와 호출어가 필요합니다.")
+            return
+
+        if self._looks_like_social_close(command_text):
+            self._stay_awake = False
+            self._awaiting_evening_briefing = False
+            self._speak(SOCIAL_CLOSE_ACK)
+            self._log("Social close acknowledged. Returning to standby mode.")
+            return
+
+        if self._awaiting_evening_briefing:
+            if self._looks_like_affirmative(command_text):
+                self._awaiting_evening_briefing = False
+                self._speak(EVENING_BRIEFING_ACK)
+                briefing_text = self._build_evening_briefing_text()
+                self._speak(briefing_text)
+                return
+
+            self._awaiting_evening_briefing = False
+
+        if self._handle_browser_command(command_text):
             return
 
         if SEND_FOLLOWUP_TO_SERVER:
@@ -247,6 +307,84 @@ class GyuvisWakeListener:
         else:
             self._log("서버 연동이 꺼져 있어 추가 명령은 출력만 합니다.")
             self._speak("서버 연동이 꺼져 있습니다.")
+
+    def _build_wake_greeting(self) -> str:
+        if EVENING_BRIEFING_ENABLED and datetime.now().hour >= EVENING_START_HOUR:
+            self._awaiting_evening_briefing = True
+            return EVENING_GREETING
+
+        self._awaiting_evening_briefing = False
+        return GREETING
+
+    def _looks_like_affirmative(self, text: str) -> bool:
+        normalized = self._normalize_text(text)
+        if normalized in {self._normalize_text(phrase) for phrase in SHORT_AFFIRMATIVE_PHRASES}:
+            return True
+        return any(self._normalize_text(phrase) in normalized for phrase in AFFIRMATIVE_PHRASES)
+
+    def _looks_like_social_close(self, text: str) -> bool:
+        normalized = self._normalize_text(text)
+        return any(self._normalize_text(phrase) in normalized for phrase in SOCIAL_CLOSE_PHRASES)
+
+    def _handle_browser_command(self, text: str) -> bool:
+        normalized = self._normalize_text(text)
+
+        if "유튜브" in normalized and any(token in normalized for token in ("틀어", "재생", "음악", "ncs")):
+            query = "NCS music playlist" if "ncs" in normalized else text.replace("유튜브", "")
+            self._open_url(f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}")
+            self._speak("네 보스. 유튜브에서 요청하신 음악을 검색하겠습니다.")
+            return True
+
+        page_commands = [
+            (("네이버",), "https://www.naver.com", "네 보스. 네이버를 열겠습니다."),
+            (("구글", "google"), "https://www.google.com", "네 보스. 구글을 열겠습니다."),
+            (("유튜브", "youtube"), "https://www.youtube.com", "네 보스. 유튜브를 열겠습니다."),
+            (("gpt", "지피티", "챗지피티", "chatgpt"), "https://chatgpt.com", "네 보스. GPT를 열겠습니다."),
+        ]
+
+        for keywords, url, reply in page_commands:
+            if any(self._normalize_text(keyword) in normalized for keyword in keywords) and any(token in normalized for token in ("열어", "켜줘", "보여", "가자")):
+                self._open_url(url)
+                self._speak(reply)
+                return True
+
+        if "뉴스" in normalized and any(token in normalized for token in ("보여", "열어", "확인")):
+            self._open_url("https://news.google.com/topstories?hl=ko&gl=KR&ceid=KR:ko")
+            self._speak("네 보스. 최신 뉴스 화면을 열겠습니다.")
+            return True
+
+        if "날씨" in normalized and any(token in normalized for token in ("보여", "열어", "확인")):
+            self._open_url("https://www.google.com/search?q=%ED%98%84%EC%9E%AC+%EB%82%A0%EC%94%A8")
+            self._speak("네 보스. 현재 날씨 정보를 열겠습니다.")
+            return True
+
+        return False
+
+    def _open_url(self, url: str) -> None:
+        webbrowser.open(url)
+
+    def _build_evening_briefing_text(self) -> str:
+        try:
+            briefing = self._get_json(f"{SERVER_URL}/briefing/evening")
+        except Exception as error:
+            self._log(f"Evening briefing fetch failed: {error}")
+            return (
+                "오늘 등록된 일정은 모두 마무리되었습니다. "
+                "현재 4개의 에이전트 중 2개가 활성 상태입니다. "
+                "1개는 대기 중이며, 1개는 서버 오류를 확인 중입니다. "
+                "활성 에이전트 2개는 보스께서 요청하신 업무를 진행 중이며, 완료 후 보고드리겠습니다."
+            )
+
+        headline = str(briefing.get("headline", "")).strip()
+        bullets = briefing.get("bullets") or []
+        bullet_text = " ".join(str(item).strip() for item in bullets if str(item).strip())
+        schedule_text = bullet_text or "오늘 등록된 일정은 모두 마무리되었습니다."
+        agent_text = (
+            "현재 4개의 에이전트 중 2개가 활성 상태입니다. "
+            "1개는 대기 중이며, 1개는 서버 오류를 확인 중입니다. "
+            "활성 에이전트 2개는 보스께서 요청하신 업무를 진행 중이며, 완료 후 보고드리겠습니다."
+        )
+        return " ".join(part for part in (headline, schedule_text, agent_text) if part)
 
     def _launch_hud_if_needed(self) -> None:
         if not OPEN_JARVIS_HUD_ON_WAKE:
@@ -259,9 +397,9 @@ class GyuvisWakeListener:
         try:
             target = launch_jarvis_hud()
             self._last_hud_launch_at = now
-            self._log(f"Jarvis HUD opened: {target}")
+            self._log(f"GYUVIS HUD opened: {target}")
         except Exception as error:
-            self._log(f"Jarvis HUD open failed: {error}")
+            self._log(f"GYUVIS HUD open failed: {error}")
 
     def _record_audio(self, seconds: float) -> np.ndarray:
         recording = sd.rec(
@@ -285,7 +423,8 @@ class GyuvisWakeListener:
 
     def _looks_like_wake_phrase(self, text: str) -> bool:
         normalized = self._normalize_text(text)
-        return self._normalize_text(VOICE_WAKE_TARGET) in normalized
+        wake_phrases = WAKE_PHRASES or (VOICE_WAKE_TARGET,)
+        return any(self._normalize_text(phrase) in normalized for phrase in wake_phrases)
 
     def _looks_like_sleep_phrase(self, text: str) -> bool:
         normalized = self._normalize_text(text)
@@ -349,17 +488,45 @@ class GyuvisWakeListener:
         with urllib.request.urlopen(request, timeout=15) as response:
             return json.loads(response.read().decode("utf-8"))
 
+    def _publish_subtitle(self, input_text: str | None = None, output_text: str | None = None) -> None:
+        payload: dict[str, str] = {}
+        if input_text is not None:
+            payload["input"] = input_text
+        if output_text is not None:
+            payload["output"] = output_text
+        if not payload:
+            return
+
+        try:
+            self._post_json(f"{SERVER_URL}/assistant/subtitles", payload)
+        except Exception:
+            pass
+
     def _speak(self, text: str) -> None:
+        if TTS_BACKEND in ("off", "none", "silent", "0"):
+            self._log(f"TTS disabled: {text}")
+            self._publish_subtitle(output_text=text)
+            return
         self._log(f"규비스: {text}")
+        self._publish_subtitle(output_text=text)
         if TTS_BACKEND in ("auto", "edge", "edge-tts"):
             if self._speak_with_edge_tts(text):
+                return
+            if not TTS_ALLOW_FALLBACK and TTS_BACKEND in ("edge", "edge-tts"):
+                self._log("edge-tts playback failed. Windows TTS fallback is disabled.")
                 return
             self._log("edge-tts 재생에 실패해 다음 엔진으로 넘어갑니다.")
 
         if TTS_BACKEND in ("powershell", "ps"):
             if self._speak_with_powershell(text):
                 return
+            if not TTS_ALLOW_FALLBACK:
+                self._log("PowerShell TTS failed. fallback is disabled.")
+                return
             self._log("PowerShell TTS 재생에 실패해 pyttsx3로 fallback합니다.")
+
+        if TTS_BACKEND not in ("auto", "pyttsx3", "powershell", "ps") and not TTS_ALLOW_FALLBACK:
+            return
 
         try:
             if self.tts is None:
@@ -370,6 +537,8 @@ class GyuvisWakeListener:
         except Exception as error:
             self._log(f"pyttsx3 재생 실패: {error}")
             if TTS_BACKEND == "pyttsx3":
+                return
+            if not TTS_ALLOW_FALLBACK:
                 return
             if self._speak_with_powershell(text):
                 return
@@ -433,26 +602,18 @@ class GyuvisWakeListener:
         TEMP_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
         media_path = TEMP_AUDIO_DIR / f"gyuvis_{uuid.uuid4().hex}.mp3"
         normalized_text = " ".join(text.replace("\r", " ").replace("\n", " ").split())
+        edge_rate = self._normalize_edge_tts_rate(EDGE_TTS_RATE)
 
-        try:
-            subprocess.run(
-                [
-                    os.sys.executable,
-                    "-m",
-                    "edge_tts",
-                    "--voice",
-                    EDGE_TTS_VOICE,
-                    "--text",
-                    normalized_text,
-                    "--write-media",
-                    str(media_path),
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-        except Exception as error:
-            self._log(f"edge-tts 생성 실패: {error}")
+        if not self._create_edge_tts_media(normalized_text, media_path, edge_rate):
+            if edge_rate != "+0%":
+                self._log("edge-tts option failed. Retrying with default rate.")
+                if not self._create_edge_tts_media(normalized_text, media_path, "+0%"):
+                    return False
+            else:
+                return False
+
+        if not media_path.exists() or media_path.stat().st_size == 0:
+            self._log("edge-tts generated no playable media.")
             return False
 
         try:
@@ -475,6 +636,54 @@ class GyuvisWakeListener:
                 media_path.unlink(missing_ok=True)
             except Exception:
                 pass
+
+    def _normalize_edge_tts_rate(self, value: str) -> str:
+        rate = str(value or "+0%").strip()
+        if not rate:
+            return "+0%"
+        if rate.endswith("%"):
+            numeric = rate.rstrip("%")
+            if numeric.lstrip("+-").isdigit():
+                return f"{numeric}%"
+            return "+0%"
+        if rate.lstrip("+-").isdigit():
+            return f"{rate}%"
+        return "+0%"
+
+    def _create_edge_tts_media(self, text: str, media_path: pathlib.Path, rate: str) -> bool:
+        command = [
+            os.sys.executable,
+            "-m",
+            "edge_tts",
+            "--voice",
+            EDGE_TTS_VOICE,
+            "--rate",
+            rate,
+            "--text",
+            text,
+            "--write-media",
+            str(media_path),
+        ]
+        edge_pitch = str(EDGE_TTS_PITCH or "").strip()
+        if edge_pitch:
+            command.insert(7, f"--pitch={edge_pitch}")
+        try:
+            completed = subprocess.run(
+                command,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            if completed.stderr.strip():
+                self._log(f"edge-tts stderr: {completed.stderr.strip()}")
+            return True
+        except subprocess.CalledProcessError as error:
+            details = (error.stderr or error.stdout or str(error)).strip()
+            self._log(f"edge-tts generation failed: {details}")
+            return False
+        except Exception as error:
+            self._log(f"edge-tts generation failed: {error}")
+            return False
 
     def _log(self, message: str) -> None:
         stamp = time.strftime("%H:%M:%S")

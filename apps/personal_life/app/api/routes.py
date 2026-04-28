@@ -3,6 +3,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 
 from ..domain.schemas import (
     AgentTaskClaimRequest,
@@ -43,6 +44,7 @@ from ..services.agent_task_service import (
     get_agent_task,
     list_agent_tasks,
 )
+from ..services.agent_standby_service import focus_agent, get_agent_standby_status
 from ..config import get_settings
 from ..services.asset_service import build_asset_summary, create_asset, list_assets, update_asset
 from ..services.briefing_service import build_evening_briefing, build_morning_briefing, build_today_briefing
@@ -55,11 +57,19 @@ from ..services.natural_language_service import process_natural_command
 from ..services.reminder_service import list_reminders
 from ..services.routine_service import create_routine, create_routine_checkin, list_routines
 from ..services.schedule_service import create_schedule, list_schedules
+from ..services.subtitle_service import get_subtitles, update_subtitles
 from ..services.task_service import create_task, list_tasks, mark_task_done
 
 router = APIRouter()
 FRONTEND_PATH = Path(__file__).resolve().parents[1] / "frontend" / "index.html"
 FRONTEND_DIR = Path(__file__).resolve().parents[1] / "frontend"
+GYUVIS_HUD_DIR = Path(__file__).resolve().parents[3] / "javis-app"
+GYUVIS_STANDBY_V2_PATH = GYUVIS_HUD_DIR / "standby-v2.html"
+
+
+class AssistantSubtitleUpdate(BaseModel):
+    input: str | None = None
+    output: str | None = None
 
 @router.get("/", include_in_schema=False)
 def frontend() -> FileResponse:
@@ -73,6 +83,14 @@ def frontend_pages(page_name: str):
         return FileResponse(file_path)
 
     raise HTTPException(status_code=404, detail="Page not found")
+
+
+@router.get("/gyuvis/standby-v2", include_in_schema=False)
+def gyuvis_standby_v2() -> FileResponse:
+    if not GYUVIS_STANDBY_V2_PATH.exists():
+        raise HTTPException(status_code=404, detail="GYUVIS standby UI not found")
+
+    return FileResponse(GYUVIS_STANDBY_V2_PATH)
     
 @router.get("/health")
 def health_check() -> dict[str, str]:
@@ -168,6 +186,26 @@ def post_agent_task_complete(task_id: int, payload: AgentTaskCompleteRequest) ->
 @router.post("/agent/tasks/{task_id}/fail", response_model=AgentTaskResponse)
 def post_agent_task_fail(task_id: int, payload: AgentTaskFailRequest) -> AgentTaskResponse:
     return fail_agent_task(task_id, payload.error_message)
+
+
+@router.get("/agent/standby-status")
+def get_agent_standby_status_route() -> dict:
+    return get_agent_standby_status()
+
+
+@router.post("/agent/standby-status/focus/{agent_id}")
+def post_agent_standby_focus(agent_id: int) -> dict:
+    return focus_agent(agent_id if agent_id > 0 else None)
+
+
+@router.get("/assistant/subtitles")
+def get_assistant_subtitles() -> dict:
+    return get_subtitles()
+
+
+@router.post("/assistant/subtitles")
+def post_assistant_subtitles(payload: AssistantSubtitleUpdate) -> dict:
+    return update_subtitles(input_text=payload.input, output_text=payload.output)
 
 
 @router.get("/conversations", response_model=list[ConversationMessageResponse])

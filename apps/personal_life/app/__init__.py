@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from .api.routes import router
 from .config import load_env_file
@@ -12,6 +13,14 @@ def create_app() -> FastAPI:
         title="Personal Life Assistant",
         version="0.1.0",
         description="A lightweight personal assistant API for daily briefings and quick capture.",
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     initialize_database()

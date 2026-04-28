@@ -12,6 +12,7 @@ const jarvis = window.jarvis || {
   restore: () => {},
   toggleAlwaysOnTop: () => {},
   nudge: () => {},
+  openExternal: (url) => window.open(url, "_blank", "noopener,noreferrer"),
   onStatus: () => {}
 };
 
@@ -27,6 +28,7 @@ let lastSwipe = 0;
 let lastMaximize = 0;
 let lastDrag = 0;
 let voiceOn = false;
+let voiceShouldListen = true;
 let recognition = null;
 let hasWelcomedBoss = false;
 let lastSeenAt = 0;
@@ -57,7 +59,7 @@ let lastSelectedLabelIndex = -1;
 let lastSelectedAt = 0;
 
 const labels = [
-  "JARVIS CORE",
+  "GYUVIS CORE",
   "Human Context",
   "Affective Loop",
   "Voice Control",
@@ -984,17 +986,36 @@ function setupVoice() {
 
   recognition.onend = () => {
     voiceOn = false;
-    voiceState.textContent = "음성 OFF";
+    if (!voiceShouldListen) {
+      voiceState.textContent = "음성 OFF";
+      return;
+    }
+
+    voiceState.textContent = "음성 재시작 중";
+    window.setTimeout(() => {
+      try {
+        recognition.start();
+      } catch {
+        voiceState.textContent = "음성 OFF";
+      }
+    }, 500);
   };
 
   recognition.onerror = (event) => {
     setStatus(`음성 인식 오류: ${event.error}`);
   };
 
-  recognition.onresult = (event) => {
+  recognition.onresult = async (event) => {
     const last = event.results[event.results.length - 1];
     const text = last[0].transcript.trim().toLowerCase();
     setStatus(`음성: ${text}`);
+
+    try {
+      const wakewordHandled = await window.JarvisWakeword?.handleTranscript(text);
+      if (wakewordHandled) return;
+    } catch {
+      setStatus("GYUVIS 명령 처리 중 오류가 발생했습니다.");
+    }
 
     if (text.includes("오른쪽") || text.includes("다음")) jarvis.moveMonitor("right");
     if (text.includes("왼쪽") || text.includes("이전")) jarvis.moveMonitor("left");
@@ -1006,14 +1027,24 @@ function setupVoice() {
 
   voiceBtn.addEventListener("click", () => {
     if (!recognition) return;
-    if (voiceOn) recognition.stop();
-    else recognition.start();
+    if (voiceOn) {
+      voiceShouldListen = false;
+      recognition.stop();
+    } else {
+      voiceShouldListen = true;
+      recognition.start();
+    }
   });
 
   window.addEventListener("keydown", (e) => {
     if (e.key.toLowerCase() === "v") {
-      if (voiceOn) recognition.stop();
-      else recognition.start();
+      if (voiceOn) {
+        voiceShouldListen = false;
+        recognition.stop();
+      } else {
+        voiceShouldListen = true;
+        recognition.start();
+      }
     }
   });
 }
@@ -1036,6 +1067,15 @@ setupVoice();
 
 window.addEventListener("load", () => {
   setTimeout(() => {
-    speakWelcomeGreeting();
+    if (localStorage.getItem("jarvisWelcomeOnLoad") === "1") {
+      speakWelcomeGreeting();
+    }
+    if (recognition && !voiceOn && voiceShouldListen) {
+      try {
+        recognition.start();
+      } catch {
+        setStatus("음성 인식을 시작하지 못했습니다. V 키나 음성 버튼으로 다시 시도해 주세요.");
+      }
+    }
   }, 700);
 });

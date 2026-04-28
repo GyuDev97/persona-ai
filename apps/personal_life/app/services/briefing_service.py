@@ -125,6 +125,31 @@ def build_evening_briefing() -> BriefingDigestResponse:
     )
 
 
+def build_evening_briefing() -> BriefingDigestResponse:
+    briefing = build_today_briefing()
+    open_tasks = briefing.top_tasks
+    bullets: list[str] = []
+
+    bullets.append(f"오늘 완료한 할 일은 {briefing.completed_today_count}개, 기록한 메모는 {briefing.capture_count_today}개입니다.")
+    if open_tasks:
+        bullets.append(f"내일로 넘길 후보는 '{open_tasks[0].title}'부터 보시면 정리가 쉬울 것 같습니다.")
+    elif not briefing.schedules:
+        bullets.append("오늘 등록된 일정은 모두 마무리되었습니다.")
+    if briefing.schedules:
+        bullets.append(f"내일을 대비해 '{briefing.schedules[0].title}' 관련 준비물을 미리 적어두면 아침이 가벼워집니다.")
+    if briefing.total_routine_count > 0:
+        bullets.append(
+            f"루틴은 오늘 {briefing.completed_routine_count} / {briefing.total_routine_count} 진행했습니다. "
+            "조금이라도 챙겼다면 흐름은 유지된 것으로 봐도 좋겠습니다."
+        )
+
+    return BriefingDigestResponse(
+        period="evening",
+        headline="저녁에는 남은 일보다 내일 아침을 가볍게 만드는 정리만 해두면 좋겠습니다.",
+        bullets=bullets[:4],
+    )
+
+
 def build_briefing_insights(
     open_task_count: int,
     schedule_count_today: int,

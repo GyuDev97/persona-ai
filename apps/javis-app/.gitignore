@@ -1,9 +1,11 @@
 .env
 data/
 __pycache__/
-app/__pycache__/
-app/api/__pycache__/
-app/domain/__pycache__/
-app/services/__pycache__/
-app/storage/__pycache__/
-node_modules
+*.py[cod]
+node_modules/
+.tmp_tts/
+.tmp_hud_browser_profile/
+dist/
+build/
+out/
+*.log
