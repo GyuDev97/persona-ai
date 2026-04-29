@@ -11,7 +11,7 @@ from .schedule_service import count_schedules_for_day, list_schedules
 from .task_service import count_completed_today, count_open_tasks, list_tasks
 
 
-def build_today_briefing() -> BriefingResponse:
+def build_today_briefing(include_opinions: bool = True) -> BriefingResponse:
     today = date.today().isoformat()
     open_task_count = count_open_tasks()
     completed_today_count = count_completed_today(today)
@@ -29,14 +29,18 @@ def build_today_briefing() -> BriefingResponse:
         completed_routine_count=completed_routine_count,
         total_routine_count=total_routine_count,
     )
-    opinions = build_assistant_opinions(
-        today=today,
-        open_task_count=open_task_count,
-        schedule_count_today=schedule_count_today,
-        completed_routine_count=completed_routine_count,
-        total_routine_count=total_routine_count,
-        top_tasks=top_tasks,
-        schedules=schedules,
+    opinions = (
+        build_assistant_opinions(
+            today=today,
+            open_task_count=open_task_count,
+            schedule_count_today=schedule_count_today,
+            completed_routine_count=completed_routine_count,
+            total_routine_count=total_routine_count,
+            top_tasks=top_tasks,
+            schedules=schedules,
+        )
+        if include_opinions
+        else []
     )
 
     prefers_directness = get_memory_value("communication_style", "prefers_directness")
@@ -78,7 +82,7 @@ def build_today_briefing() -> BriefingResponse:
 
 
 def build_morning_briefing() -> BriefingDigestResponse:
-    briefing = build_today_briefing()
+    briefing = build_today_briefing(include_opinions=False)
     due_reminders = list_due_reminders(briefing.today, limit=3)
 
     bullets: list[str] = []
@@ -103,7 +107,7 @@ def build_morning_briefing() -> BriefingDigestResponse:
 
 
 def build_evening_briefing() -> BriefingDigestResponse:
-    briefing = build_today_briefing()
+    briefing = build_today_briefing(include_opinions=False)
     open_tasks = briefing.top_tasks
     bullets: list[str] = []
 
@@ -126,7 +130,7 @@ def build_evening_briefing() -> BriefingDigestResponse:
 
 
 def build_evening_briefing() -> BriefingDigestResponse:
-    briefing = build_today_briefing()
+    briefing = build_today_briefing(include_opinions=False)
     open_tasks = briefing.top_tasks
     bullets: list[str] = []
 

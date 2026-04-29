@@ -54,8 +54,12 @@ data/
 # GyuVIS local runtime artifacts
 .tmp_tts/
 .tmp_hud_browser_profile/
+.tmp_naver_blog_profile/
+.tmp_comtypes_gen/
 apps/personal_life/.tmp_tts/
 apps/personal_life/.tmp_hud_browser_profile/
+apps/personal_life/.tmp_naver_blog_profile/
+apps/personal_life/.tmp_comtypes_gen/
 apps/javis-app/.tmp_tts/
 apps/javis-app/.tmp_hud_browser_profile/
 

@@ -1,8 +1,10 @@
 import json
+import json
 import os
 import pathlib
 import re
 import subprocess
+import sys
 import threading
 import time
 import uuid
@@ -32,10 +34,17 @@ CLAP_MIN_GAP_SECONDS = 0.10
 CLAP_MAX_WINDOW_SECONDS = 1.6
 CLAP_COUNT_TO_WAKE = int(os.getenv("GYUVIS_CLAP_COUNT", "2"))
 WAKE_RECORD_SECONDS = float(os.getenv("GYUVIS_WAKE_RECORD_SECONDS", "4.0"))
-FOLLOWUP_RECORD_SECONDS = float(os.getenv("GYUVIS_FOLLOWUP_RECORD_SECONDS", "6.0"))
+FOLLOWUP_RECORD_SECONDS = float(os.getenv("GYUVIS_FOLLOWUP_RECORD_SECONDS", "8.0"))
+FOLLOWUP_MAX_RECORD_SECONDS = float(os.getenv("GYUVIS_FOLLOWUP_MAX_RECORD_SECONDS", "14.0"))
+FOLLOWUP_SILENCE_SECONDS = float(os.getenv("GYUVIS_FOLLOWUP_SILENCE_SECONDS", "1.2"))
+FOLLOWUP_VOICE_THRESHOLD = float(os.getenv("GYUVIS_FOLLOWUP_VOICE_THRESHOLD", "0.018"))
 COOLDOWN_SECONDS = float(os.getenv("GYUVIS_WAKE_COOLDOWN_SECONDS", "2.2"))
 VOICE_ONLY_WAKE = os.getenv("GYUVIS_VOICE_ONLY_WAKE", "1") == "1"
 SERVER_URL = os.getenv("GYUVIS_SERVER_URL", "http://127.0.0.1:8000").rstrip("/")
+NCS_PLAYLIST_URL = os.getenv(
+    "GYUVIS_NCS_PLAYLIST_URL",
+    "https://www.youtube.com/watch?v=K4DyBUG242c&list=PLRBp0Fe2Gpgn8Y9qI-p0aTxVtw8onBSFj",
+)
 SEND_FOLLOWUP_TO_SERVER = os.getenv("GYUVIS_SEND_FOLLOWUP", "1") == "1"
 AUTO_LISTEN_FOLLOWUP = os.getenv("GYUVIS_AUTO_LISTEN_FOLLOWUP", "1") == "1"
 DEBUG_AUDIO = os.getenv("GYUVIS_DEBUG_AUDIO", "0") == "1"
@@ -116,6 +125,10 @@ USER_GOOD_DAY_REPLY = os.getenv(
     "다행입니다 보스. 좋은 흐름은 기록해두면 다음에도 다시 꺼내 쓰기 좋습니다. 오늘 잘된 점 하나만 남겨둘까요?",
 )
 SOFT_CONFIRM_ACK = os.getenv("GYUVIS_SOFT_CONFIRM_ACK", "네 보스. 현재 흐름대로 계속 진행하겠습니다.")
+GYUVIS_INTRO_REPLY = os.getenv(
+    "GYUVIS_INTRO_REPLY",
+    "안녕하세요. 저는 보스의 로컬 데스크톱 어시스턴트, 규비스입니다. 일정과 브리핑, 에이전트 상태 확인, 브라우저와 PC 작업 보조를 맡고 있습니다. 지금은 아직 성장 중이지만, 보스가 말하면 바로 움직이는 개인 비서가 되는 중입니다.",
+)
 
 
 class GyuvisWakeListener:
@@ -143,6 +156,7 @@ class GyuvisWakeListener:
         self._stay_awake = False
         self._last_hud_launch_at = 0.0
         self._pending_briefing_period: str | None = None
+        self._pending_followup_action: str | None = None
 
     def run(self) -> None:
         self._log("웨이크 모드를 시작합니다. 박수 두 번 뒤에 '일어나'처럼 불러보세요.")
@@ -285,7 +299,7 @@ class GyuvisWakeListener:
 
     def _handle_followup_only(self) -> None:
         self._log("명령을 듣는 중입니다...")
-        command_audio = self._record_audio(FOLLOWUP_RECORD_SECONDS)
+        command_audio = self._record_followup_audio()
         command_text = self._transcribe(command_audio)
 
         if not command_text:
@@ -297,6 +311,7 @@ class GyuvisWakeListener:
         if self._looks_like_sleep_phrase(command_text):
             self._stay_awake = False
             self._pending_briefing_period = None
+            self._pending_followup_action = None
             self._speak(SLEEP_ACKNOWLEDGEMENT)
             self._log("Pause command acknowledged. Returning to standby mode.")
             return
@@ -307,12 +322,19 @@ class GyuvisWakeListener:
         if self._looks_like_social_close(command_text):
             self._stay_awake = False
             self._pending_briefing_period = None
+            self._pending_followup_action = None
             self._speak(SOCIAL_CLOSE_ACK)
             self._log("Social close acknowledged. Returning to standby mode.")
             return
 
+        if self._handle_pending_followup_action(command_text):
+            return
+
+        if self._handle_explicit_followup_command(command_text):
+            return
+
         if self._pending_briefing_period:
-            if self._looks_like_affirmative(command_text):
+            if self._looks_like_briefing_affirmative(command_text):
                 briefing_period = self._pending_briefing_period
                 self._pending_briefing_period = None
                 self._speak(BRIEFING_ACK)
@@ -321,21 +343,6 @@ class GyuvisWakeListener:
                 return
 
             self._pending_briefing_period = None
-
-        if self._handle_agent_detail_command(command_text):
-            return
-
-        if self._handle_briefing_command(command_text):
-            return
-
-        if self._handle_soft_confirmation(command_text):
-            return
-
-        if self._handle_social_dialogue(command_text):
-            return
-
-        if self._handle_browser_command(command_text):
-            return
 
         if SEND_FOLLOWUP_TO_SERVER:
             response_text = self._send_followup_to_server(command_text)
@@ -374,9 +381,324 @@ class GyuvisWakeListener:
             return True
         return any(self._normalize_text(phrase) in normalized for phrase in AFFIRMATIVE_PHRASES)
 
+    def _looks_like_briefing_affirmative(self, text: str) -> bool:
+        normalized = self._normalize_text(text)
+        short_affirmatives = {self._normalize_text(phrase) for phrase in SHORT_AFFIRMATIVE_PHRASES}
+        if normalized in short_affirmatives:
+            return True
+
+        non_briefing_tokens = (
+            "에이전트",
+            "agent",
+            "블로그",
+            "초안",
+            "네이버",
+            "유튜브",
+            "구글",
+            "gpt",
+            "뉴스",
+            "날씨",
+            "검색",
+            "열어",
+            "보여",
+            "작성",
+            "만들",
+            "생성",
+            "채워",
+            "입력",
+        )
+        if "브리핑" not in normalized and any(token in normalized for token in non_briefing_tokens):
+            return False
+
+        if any(token in normalized for token in ("어진행", "응진행", "네진행", "진행", "시작")):
+            return True
+
+        return self._looks_like_affirmative(text)
+
     def _looks_like_social_close(self, text: str) -> bool:
         normalized = self._normalize_text(text)
         return any(self._normalize_text(phrase) in normalized for phrase in SOCIAL_CLOSE_PHRASES)
+
+    def _handle_explicit_followup_command(self, text: str) -> bool:
+        handlers = (
+            self._handle_incomplete_agent_fragment,
+            self._handle_agent_news_readout_command,
+            self._handle_agent_draft_to_blog_command,
+            self._handle_agent_recovery_command,
+            self._handle_agent_team_briefing_command,
+            self._handle_agent_status_query,
+            self._handle_agent_detail_command,
+            self._handle_briefing_command,
+            self._handle_soft_confirmation,
+            self._handle_social_dialogue,
+            self._handle_desktop_monitor_command,
+            self._handle_browser_command,
+        )
+        for handler in handlers:
+            if handler(text):
+                self._pending_briefing_period = None
+                return True
+        return False
+
+    def _handle_incomplete_agent_fragment(self, text: str) -> bool:
+        normalized = self._normalize_text(text)
+        if normalized not in {"에이전트", "에이전트들", "에이전트들의", "agent", "agents"}:
+            return False
+
+        self._speak("네 보스. 에이전트들의 상태를 확인할까요, 아니면 전체 에이전트 브리핑을 진행할까요?")
+        return True
+
+    def _handle_pending_followup_action(self, text: str) -> bool:
+        if self._pending_followup_action is None:
+            return False
+        if not self._looks_like_pending_action_confirmation(text):
+            return False
+
+        action = self._pending_followup_action
+        self._pending_followup_action = None
+        self._pending_briefing_period = None
+
+        if action == "naver_blog_fill_draft":
+            self._speak("네 보스. 최신 초안을 네이버 블로그 글쓰기 화면에 입력하겠습니다.")
+            if SEND_FOLLOWUP_TO_SERVER:
+                response_text = self._send_followup_to_server("네이버 블로그 글쓰기 화면에 최신 초안을 입력해줘")
+                if response_text:
+                    self._speak(response_text)
+            else:
+                self._speak("서버 연동이 꺼져 있어 블로그 입력 작업을 시작할 수 없습니다.")
+            return True
+
+        return False
+
+    def _looks_like_pending_action_confirmation(self, text: str) -> bool:
+        normalized = self._normalize_text(text)
+        topic_tokens = (
+            "브리핑",
+            "보고",
+            "에이전트",
+            "agent",
+            "뉴스",
+            "날씨",
+            "유튜브",
+            "네이버",
+            "구글",
+            "gpt",
+            "검색",
+            "상태",
+            "상세",
+        )
+        if any(token in normalized for token in topic_tokens):
+            return False
+        if normalized in {"어", "응", "네", "좋아", "그래", "ㅇㅇ", "오케이"}:
+            return True
+        return any(
+            token in normalized
+            for token in (
+                "어진행",
+                "응진행",
+                "네진행",
+                "좋아진행",
+                "진행",
+                "계속",
+                "그렇게해",
+                "그대로해",
+                "해줘",
+                "부탁",
+            )
+        )
+
+    def _handle_agent_status_query(self, text: str) -> bool:
+        normalized = self._normalize_text(text)
+        agent_related = (
+            "에이전트" in normalized
+            or "agent" in normalized
+            or self._extract_agent_id(text) is not None
+            or "뉴스보는애" in normalized
+            or "뉴스수집" in normalized
+            or "it뉴스" in normalized
+            or "아이티뉴스" in normalized
+            or "일하는애" in normalized
+            or "노는애" in normalized
+        )
+        status_related = any(
+            token in normalized
+            for token in (
+                "상태",
+                "뭐해",
+                "뭐하고",
+                "뭘",
+                "뭐할",
+                "할거",
+                "할거야",
+                "어떤거",
+                "어떤걸",
+                "담당",
+                "역할",
+                "어때",
+                "진행",
+                "일하",
+                "놀고",
+                "완료",
+                "수집",
+                "몇건",
+                "몇개",
+                "보고됐",
+                "잘되고",
+                "모았",
+                "모은",
+            )
+        )
+        if not (agent_related and status_related):
+            return False
+
+        agent_id = self._extract_agent_id(text)
+        if agent_id is None and any(token in normalized for token in ("뉴스", "it", "아이티", "모바일", "테크")):
+            agent_id = 1
+
+        try:
+            state = self._get_json(f"{SERVER_URL}/agent/standby-status")
+            self._speak(self._build_agent_status_reply_from_state(state, agent_id))
+        except Exception as error:
+            self._log(f"에이전트 상태 조회 실패: {error}")
+            self._speak("에이전트 상태를 확인하는 중 문제가 발생했습니다.")
+        return True
+
+    def _build_agent_status_reply_from_state(self, state: dict[str, Any], agent_id: int | None = None) -> str:
+        agents = state.get("agents") or []
+        if agent_id is not None:
+            agent = next((item for item in agents if int(item.get("id", 0)) == agent_id), None)
+            if agent is None:
+                return "현재 표시 가능한 에이전트는 1번부터 4번까지입니다."
+            return self._build_single_agent_status_reply(agent)
+
+        active_count = sum(1 for agent in agents if agent.get("tone") == "active")
+        error_count = sum(1 for agent in agents if agent.get("tone") == "error")
+        idle_count = max(len(agents) - active_count - error_count, 0)
+        parts = [
+            f"현재 에이전트는 총 {len(agents)}개입니다. 활성 {active_count}개, 대기 {idle_count}개, 확인 필요 {error_count}개로 보입니다."
+        ]
+        for agent in agents:
+            parts.append(
+                f"{agent.get('id')}번은 {agent.get('title')} 담당이고, 상태는 {agent.get('status')}, 처리는 {agent.get('processing')}입니다."
+            )
+        return " ".join(parts)
+
+    def _build_single_agent_status_reply(self, agent: dict[str, Any]) -> str:
+        base = (
+            f"에이전트 {agent.get('id')}번은 {agent.get('title')} 담당입니다. "
+            f"현재 상태는 {agent.get('status')}, 처리는 {agent.get('processing')}입니다."
+        )
+        if int(agent.get("id") or 0) != 1:
+            return base
+
+        collected_count = int(agent.get("collected_count") or 0)
+        if agent.get("report"):
+            return f"{base} 오늘 수집된 IT 뉴스는 {collected_count}건이고, 최종 보고가 생성되어 있습니다."
+        if collected_count:
+            return f"{base} 오늘 수집된 IT 뉴스는 {collected_count}건이며, 18시에 최종 보고로 정리됩니다."
+        return f"{base} 상시 수집 시간은 10시부터 18시까지입니다. 아직 오늘 수집된 뉴스는 없습니다."
+
+    def _handle_agent_news_readout_command(self, text: str) -> bool:
+        normalized = self._normalize_text(text)
+        agent_id = self._extract_agent_id(text)
+        asks_news_collection = (
+            agent_id == 1
+            and any(token in normalized for token in ("뭐모았", "뭐모은", "뭐수집", "오늘뭐", "뉴스읽", "상위", "세개", "3개"))
+        )
+        if not asks_news_collection:
+            return False
+
+        try:
+            state = self._get_json(f"{SERVER_URL}/agent/standby-status")
+            agents = state.get("agents") or []
+            agent = next((item for item in agents if int(item.get("id", 0)) == 1), {})
+            titles = [str(title).strip() for title in (agent.get("latest_titles") or []) if str(title).strip()]
+            if not titles:
+                self._speak("에이전트 1번이 오늘 수집한 뉴스는 아직 없습니다. 수집기를 확인하겠습니다.")
+                return True
+
+            self._post_json(f"{SERVER_URL}/agent/standby-status/detail/1", {})
+            top_titles = titles[:3]
+            lines = [f"에이전트 1번이 오늘 수집한 주요 IT 뉴스 상위 {len(top_titles)}개입니다."]
+            lines.extend(f"{index + 1}. {title}" for index, title in enumerate(top_titles))
+            self._speak(" ".join(lines))
+        except Exception as error:
+            self._log(f"에이전트 1번 뉴스 조회 실패: {error}")
+            self._speak("에이전트 1번 수집 뉴스를 확인하는 중 문제가 발생했습니다.")
+        return True
+
+    def _handle_agent_draft_to_blog_command(self, text: str) -> bool:
+        normalized = self._normalize_text(text)
+        if not (
+            "초안" in normalized
+            and "네이버" in normalized
+            and any(token in normalized for token in ("넣어", "입력", "올려", "채워", "보내"))
+        ):
+            return False
+
+        self._pending_followup_action = None
+        self._pending_briefing_period = None
+        self._speak("네 보스. 최신 초안을 네이버 블로그 글쓰기 화면에 입력하겠습니다.")
+        if SEND_FOLLOWUP_TO_SERVER:
+            response_text = self._send_followup_to_server("네이버 블로그 글쓰기 화면에 최신 초안을 입력해줘")
+            if response_text:
+                self._speak(response_text)
+        else:
+            self._speak("서버 연동이 꺼져 있어 블로그 입력 작업을 시작할 수 없습니다.")
+        return True
+
+    def _handle_agent_recovery_command(self, text: str) -> bool:
+        normalized = self._normalize_text(text)
+        agent_id = self._extract_agent_id(text)
+        if not (
+            agent_id is not None
+            and any(token in normalized for token in ("복구", "고쳐", "재시작", "리커버", "살려"))
+            and ("에이전트" in normalized or "agent" in normalized)
+        ):
+            return False
+
+        try:
+            state = self._post_json(f"{SERVER_URL}/agent/standby-status/recover/{agent_id}", {})
+            self._post_json(f"{SERVER_URL}/agent/standby-status/detail/{agent_id}", {})
+            agent = next((item for item in state.get("agents", []) if int(item.get("id", 0)) == agent_id), None)
+            if agent:
+                self._speak(
+                    f"네 보스. 에이전트 {agent_id}번 상태를 실제 작업 큐 기준으로 다시 조회했습니다. "
+                    f"현재 상태는 {agent.get('status')}, 처리는 {agent.get('processing')}입니다."
+                )
+            else:
+                self._speak(f"네 보스. 에이전트 {agent_id}번 상태를 다시 조회했습니다.")
+        except Exception as error:
+            self._log(f"에이전트 복구 요청 실패: {error}")
+            self._speak(f"에이전트 {agent_id}번 복구 요청 중 문제가 발생했습니다.")
+        return True
+
+    def _handle_agent_team_briefing_command(self, text: str) -> bool:
+        normalized = self._normalize_text(text)
+        if not (
+            any(token in normalized for token in ("전체에이전트", "에이전트전체", "모든에이전트", "에이전트들"))
+            and any(token in normalized for token in ("브리핑", "보고", "상태"))
+        ):
+            return False
+
+        try:
+            state = self._get_json(f"{SERVER_URL}/agent/standby-status")
+            agents = state.get("agents") or []
+            active_count = sum(1 for agent in agents if agent.get("tone") == "active")
+            idle_count = sum(1 for agent in agents if agent.get("tone") == "idle")
+            error_count = sum(1 for agent in agents if agent.get("tone") == "error")
+            lines = [
+                f"전체 에이전트 브리핑입니다. 총 {len(agents)}개 중 활성 {active_count}개, 대기 {idle_count}개, 확인 필요 {error_count}개입니다."
+            ]
+            for agent in agents:
+                lines.append(
+                    f"{agent.get('id')}번 {agent.get('title')}. 상태 {agent.get('status')}, 처리 {agent.get('processing')}."
+                )
+            self._speak(" ".join(lines))
+        except Exception as error:
+            self._log(f"전체 에이전트 브리핑 실패: {error}")
+            self._speak("전체 에이전트 상태를 확인하는 중 문제가 발생했습니다.")
+        return True
 
     def _handle_agent_detail_command(self, text: str) -> bool:
         normalized = self._normalize_text(text)
@@ -395,6 +717,8 @@ class GyuvisWakeListener:
 
         try:
             self._post_json(f"{SERVER_URL}/agent/standby-status/detail/{agent_id}", {})
+            if agent_id == 2 and "초안" in normalized:
+                self._pending_followup_action = "naver_blog_fill_draft"
             self._speak(f"네 보스. 에이전트 {agent_id}번 상세 화면을 열겠습니다.")
         except Exception as error:
             self._log(f"에이전트 상세 화면 요청 실패: {error}")
@@ -481,6 +805,21 @@ class GyuvisWakeListener:
 
     def _handle_social_dialogue(self, text: str) -> bool:
         normalized = self._normalize_text(text)
+        if any(
+            token in normalized
+            for token in (
+                "자기소개",
+                "너소개",
+                "규비스소개",
+                "한마디",
+                "영상보고있는분들",
+                "시청자",
+                "구독자",
+            )
+        ):
+            self._speak(GYUVIS_INTRO_REPLY)
+            return True
+
         if any(token in normalized for token in ("너오늘어때", "규비스오늘어때", "기분어때", "상태어때", "괜찮아")):
             self._speak(GYUVIS_WELLBEING_REPLY)
             return True
@@ -503,8 +842,11 @@ class GyuvisWakeListener:
         normalized = self._normalize_text(text)
 
         if "유튜브" in normalized and any(token in normalized for token in ("틀어", "재생", "음악", "ncs")):
-            query = "NCS music playlist" if "ncs" in normalized else text.replace("유튜브", "")
-            self._open_url(f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}")
+            if "ncs" in normalized:
+                self._open_url(NCS_PLAYLIST_URL)
+            else:
+                query = text.replace("유튜브", "")
+                self._open_url(f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}")
             self._speak("네 보스. 유튜브에서 요청하신 음악을 검색하겠습니다.")
             return True
 
@@ -532,6 +874,39 @@ class GyuvisWakeListener:
             return True
 
         return False
+
+    def _handle_desktop_monitor_command(self, text: str) -> bool:
+        normalized = self._normalize_text(text)
+        if "모니터" not in normalized:
+            return False
+        if re.search(r"\d+번모니터", normalized) is None:
+            return False
+
+        action_keywords = ("유튜브", "youtube", "엑셀", "excel", "네이버", "구글", "gpt", "지피티", "뉴스", "날씨")
+        if not any(keyword in normalized for keyword in action_keywords):
+            return False
+
+        script_path = pathlib.Path(__file__).resolve().parent / "pc_desktop_actions.py"
+        try:
+            completed = subprocess.run(
+                [sys.executable, str(script_path), "--text", text],
+                cwd=str(script_path.parent),
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            output = (completed.stdout or completed.stderr or "").strip()
+            result = json.loads(output) if output else {}
+            message = str(result.get("message") or "").strip()
+            if completed.returncode == 0 and result.get("ok", False):
+                self._speak(f"네 보스. {message}")
+            else:
+                self._speak(message or "데스크톱 명령을 처리하는 중 문제가 발생했습니다.")
+        except Exception as error:
+            self._log(f"데스크톱 모니터 명령 실패: {error}")
+            self._speak("데스크톱 명령을 실행하는 중 문제가 발생했습니다.")
+        return True
 
     def _open_url(self, url: str) -> None:
         webbrowser.open(url)
@@ -624,6 +999,37 @@ class GyuvisWakeListener:
         sd.wait()
         return recording.reshape(-1)
 
+    def _record_followup_audio(self) -> np.ndarray:
+        block_seconds = 0.20
+        blocksize = int(SAMPLE_RATE * block_seconds)
+        min_samples = int(FOLLOWUP_RECORD_SECONDS * SAMPLE_RATE)
+        max_samples = int(FOLLOWUP_MAX_RECORD_SECONDS * SAMPLE_RATE)
+        silence_limit = max(1, int(FOLLOWUP_SILENCE_SECONDS / block_seconds))
+        chunks: list[np.ndarray] = []
+        silent_blocks = 0
+        heard_voice = False
+
+        with sd.InputStream(samplerate=SAMPLE_RATE, channels=1, dtype="int16", blocksize=blocksize) as stream:
+            while sum(chunk.size for chunk in chunks) < max_samples:
+                data, _overflowed = stream.read(blocksize)
+                flat = data.reshape(-1).copy()
+                chunks.append(flat)
+
+                rms = float(np.sqrt(np.mean(np.square(flat.astype(np.float32) / 32768.0))))
+                if rms >= FOLLOWUP_VOICE_THRESHOLD:
+                    heard_voice = True
+                    silent_blocks = 0
+                elif heard_voice:
+                    silent_blocks += 1
+
+                sample_count = sum(chunk.size for chunk in chunks)
+                if sample_count >= min_samples and heard_voice and silent_blocks >= silence_limit:
+                    break
+
+        if not chunks:
+            return np.array([], dtype=np.int16)
+        return np.concatenate(chunks).astype(np.int16)
+
     def _transcribe(self, samples: np.ndarray) -> str:
         audio = sr.AudioData(samples.tobytes(), SAMPLE_RATE, 2)
         try:
@@ -663,6 +1069,7 @@ class GyuvisWakeListener:
             return summary or "확인했습니다."
 
         task = initial.get("task") or {}
+        task_type = str(task.get("task_type", ""))
         task_id = task.get("id")
         if not task_id:
             return summary or "확인 중입니다."
@@ -679,11 +1086,17 @@ class GyuvisWakeListener:
 
             status = str(detail.get("status", ""))
             if status == "completed":
-                return str(detail.get("result_summary") or summary or "확인했습니다.")
+                result_summary = str(detail.get("result_summary") or summary or "확인했습니다.")
+                self._remember_followup_action(task_type, result_summary)
+                return result_summary
             if status == "failed":
                 return str(detail.get("error_message") or "작업 처리 중 오류가 발생했습니다.")
 
         return summary or "작업을 시작했습니다. 결과 확인에 조금 더 시간이 필요합니다."
+
+    def _remember_followup_action(self, task_type: str, result_summary: str) -> None:
+        if task_type == "agent2_it_blog_draft" and "글쓰기 화면" in result_summary and "입력" in result_summary:
+            self._pending_followup_action = "naver_blog_fill_draft"
 
     def _post_json(self, url: str, payload: dict[str, Any]) -> dict[str, Any]:
         data = json.dumps(payload).encode("utf-8")

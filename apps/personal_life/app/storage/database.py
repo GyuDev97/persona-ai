@@ -132,6 +132,45 @@ CREATE TABLE IF NOT EXISTS agent_tasks (
     error_message TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
+
+CREATE TABLE IF NOT EXISTS agent_news_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_id INTEGER NOT NULL,
+    topic TEXT NOT NULL,
+    title TEXT NOT NULL,
+    url TEXT NOT NULL,
+    source TEXT NOT NULL DEFAULT '',
+    published_at TEXT,
+    collected_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    importance_score INTEGER NOT NULL DEFAULT 1,
+    UNIQUE (agent_id, url)
+);
+
+CREATE TABLE IF NOT EXISTS agent_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_id INTEGER NOT NULL,
+    report_date TEXT NOT NULL,
+    title TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    highlights_json TEXT NOT NULL DEFAULT '[]',
+    status TEXT NOT NULL DEFAULT 'completed',
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    UNIQUE (agent_id, report_date)
+);
+
+CREATE TABLE IF NOT EXISTS agent_blog_drafts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_id INTEGER NOT NULL DEFAULT 2,
+    source_agent_id INTEGER,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    platform TEXT NOT NULL DEFAULT 'naver_blog',
+    status TEXT NOT NULL DEFAULT 'drafted',
+    source_payload TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
 """
 
 MARIADB_SCHEMA = [
@@ -269,6 +308,48 @@ MARIADB_SCHEMA = [
         result_payload LONGTEXT NULL,
         error_message TEXT NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS agent_news_items (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        agent_id INT NOT NULL,
+        topic VARCHAR(100) NOT NULL,
+        title TEXT NOT NULL,
+        url VARCHAR(1000) NOT NULL,
+        source VARCHAR(200) NOT NULL DEFAULT '',
+        published_at DATETIME NULL,
+        collected_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        importance_score INT NOT NULL DEFAULT 1,
+        UNIQUE KEY uniq_agent_news_url (agent_id, url(500))
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS agent_reports (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        agent_id INT NOT NULL,
+        report_date VARCHAR(20) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        summary TEXT NOT NULL,
+        highlights_json LONGTEXT NOT NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'completed',
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_agent_report_day (agent_id, report_date)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS agent_blog_drafts (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        agent_id INT NOT NULL DEFAULT 2,
+        source_agent_id INT NULL,
+        title VARCHAR(255) NOT NULL,
+        body LONGTEXT NOT NULL,
+        platform VARCHAR(50) NOT NULL DEFAULT 'naver_blog',
+        status VARCHAR(30) NOT NULL DEFAULT 'drafted',
+        source_payload LONGTEXT NOT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )
     """,
 ]

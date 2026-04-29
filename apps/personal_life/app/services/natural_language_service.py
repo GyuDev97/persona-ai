@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import webbrowser
 from dataclasses import dataclass
@@ -24,6 +25,12 @@ from .schedule_service import create_schedule
 from .task_service import create_task
 
 
+GYUVIS_INTRO_REPLY = os.getenv(
+    "GYUVIS_INTRO_REPLY",
+    "안녕하세요. 저는 보스의 로컬 데스크톱 어시스턴트, 규비스입니다. 일정과 브리핑, 에이전트 상태 확인, 브라우저와 PC 작업 보조를 맡고 있습니다. 지금은 아직 성장 중이지만, 보스가 말하면 바로 움직이는 개인 비서가 되는 중입니다.",
+)
+
+
 @dataclass
 class ParsedCommand:
     command_type: str
@@ -42,6 +49,18 @@ def process_natural_command(payload: NaturalCommandCreate) -> NaturalCommandResp
     log_conversation("user", stripped)
     intent = classify_natural_intent(stripped)
     print(f"[natural] text={stripped!r} intent={intent}")
+
+    if _looks_like_intro_request(stripped):
+        response = NaturalCommandResponse(
+            text=payload.text,
+            interpreted_as="assistant_intro",
+            summary=GYUVIS_INTRO_REPLY,
+            created_id=0,
+            created_type="assistant_intro",
+            reminder_id=None,
+        )
+        log_conversation("assistant", response.summary, interpreted_as=response.interpreted_as, created_type=response.created_type)
+        return response
 
     if _looks_like_briefing_request(stripped):
         summary = _build_voice_briefing_summary()
@@ -220,6 +239,22 @@ def classify_natural_intent(text: str) -> str:
     if _looks_like_capture(normalized):
         return "capture_request"
     return "unknown"
+
+
+def _looks_like_intro_request(text: str) -> bool:
+    compact = re.sub(r"[\s?!.,~]+", "", text.strip().lower())
+    return any(
+        token in compact
+        for token in (
+            "자기소개",
+            "너소개",
+            "규비스소개",
+            "한마디",
+            "영상보고있는분들",
+            "시청자",
+            "구독자",
+        )
+    )
 
 
 def _should_force_answer_mode(text: str) -> bool:

@@ -955,9 +955,9 @@
     const fingertipIndexes = new Set([4, 8, 12, 16, 20]);
     const agentReports = {
       1: [
-        "오후 6시 기준 AI 주요 뉴스 흐름을 수집하고, 제품 출시와 모델 업데이트 중심으로 요약했습니다.",
-        "중복 기사와 단순 루머는 제외하고, 보스께서 바로 훑을 수 있는 핵심 항목만 남겼습니다.",
-        "다음 단계: 블로그나 메모용으로 확장 가능한 이슈를 2개 선별할 수 있습니다."
+        "오전 10시부터 오후 6시까지의 IT/모바일/테크 뉴스 흐름을 요약하는 전담 에이전트입니다.",
+        "현재 단계에서는 Google News RSS 기준 최신 헤드라인을 수집하고, 보스께서 훑기 쉬운 목록으로 정리합니다.",
+        "다음 단계: 시간대별 누적 수집, 중복 제거, 중요도 점수화를 붙이면 진짜 10시~18시 리포트로 확장할 수 있습니다."
       ],
       2: [
         "IT/모바일 블로그 초안 후보를 정리하고, 독자가 관심 가질 만한 제목 방향을 우선 추렸습니다.",
@@ -1033,11 +1033,50 @@
       reportTitle.textContent = agent.title;
       reportStatus.textContent = agent.status;
       reportProcessing.textContent = agent.processing;
-      reportBody.innerHTML = (agentReports[agent.id] || ["수행 내용이 아직 등록되지 않았습니다."])
+      reportBody.innerHTML = getAgentReportLines(agent)
         .map((line) => `<p>${line}</p>`)
         .join("");
       reportOverlay.classList.add("active");
       renderAgentDetail(agent);
+    }
+
+    function getAgentReportLines(agent) {
+      if (agent.report?.summary) {
+        const highlights = agent.report.highlights || [];
+        const lines = [agent.report.summary];
+        highlights.slice(0, 5).forEach((item, index) => {
+          lines.push(`${index + 1}. ${item.title}`);
+        });
+        return lines;
+      }
+
+      if (agent.id === 1 && agent.latest_titles?.length) {
+        return [
+          `오늘 수집된 IT 뉴스는 ${agent.collected_count || agent.latest_titles.length}건입니다.`,
+          ...agent.latest_titles.slice(0, 5).map((title, index) => `${index + 1}. ${title}`)
+        ];
+      }
+
+      if (agent.id === 2 && agent.draft) {
+        return [
+          `최신 초안 #${agent.draft.id}: ${agent.draft.title}`,
+          `상태: ${agent.draft.status || "drafted"}`,
+          agent.draft.body_preview || "초안 본문 미리보기가 아직 준비되지 않았습니다."
+        ];
+      }
+
+      if (agent.tasks?.length) {
+        const lines = [
+          `최근 작업 ${agent.tasks.length}건을 확인했습니다.`,
+          ...agent.tasks.slice(0, 5).map((task) => {
+            const result = task.error_message || task.result_summary || task.command_text || "작업 상세 없음";
+            return `#${task.id} [${task.status}] ${result}`;
+          })
+        ];
+        return lines;
+      }
+
+      return agentReports[agent.id] || ["수행 내용이 아직 등록되지 않았습니다."];
     }
 
     function hideReport() {
