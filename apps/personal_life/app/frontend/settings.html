@@ -4,17 +4,90 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>GyuOS - 설정</title>
+<link rel="stylesheet" href="/shared/gyuos-shell.css" />
+<script src="/shared/gyuos-shell.js" defer></script>
 <style>
-:root{--bg:#fbf8f3;--panel:#fffdfa;--line:#eee4da;--text:#1f1a17;--muted:#8b8178;--brand:#b9652f;--brand2:#f4e7dc;--green:#2aa66a;--red:#ef4740;--blue:#4b86f7;--orange:#ed9b2f;--shadow:0 10px 30px rgba(80,52,30,.07)}
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Pretendard,"Noto Sans KR",sans-serif;background:radial-gradient(circle at top,#fff 0,#fbf8f3 42%,#f8f3eb 100%);color:var(--text)}
-.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}.sidebar{position:sticky;top:0;height:100vh;padding:30px 20px;border-right:1px solid var(--line);background:rgba(255,252,247,.78);backdrop-filter:blur(14px);display:flex;flex-direction:column}.logo{font-size:30px;font-weight:800;color:#4a2a17}.sub{font-size:13px;color:#756b62;margin-top:5px}.nav{margin-top:34px;display:grid;gap:8px}.nav a{display:flex;align-items:center;gap:14px;padding:14px 15px;border-radius:12px;text-decoration:none;color:#2c2926;font-weight:650}.nav a.active{background:#f3e7dc;color:#a75725}.nav .ico{width:22px;text-align:center;font-size:18px}.assistant{margin-top:auto;padding:24px 18px;text-align:center;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}.bot{width:78px;height:78px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#fff,#ead8c6);font-size:38px}.btn{background:linear-gradient(135deg,#c87338,#a95422);border:0;color:#fff;border-radius:10px;padding:12px 20px;font-weight:800;cursor:pointer}.ver{margin-top:26px;color:#aaa;font-size:12px}.main{padding:22px 28px 34px;max-width:1480px}.topbar{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center}.search{justify-self:center;width:min(720px,100%);height:44px;border:1px solid var(--line);background:#fff;border-radius:14px;box-shadow:var(--shadow);display:flex;align-items:center;padding:0 16px;color:#b7ada4;font-size:14px}.kbd{margin-left:auto;color:#777;background:#f7f2ed;border:1px solid var(--line);padding:3px 8px;border-radius:7px}.user{display:flex;align-items:center;gap:18px}.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#6fa1c8,#f0c39b)}.hero{display:flex;justify-content:space-between;align-items:flex-end;margin:22px 6px 22px}.hero h1{margin:0 0 8px;font-size:29px}.hero p{margin:0;color:#81766d}.weather{display:flex;align-items:center;gap:24px;color:#6d625a}.sun{font-size:36px}.tabs{display:flex;gap:30px;margin:8px 6px 18px;border-bottom:1px solid var(--line)}.tabs span{padding:0 0 12px;color:#594f47;font-weight:700}.tabs .on{color:#a75725;border-bottom:2px solid #a75725}.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}.card{background:rgba(255,255,255,.82);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}.metric{padding:22px}.label{display:flex;gap:10px;align-items:center;color:#5c514a;font-weight:750;font-size:14px}.value{font-size:26px;font-weight:850;margin:20px 0 8px}.small{color:#7e736a;font-size:13px}.green{color:var(--green)}.red{color:var(--red)}.grid{margin-top:16px;display:grid;grid-template-columns:1.05fr 1fr .9fr;gap:16px}.span2{grid-column:span 2}.card h3{margin:0 0 16px;font-size:17px}.section{padding:22px}.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f0e8df}.row:last-child{border-bottom:0}.badge{font-size:12px;padding:5px 9px;border-radius:999px;background:#f5eadf;color:#a75725;font-weight:800}.grow{flex:1}.muted{color:var(--muted);font-size:13px}.pill{padding:5px 9px;border-radius:999px;background:#edf4ff;color:#3777ea;font-size:12px;font-weight:800}.timeline .time{width:58px;font-weight:750}.dot{width:9px;height:9px;border-radius:50%;background:#ef4740}.dot.o{background:#ed9b2f}.dot.g{background:#bbb}.donut{width:172px;height:172px;border-radius:50%;background:conic-gradient(#d74335 0 32%,#f0a22e 32% 50%,#edd36a 50% 66%,#79c7bd 66% 80%,#73a5f1 80% 100%);position:relative;margin:8px auto}.donut:after{content:'총 소비\A ₩1,280,000\A 예산 대비 64%';white-space:pre;position:absolute;inset:34px;border-radius:50%;background:white;display:grid;place-items:center;text-align:center;font-weight:800;font-size:13px;line-height:1.7}.money{display:grid;grid-template-columns:220px 1fr;gap:20px}.legend{display:grid;gap:12px}.legend div{display:flex;justify-content:space-between}.carbox{display:grid;grid-template-columns:160px 1fr;gap:16px}.car{height:92px;border-radius:16px;background:linear-gradient(160deg,#e8ecef,#fff);display:grid;place-items:center;font-size:58px}.content img{width:64px;height:64px;object-fit:cover;border-radius:12px;background:#ddd}.thumb{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#0f2742,#7fb5d6);display:grid;place-items:center;color:white;font-weight:900;flex:none}.progress{height:6px;background:#eee6de;border-radius:99px;overflow:hidden}.bar{height:100%;background:#d36d28;border-radius:99px}.action{display:flex;justify-content:space-between;align-items:center;background:#fbf2ea;border-radius:12px;padding:12px 14px;margin-top:10px}.plus{width:34px;height:34px;border-radius:50%;background:#fbf2ea;display:grid;place-items:center;color:#a75725;font-size:22px}.footerGrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}.contentlist .row{padding:9px 0}@media(max-width:1100px){.app{grid-template-columns:1fr}.sidebar{display:none}.metrics{grid-template-columns:repeat(2,1fr)}.grid,.footerGrid{grid-template-columns:1fr}.span2{grid-column:auto}.main{padding:18px}.weather{display:none}.money{grid-template-columns:1fr}}
+:root{--bg:#fbf7f1;--panel:rgba(255,253,249,.86);--line:#efe4d9;--text:#211b17;--muted:#8d8379;--brand:#d35a12;--brand-deep:#a6420b;--brand-soft:#fff1e5;--green:#24b261;--red:#ef4740;--blue:#2584dd;--shadow:0 18px 46px rgba(91,61,35,.08)}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;color:var(--text);font-family:"Malgun Gothic","맑은 고딕","Nanum Gothic","나눔고딕",Arial,sans-serif;background:radial-gradient(circle at 18% 0,rgba(245,221,190,.56),transparent 33%),radial-gradient(circle at 88% 7%,rgba(225,239,246,.72),transparent 30%),linear-gradient(135deg,#fffaf3,#fbf7f1 48%,#f7efe7)}button,input,select,textarea{font:inherit}button{border:0;cursor:pointer}.app{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100vh}.main{padding:34px 36px 38px;max-width:1760px;width:100%}.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}.card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);backdrop-filter:blur(16px)}.metric{padding:18px;display:grid;gap:8px}.metric span{color:var(--muted);font-size:13px;font-weight:800}.metric b{font-size:24px}.panel{padding:22px}.head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:16px}.head h2{margin:0;font-size:21px;letter-spacing:-.03em}.muted{color:var(--muted);font-size:13px;line-height:1.5;font-weight:700}.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:grid;gap:7px}.field.full{grid-column:1/-1}.field label{font-size:13px;color:#6f6258;font-weight:950}.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:14px;background:#fffdfa;padding:12px 13px;color:var(--text);font-weight:800}.field textarea{min-height:92px;resize:vertical}.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}.btn,.ghost{min-height:42px;border-radius:14px;padding:0 17px;font-weight:950}.btn{background:linear-gradient(135deg,var(--brand),var(--brand-deep));color:white;box-shadow:0 14px 28px rgba(194,80,14,.18)}.ghost{border:1px solid var(--line);background:#fffdfa;color:var(--brand-deep)}.list{display:grid;gap:10px}.row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0;border-bottom:1px solid var(--line)}.row:last-child{border-bottom:0}.title{font-weight:950}.tag{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:6px 10px;background:var(--brand-soft);color:var(--brand-deep);font-size:12px;font-weight:950}.status.ok{color:var(--green)}.status.warn{color:var(--red)}.switch{position:relative;width:46px;height:26px;border-radius:999px;background:#eaded3;border:1px solid var(--line)}.switch.on{background:#dff6e8}.switch:after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:white;box-shadow:0 3px 8px rgba(0,0,0,.14);transition:.18s}.switch.on:after{left:23px;background:var(--green)}.toast{position:fixed;right:24px;bottom:24px;z-index:10;background:#211b17;color:#fff;padding:13px 16px;border-radius:14px;font-weight:850;box-shadow:0 16px 36px rgba(0,0,0,.18);display:none}.toast.show{display:block}@media(max-width:1120px){.grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}}@media(max-width:880px){.app{grid-template-columns:1fr}.main{padding:22px}.cards,.form{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="app">
-  <aside class="sidebar"><div class="logo">GyuOS</div><div class="sub">Personal Concierge OS</div><nav class="nav"><a href="index.html"><span class="ico">⌂</span>홈</a><a href="gyuos_pc_briefing.html" ><span class="ico">▣</span>브리핑</a><a href="gyuos_pc_schedule.html"><span class="ico">▣</span>일정</a><a href="gyuos_pc_money.html"><span class="ico">▣</span>돈 관리</a><a href="gyuos_pc_car.html"><span class="ico">▣</span>자동차</a><a href="gyuos_pc_creator.html"><span class="ico">⌁</span>Creator Studio</a><a href="gyuos_pc_memory.html"><span class="ico">⌕</span>기억 검색</a><a href="gyuos_pc_memo.html"><span class="ico">▤</span>메모</a><a href="gyuos_pc_routine.html"><span class="ico">☑</span>루틴 & 목표</a><a href="gyuos_pc_settings.html" class="active"><span class="ico">⚙</span>설정</a></nav><div class="assistant"><div class="bot">🤖</div><b>Gyu Assistant</b><p class="muted">무엇이든 물어보세요!</p><button class="btn">AI와 대화</button></div><div class="ver">v1.0.0<br>© GyuOS All rights reserved.</div></aside>
-  <main class="main"><div class="topbar"><div class="search">✦ 무엇이든 물어보거나 명령해보세요. 예) 오늘 일정 알려줘, 점심 12,000원 기록해줘 <span class="kbd">⌘ K</span></div><div class="user">🔔 🌙 <span class="avatar"></span><b>Gyu⌄</b></div></div>
-  <section class="hero"><div><h1>설정</h1><p>사용 환경과 연결된 데이터를 관리하세요.</p></div><div class="weather"><span class="sun">☀️</span><b style="font-size:25px">24°</b><span>맑음 · 서울 강남구</span><span>2024.04.26 (금)</span></div></section>
-  <section class="metrics"><div class="card metric"><div class="label">🗓 오늘 일정</div><div class="value">2 <small>건</small></div><div class="small">10:00 대표 미팅</div></div><div class="card metric"><div class="label">💳 이번 달 소비</div><div class="value">452,600 <small>원</small></div><div class="small">지난 달 대비 <span class="red">+12%</span></div></div><div class="card metric"><div class="label">🚘 차량 상태</div><div class="value">D-18</div><div class="small">보험 만기 예정</div></div><div class="card metric"><div class="label">✅ 루틴</div><div class="value">66<small>%</small></div><div class="small">목표 진행률</div></div><div class="card metric"><div class="label">📈 콘텐츠</div><div class="value">2,340</div><div class="small">최근 7일 조회수</div></div></section><section class="grid"><div class="card section"><h3>프로필</h3><div class="row"><span class="avatar"></span><div class="grow"><b>Gyu</b><div class="muted">gyu@example.com</div></div><span class="badge">프리미엄</span></div><div class="row"><span>🌙</span><b class="grow">다크 모드</b><span>꺼짐</span></div><div class="row"><span>🔔</span><b class="grow">알림</b><span>켜짐</span></div></div><div class="card section"><h3>연결된 데이터</h3><div class="row"><span>📅</span><b class="grow">캘린더</b><span class="green">연결됨</span></div><div class="row"><span>💳</span><b class="grow">카드/가계부</b><span class="green">연결됨</span></div><div class="row"><span>🚘</span><b class="grow">차량 정보</b><span class="green">연결됨</span></div></div></section></main></div>
+  <gyuos-sidebar active="settings" card-title="Gyu Assistant" card-text="GyuOS 설정과 연결 상태를 관리합니다."></gyuos-sidebar>
+  <main class="main">
+    <gyuos-header title="설정" subtitle="개인화, 음성, 에이전트, 로컬 시스템 상태를 한 곳에서 관리합니다."></gyuos-header>
+
+    <section class="cards">
+      <article class="card metric"><span>Assistant Mode</span><b id="aiMode">-</b><small class="muted" id="modelName">확인 중</small></article>
+      <article class="card metric"><span>API Health</span><b id="apiHealth">-</b><small class="muted" id="apiTime">-</small></article>
+      <article class="card metric"><span>Agent Center</span><b id="agentCount">-</b><small class="muted">등록 에이전트</small></article>
+      <article class="card metric"><span>Voice Wake</span><b>일어나</b><small class="muted">규비스 호출 지원</small></article>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <div class="head"><div><h2>프로필 설정</h2><div class="muted">브라우저에 저장되는 로컬 표시 설정입니다.</div></div><span class="tag">Local</span></div>
+        <form id="profileForm">
+          <div class="form">
+            <div class="field"><label for="displayName">표시 이름</label><input id="displayName" value="Gyu" /></div>
+            <div class="field"><label for="assistantName">비서 이름</label><input id="assistantName" value="규비스" /></div>
+            <div class="field"><label for="tone">응답 톤</label><select id="tone"><option>전문적이고 충성스럽게</option><option>조금 더 친근하게</option><option>짧고 빠르게</option></select></div>
+            <div class="field"><label for="briefingTime">기본 브리핑</label><select id="briefingTime"><option>아침/오후/저녁 자동 구분</option><option>저녁 브리핑 중심</option><option>수동으로만 진행</option></select></div>
+            <div class="field full"><label for="memo">운영 메모</label><textarea id="memo" placeholder="규비스가 기억했으면 하는 운영 스타일을 적어두세요."></textarea></div>
+          </div>
+          <div class="actions"><button class="ghost" type="button" id="resetProfile">초기화</button><button class="btn" type="submit">저장하기</button></div>
+        </form>
+      </article>
+
+      <aside class="panel">
+        <div class="head"><div><h2>음성 / 화면</h2><div class="muted">현재 브라우저에만 적용되는 표시 옵션입니다.</div></div></div>
+        <div class="list">
+          <div class="row"><div><div class="title">대기화면 자동 열기</div><div class="muted">호출어 감지 후 standby-v2 화면 사용</div></div><button class="switch on" data-toggle="hud"></button></div>
+          <div class="row"><div><div class="title">자막 표시</div><div class="muted">입력/출력 문장을 대기화면 하단에 표시</div></div><button class="switch on" data-toggle="subtitle"></button></div>
+          <div class="row"><div><div class="title">카메라 제스처</div><div class="muted">손가락 상태와 중앙 확장 제스처 사용</div></div><button class="switch on" data-toggle="gesture"></button></div>
+          <div class="row"><div><div class="title">위험 액션 승인</div><div class="muted">삭제/외부 입력/코드 수정은 승인 기반</div></div><button class="switch on" data-toggle="approval"></button></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="grid" style="margin-top:18px">
+      <article class="panel">
+        <div class="head"><div><h2>시스템 상태</h2><div class="muted">로컬 서버, 에이전트, 주요 페이지 연결 상태입니다.</div></div><button class="ghost" type="button" id="refreshButton">새로고침</button></div>
+        <div class="list" id="statusList"></div>
+      </article>
+      <article class="panel">
+        <div class="head"><div><h2>바로가기</h2><div class="muted">자주 확인하는 운영 화면입니다.</div></div></div>
+        <div class="list">
+          <a class="row" href="/agent/report-center"><div><div class="title">Agent Report Center</div><div class="muted">에이전트 상태와 최근 결과</div></div><span class="tag">열기</span></a>
+          <a class="row" href="/money-core"><div><div class="title">Money Core</div><div class="muted">재정 입력과 월간 흐름</div></div><span class="tag">열기</span></a>
+          <a class="row" href="/creator.html"><div><div class="title">Creator Studio</div><div class="muted">뉴스, 블로그 초안, 아이디어</div></div><span class="tag">열기</span></a>
+        </div>
+      </article>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const $=(id)=>document.getElementById(id);
+const defaults={displayName:"Gyu",assistantName:"규비스",tone:"전문적이고 충성스럽게",briefingTime:"아침/오후/저녁 자동 구분",memo:""};
+function toast(message){const t=$("toast");t.textContent=message;t.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.classList.remove("show"),2400)}
+function loadProfile(){const saved=JSON.parse(localStorage.getItem("gyuos_settings")||"{}");const data={...defaults,...saved};for(const key of Object.keys(defaults)){if($(key))$(key).value=data[key]||""}}
+function saveProfile(){const data={};for(const key of Object.keys(defaults)){data[key]=$(key)?.value||""}localStorage.setItem("gyuos_settings",JSON.stringify(data));toast("설정을 저장했습니다.")}
+async function json(url){const r=await fetch(url);if(!r.ok)throw new Error(await r.text());return r.json()}
+async function loadStatus(){
+  const rows=[];
+  try{const s=await json("/assistant/status");$("aiMode").textContent=s.ai_enabled?"AI 연결":"Fallback";$("modelName").textContent=s.model||"규칙 기반";rows.push(["Assistant",s.ai_enabled?`연결됨 · ${s.model}`:"Fallback 모드","ok"])}catch(e){rows.push(["Assistant","확인 실패","warn"])}
+  try{const h=await json("/health");$("apiHealth").textContent=h.status==="ok"?"OK":"확인";$("apiTime").textContent=h.timestamp||"-";rows.push(["API Server",h.status||"unknown","ok"])}catch(e){$("apiHealth").textContent="FAIL";rows.push(["API Server","연결 실패","warn"])}
+  try{const a=await json("/agent/report-center/data");$("agentCount").textContent=(a.cards||[]).length;rows.push(["Agents",`${(a.cards||[]).length}개 등록 · updated ${a.updated_at||"-"}`,"ok"])}catch(e){rows.push(["Agents","확인 실패","warn"])}
+  rows.push(["Local Storage","프로필 설정 저장 가능","ok"],["Danger Actions","자동 배포/결제 없음","ok"]);
+  $("statusList").innerHTML=rows.map(([name,text,state])=>`<div class="row"><div><div class="title">${name}</div><div class="muted">${text}</div></div><b class="status ${state}">${state==="ok"?"정상":"확인"}</b></div>`).join("");
+}
+document.querySelectorAll("[data-toggle]").forEach((button)=>button.addEventListener("click",()=>button.classList.toggle("on")));
+$("profileForm").addEventListener("submit",(event)=>{event.preventDefault();saveProfile()});
+$("resetProfile").addEventListener("click",()=>{localStorage.removeItem("gyuos_settings");loadProfile();toast("기본값으로 되돌렸습니다.")});
+$("refreshButton").addEventListener("click",loadStatus);
+window.addEventListener("gyuos:refresh",loadStatus);
+loadProfile();loadStatus();
+</script>
 </body>
 </html>

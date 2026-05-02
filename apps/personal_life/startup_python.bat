@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 > nul
-setlocal
+setlocal EnableExtensions
 
 set "ROOT_DIR=D:\github\persona-ai"
 set "APP_DIR=%ROOT_DIR%\apps\personal_life"
@@ -12,52 +12,45 @@ set "HOST=127.0.0.1"
 set "PORT=8000"
 
 echo ===============================
-echo GW Assistant Python Server Start
+echo GyuVIS Python Server Launcher
 echo ===============================
 echo.
-
 echo [INFO] ROOT_DIR=%ROOT_DIR%
 echo [INFO] APP_DIR=%APP_DIR%
-echo [INFO] UI=http://%HOST%:%PORT%/
-echo [INFO] Docs=http://%HOST%:%PORT%/docs
+echo [INFO] App URL=http://%HOST%:%PORT%/
+echo [INFO] API Docs=http://%HOST%:%PORT%/docs
 echo.
 
-echo [1/4] Move to app directory
+echo [1/4] Moving to app directory...
 cd /d "%APP_DIR%"
 if errorlevel 1 (
-    echo ERROR: Failed to change directory to "%APP_DIR%".
+    echo [ERROR] Could not move to APP_DIR: "%APP_DIR%"
     set "EXIT_CODE=1"
     goto :always_pause
 )
 
-echo [2/4] Activate virtual environment
+echo [2/4] Activating Python environment...
 if exist "%PROJECT_PYTHON%" (
     echo Using project venv: %PROJECT_VENV%
     call "%PROJECT_VENV%"
-) else if exist "%PROJECT_VENV%" (
-    echo Project venv exists but python.exe is missing. Skipping broken project venv.
 ) else if exist "%DEFAULT_PYTHON%" (
     echo Using default venv: %DEFAULT_VENV%
     call "%DEFAULT_VENV%"
-) else if exist "%DEFAULT_VENV%" (
-    echo Default venv exists but python.exe is missing. Skipping broken default venv.
 ) else (
-    echo INFO: No venv found. Continuing with current Python environment.
+    echo [INFO] No venv found. Using Python from PATH.
 )
 
-echo [3/4] Check Python
+echo [3/4] Checking Python...
 python --version
 if errorlevel 1 (
-    echo ERROR: Python is not available in this command prompt.
-    echo Hint: recreate the venv with a currently installed Python, or install Python and add it to PATH.
+    echo [ERROR] Python is not available in this command prompt.
     set "EXIT_CODE=1"
     goto :always_pause
 )
 
-echo [4/4] Run server
-echo UI will open at http://%HOST%:%PORT%/
+echo [4/4] Starting server...
+echo Open http://%HOST%:%PORT%/ in your browser.
 echo Press Ctrl+C to stop the server.
-echo This window will stay open after the server stops.
 echo.
 start "" "http://%HOST%:%PORT%/"
 python -m uvicorn main:app --reload --host 0.0.0.0 --port %PORT%
@@ -65,9 +58,8 @@ python -m uvicorn main:app --reload --host 0.0.0.0 --port %PORT%
 set "EXIT_CODE=%ERRORLEVEL%"
 echo.
 echo ===============================
-echo Server process ended.
+echo Server process stopped.
 echo Exit code: %EXIT_CODE%
-echo Check the messages above for details.
 echo ===============================
 
 :always_pause

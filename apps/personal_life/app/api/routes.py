@@ -44,6 +44,13 @@ from ..services.agent_task_service import (
     get_agent_task,
     list_agent_tasks,
 )
+from ..services.agent_definition_service import (
+    create_agent_definition,
+    disable_agent_definition,
+    get_agent_definition,
+    list_agent_definitions,
+    update_agent_definition,
+)
 from ..services.agent_report_center_service import build_agent_report_center, create_naver_blog_fill_task
 from ..services.agent_standby_service import focus_agent, get_agent_standby_status, open_agent_detail, recover_agent
 from ..config import get_settings
@@ -54,6 +61,21 @@ from ..services.conversation_service import list_conversations
 from ..services.finance_service import build_finance_briefing
 from ..services.memory_service import import_profile_yaml, list_profile_memories
 from ..services.mobile_assistant_service import process_mobile_assistant_command
+from ..services.money_core_service import (
+    build_money_core_summary,
+    create_auto_transfer,
+    create_card_usage,
+    create_expense,
+    create_installment,
+    delete_money_core_item,
+    list_assets_history,
+    list_auto_transfer,
+    list_card_usage,
+    list_expenses,
+    list_installments,
+    save_asset_history,
+    save_income_summary,
+)
 from ..services.natural_language_service import process_natural_command
 from ..services.reminder_service import list_reminders
 from ..services.routine_service import create_routine, create_routine_checkin, list_routines
@@ -67,11 +89,23 @@ FRONTEND_DIR = Path(__file__).resolve().parents[1] / "frontend"
 GYUVIS_HUD_DIR = Path(__file__).resolve().parents[3] / "javis-app"
 GYUVIS_STANDBY_V2_PATH = GYUVIS_HUD_DIR / "standby-v2.html"
 AGENT_REPORT_CENTER_PATH = FRONTEND_DIR / "agent_report_center.html"
+MONEY_CORE_PATH = FRONTEND_DIR / "money_core.html"
 
 
 class AssistantSubtitleUpdate(BaseModel):
     input: str | None = None
     output: str | None = None
+
+
+class AgentDefinitionPayload(BaseModel):
+    title: str
+    description: str = ""
+    task_types: list[str] | str = ""
+    status: str = "대기"
+    processing: str = "대기중"
+    tone: str = "idle"
+    sort_order: int = 100
+    is_enabled: bool = True
 
 @router.get("/", include_in_schema=False)
 def frontend() -> FileResponse:
@@ -101,6 +135,14 @@ def agent_report_center_page() -> FileResponse:
         raise HTTPException(status_code=404, detail="Agent Report Center not found")
 
     return FileResponse(AGENT_REPORT_CENTER_PATH)
+
+
+@router.get("/money-core", include_in_schema=False)
+def money_core_page() -> FileResponse:
+    if not MONEY_CORE_PATH.exists():
+        raise HTTPException(status_code=404, detail="Money Core page not found")
+
+    return FileResponse(MONEY_CORE_PATH)
     
 @router.get("/health")
 def health_check() -> dict[str, str]:
@@ -135,6 +177,104 @@ def get_evening_briefing() -> BriefingDigestResponse:
 @router.get("/finance/briefing", response_model=FinanceBriefingResponse)
 def get_finance_briefing() -> FinanceBriefingResponse:
     return build_finance_briefing()
+
+
+@router.get("/finance/summary")
+def get_money_core_summary(month: str | None = None) -> dict:
+    return build_money_core_summary(month)
+
+
+@router.post("/finance/summary")
+def post_money_core_summary(payload: dict) -> dict:
+    try:
+        return save_income_summary(payload)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.get("/finance/expenses")
+def get_money_core_expenses(month: str | None = None) -> list[dict]:
+    return list_expenses(month)
+
+
+@router.post("/finance/expenses")
+def post_money_core_expense(payload: dict) -> dict:
+    try:
+        return create_expense(payload)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.delete("/finance/expenses/{item_id}")
+def delete_money_core_expense(item_id: int) -> dict:
+    return delete_money_core_item("expenses", item_id)
+
+
+@router.get("/finance/card")
+def get_money_core_card(month: str | None = None) -> list[dict]:
+    return list_card_usage(month)
+
+
+@router.post("/finance/card")
+def post_money_core_card(payload: dict) -> dict:
+    try:
+        return create_card_usage(payload)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.delete("/finance/card/{item_id}")
+def delete_money_core_card(item_id: int) -> dict:
+    return delete_money_core_item("card_usage", item_id)
+
+
+@router.get("/finance/installments")
+def get_money_core_installments(month: str | None = None) -> list[dict]:
+    return list_installments(month)
+
+
+@router.post("/finance/installments")
+def post_money_core_installment(payload: dict) -> dict:
+    try:
+        return create_installment(payload)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.delete("/finance/installments/{item_id}")
+def delete_money_core_installment(item_id: int) -> dict:
+    return delete_money_core_item("installments", item_id)
+
+
+@router.get("/finance/assets")
+def get_money_core_assets() -> list[dict]:
+    return list_assets_history()
+
+
+@router.post("/finance/assets")
+def post_money_core_asset(payload: dict) -> dict:
+    try:
+        return save_asset_history(payload)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.get("/finance/auto-transfer")
+def get_money_core_auto_transfer() -> list[dict]:
+    return list_auto_transfer()
+
+
+@router.post("/finance/auto-transfer")
+def post_money_core_auto_transfer(payload: dict) -> dict:
+    try:
+        return create_auto_transfer(payload)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.delete("/finance/auto-transfer/{item_id}")
+def delete_money_core_auto_transfer(item_id: int) -> dict:
+    return delete_money_core_item("auto_transfer", item_id)
 
 
 @router.post("/assets", response_model=AssetResponse)
@@ -206,6 +346,43 @@ def get_agent_standby_status_route() -> dict:
 @router.get("/agent/report-center/data")
 def get_agent_report_center_data() -> dict:
     return build_agent_report_center()
+
+
+@router.get("/agent/definitions")
+def get_agent_definitions(include_disabled: bool = False) -> list[dict]:
+    return list_agent_definitions(include_disabled=include_disabled)
+
+
+@router.get("/agent/definitions/{agent_id}")
+def get_agent_definition_route(agent_id: int) -> dict:
+    try:
+        return get_agent_definition(agent_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.post("/agent/definitions")
+def post_agent_definition(payload: AgentDefinitionPayload) -> dict:
+    try:
+        return create_agent_definition(payload.dict())
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.put("/agent/definitions/{agent_id}")
+def put_agent_definition(agent_id: int, payload: AgentDefinitionPayload) -> dict:
+    try:
+        return update_agent_definition(agent_id, payload.dict())
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.delete("/agent/definitions/{agent_id}")
+def delete_agent_definition(agent_id: int) -> dict:
+    try:
+        return disable_agent_definition(agent_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
 
 
 @router.post("/agent/blog-drafts/{draft_id}/fill")

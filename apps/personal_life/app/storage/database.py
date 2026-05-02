@@ -133,6 +133,20 @@ CREATE TABLE IF NOT EXISTS agent_tasks (
     created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
+CREATE TABLE IF NOT EXISTS agent_definitions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    task_types TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT '대기',
+    processing TEXT NOT NULL DEFAULT '대기중',
+    tone TEXT NOT NULL DEFAULT 'idle',
+    sort_order INTEGER NOT NULL DEFAULT 100,
+    is_enabled INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
 CREATE TABLE IF NOT EXISTS agent_news_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     agent_id INTEGER NOT NULL,
@@ -170,6 +184,64 @@ CREATE TABLE IF NOT EXISTS agent_blog_drafts (
     source_payload TEXT NOT NULL DEFAULT '{}',
     created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
+CREATE TABLE IF NOT EXISTS income_summary (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    month TEXT NOT NULL UNIQUE,
+    salary INTEGER NOT NULL DEFAULT 0,
+    saving INTEGER NOT NULL DEFAULT 0,
+    fixed_expense INTEGER NOT NULL DEFAULT 0,
+    check_card INTEGER NOT NULL DEFAULT 0,
+    credit_card INTEGER NOT NULL DEFAULT 0,
+    remaining_cash INTEGER NOT NULL DEFAULT 0,
+    card_limit INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
+CREATE TABLE IF NOT EXISTS expenses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    month TEXT NOT NULL,
+    category TEXT NOT NULL,
+    amount INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
+CREATE TABLE IF NOT EXISTS card_usage (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    card_name TEXT NOT NULL,
+    total_amount INTEGER NOT NULL DEFAULT 0,
+    payment_amount INTEGER NOT NULL DEFAULT 0,
+    billing_cycle_start TEXT,
+    billing_cycle_end TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
+CREATE TABLE IF NOT EXISTS installments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    total_month INTEGER NOT NULL DEFAULT 1,
+    current_month INTEGER NOT NULL DEFAULT 1,
+    monthly_amount INTEGER NOT NULL DEFAULT 0,
+    card_name TEXT NOT NULL DEFAULT '',
+    start_date TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
+CREATE TABLE IF NOT EXISTS assets_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    month TEXT NOT NULL UNIQUE,
+    total_asset INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
+CREATE TABLE IF NOT EXISTS auto_transfer (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    amount INTEGER NOT NULL DEFAULT 0,
+    transfer_date TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 """
 
@@ -311,6 +383,21 @@ MARIADB_SCHEMA = [
     )
     """,
     """
+    CREATE TABLE IF NOT EXISTS agent_definitions (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        title VARCHAR(255) NOT NULL,
+        description TEXT NOT NULL,
+        task_types VARCHAR(500) NOT NULL DEFAULT '',
+        status VARCHAR(30) NOT NULL DEFAULT '대기',
+        processing VARCHAR(255) NOT NULL DEFAULT '대기중',
+        tone VARCHAR(30) NOT NULL DEFAULT 'idle',
+        sort_order INT NOT NULL DEFAULT 100,
+        is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+    """,
+    """
     CREATE TABLE IF NOT EXISTS agent_news_items (
         id BIGINT PRIMARY KEY AUTO_INCREMENT,
         agent_id INT NOT NULL,
@@ -350,6 +437,70 @@ MARIADB_SCHEMA = [
         source_payload LONGTEXT NOT NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS income_summary (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        month VARCHAR(7) NOT NULL UNIQUE,
+        salary BIGINT NOT NULL DEFAULT 0,
+        saving BIGINT NOT NULL DEFAULT 0,
+        fixed_expense BIGINT NOT NULL DEFAULT 0,
+        check_card BIGINT NOT NULL DEFAULT 0,
+        credit_card BIGINT NOT NULL DEFAULT 0,
+        remaining_cash BIGINT NOT NULL DEFAULT 0,
+        card_limit BIGINT NOT NULL DEFAULT 0,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS expenses (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        month VARCHAR(7) NOT NULL,
+        category VARCHAR(100) NOT NULL,
+        amount BIGINT NOT NULL DEFAULT 0,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS card_usage (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        card_name VARCHAR(100) NOT NULL,
+        total_amount BIGINT NOT NULL DEFAULT 0,
+        payment_amount BIGINT NOT NULL DEFAULT 0,
+        billing_cycle_start VARCHAR(20) NULL,
+        billing_cycle_end VARCHAR(20) NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS installments (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        title VARCHAR(200) NOT NULL,
+        total_month INT NOT NULL DEFAULT 1,
+        current_month INT NOT NULL DEFAULT 1,
+        monthly_amount BIGINT NOT NULL DEFAULT 0,
+        card_name VARCHAR(100) NOT NULL DEFAULT '',
+        start_date VARCHAR(20) NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS assets_history (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        month VARCHAR(7) NOT NULL UNIQUE,
+        total_asset BIGINT NOT NULL DEFAULT 0,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS auto_transfer (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        title VARCHAR(200) NOT NULL,
+        amount BIGINT NOT NULL DEFAULT 0,
+        transfer_date VARCHAR(20) NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
     """,
 ]

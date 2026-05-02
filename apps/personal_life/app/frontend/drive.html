@@ -4,17 +4,113 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>GyuOS - 자동차</title>
+<link rel="stylesheet" href="/shared/gyuos-shell.css" />
+<script src="/shared/gyuos-shell.js" defer></script>
 <style>
-:root{--bg:#fbf8f3;--panel:#fffdfa;--line:#eee4da;--text:#1f1a17;--muted:#8b8178;--brand:#b9652f;--brand2:#f4e7dc;--green:#2aa66a;--red:#ef4740;--blue:#4b86f7;--orange:#ed9b2f;--shadow:0 10px 30px rgba(80,52,30,.07)}
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Pretendard,"Noto Sans KR",sans-serif;background:radial-gradient(circle at top,#fff 0,#fbf8f3 42%,#f8f3eb 100%);color:var(--text)}
-.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}.sidebar{position:sticky;top:0;height:100vh;padding:30px 20px;border-right:1px solid var(--line);background:rgba(255,252,247,.78);backdrop-filter:blur(14px);display:flex;flex-direction:column}.logo{font-size:30px;font-weight:800;color:#4a2a17}.sub{font-size:13px;color:#756b62;margin-top:5px}.nav{margin-top:34px;display:grid;gap:8px}.nav a{display:flex;align-items:center;gap:14px;padding:14px 15px;border-radius:12px;text-decoration:none;color:#2c2926;font-weight:650}.nav a.active{background:#f3e7dc;color:#a75725}.nav .ico{width:22px;text-align:center;font-size:18px}.assistant{margin-top:auto;padding:24px 18px;text-align:center;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}.bot{width:78px;height:78px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#fff,#ead8c6);font-size:38px}.btn{background:linear-gradient(135deg,#c87338,#a95422);border:0;color:#fff;border-radius:10px;padding:12px 20px;font-weight:800;cursor:pointer}.ver{margin-top:26px;color:#aaa;font-size:12px}.main{padding:22px 28px 34px;max-width:1480px}.topbar{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center}.search{justify-self:center;width:min(720px,100%);height:44px;border:1px solid var(--line);background:#fff;border-radius:14px;box-shadow:var(--shadow);display:flex;align-items:center;padding:0 16px;color:#b7ada4;font-size:14px}.kbd{margin-left:auto;color:#777;background:#f7f2ed;border:1px solid var(--line);padding:3px 8px;border-radius:7px}.user{display:flex;align-items:center;gap:18px}.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#6fa1c8,#f0c39b)}.hero{display:flex;justify-content:space-between;align-items:flex-end;margin:22px 6px 22px}.hero h1{margin:0 0 8px;font-size:29px}.hero p{margin:0;color:#81766d}.weather{display:flex;align-items:center;gap:24px;color:#6d625a}.sun{font-size:36px}.tabs{display:flex;gap:30px;margin:8px 6px 18px;border-bottom:1px solid var(--line)}.tabs span{padding:0 0 12px;color:#594f47;font-weight:700}.tabs .on{color:#a75725;border-bottom:2px solid #a75725}.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}.card{background:rgba(255,255,255,.82);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}.metric{padding:22px}.label{display:flex;gap:10px;align-items:center;color:#5c514a;font-weight:750;font-size:14px}.value{font-size:26px;font-weight:850;margin:20px 0 8px}.small{color:#7e736a;font-size:13px}.green{color:var(--green)}.red{color:var(--red)}.grid{margin-top:16px;display:grid;grid-template-columns:1.05fr 1fr .9fr;gap:16px}.span2{grid-column:span 2}.card h3{margin:0 0 16px;font-size:17px}.section{padding:22px}.row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f0e8df}.row:last-child{border-bottom:0}.badge{font-size:12px;padding:5px 9px;border-radius:999px;background:#f5eadf;color:#a75725;font-weight:800}.grow{flex:1}.muted{color:var(--muted);font-size:13px}.pill{padding:5px 9px;border-radius:999px;background:#edf4ff;color:#3777ea;font-size:12px;font-weight:800}.timeline .time{width:58px;font-weight:750}.dot{width:9px;height:9px;border-radius:50%;background:#ef4740}.dot.o{background:#ed9b2f}.dot.g{background:#bbb}.donut{width:172px;height:172px;border-radius:50%;background:conic-gradient(#d74335 0 32%,#f0a22e 32% 50%,#edd36a 50% 66%,#79c7bd 66% 80%,#73a5f1 80% 100%);position:relative;margin:8px auto}.donut:after{content:'총 소비\A ₩1,280,000\A 예산 대비 64%';white-space:pre;position:absolute;inset:34px;border-radius:50%;background:white;display:grid;place-items:center;text-align:center;font-weight:800;font-size:13px;line-height:1.7}.money{display:grid;grid-template-columns:220px 1fr;gap:20px}.legend{display:grid;gap:12px}.legend div{display:flex;justify-content:space-between}.carbox{display:grid;grid-template-columns:160px 1fr;gap:16px}.car{height:92px;border-radius:16px;background:linear-gradient(160deg,#e8ecef,#fff);display:grid;place-items:center;font-size:58px}.content img{width:64px;height:64px;object-fit:cover;border-radius:12px;background:#ddd}.thumb{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#0f2742,#7fb5d6);display:grid;place-items:center;color:white;font-weight:900;flex:none}.progress{height:6px;background:#eee6de;border-radius:99px;overflow:hidden}.bar{height:100%;background:#d36d28;border-radius:99px}.action{display:flex;justify-content:space-between;align-items:center;background:#fbf2ea;border-radius:12px;padding:12px 14px;margin-top:10px}.plus{width:34px;height:34px;border-radius:50%;background:#fbf2ea;display:grid;place-items:center;color:#a75725;font-size:22px}.footerGrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}.contentlist .row{padding:9px 0}@media(max-width:1100px){.app{grid-template-columns:1fr}.sidebar{display:none}.metrics{grid-template-columns:repeat(2,1fr)}.grid,.footerGrid{grid-template-columns:1fr}.span2{grid-column:auto}.main{padding:18px}.weather{display:none}.money{grid-template-columns:1fr}}
+:root{--bg:#fbf7f1;--panel:rgba(255,253,249,.86);--line:#efe4d9;--text:#211b17;--muted:#8d8379;--brand:#d35a12;--brand-deep:#a6420b;--brand-soft:#fff1e5;--green:#24b261;--red:#ef4740;--blue:#2584dd;--orange:#f29524;--shadow:0 18px 46px rgba(91,61,35,.08)}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;color:var(--text);font-family:"Malgun Gothic","맑은 고딕","Nanum Gothic","나눔고딕",Arial,sans-serif;background:radial-gradient(circle at 18% 0,rgba(245,221,190,.56),transparent 33%),radial-gradient(circle at 88% 7%,rgba(225,239,246,.72),transparent 30%),linear-gradient(135deg,#fffaf3,#fbf7f1 48%,#f7efe7)}button,input{font:inherit}button{border:0;cursor:pointer}.app{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100vh}.main{padding:34px 36px 38px;max-width:1760px;width:100%}.hero,.panel,.metric{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);backdrop-filter:blur(16px)}.hero{display:grid;grid-template-columns:1fr 360px;gap:22px;padding:24px;margin-bottom:18px}.car-visual{min-height:230px;border-radius:18px;background:linear-gradient(135deg,#f4f7fa,#fff 52%,#f7e8da);display:grid;place-items:center;position:relative;overflow:hidden}.car-visual:before{content:"";position:absolute;inset:auto -8% 24px;height:36px;background:#e5ddd4;border-radius:50%}.car-shape{width:250px;height:84px;border-radius:44px 54px 30px 30px;background:linear-gradient(135deg,#ef6d2c,#b9450d);position:relative;box-shadow:0 20px 40px rgba(166,73,17,.22)}.car-shape:before{content:"";position:absolute;left:58px;top:-48px;width:120px;height:60px;border-radius:48px 48px 8px 8px;background:linear-gradient(135deg,#fff5ec,#e8f3f8);border:8px solid #c54c13}.wheel{position:absolute;bottom:-20px;width:46px;height:46px;border-radius:50%;background:#2b2928;border:8px solid #fff}.wheel.left{left:42px}.wheel.right{right:42px}.hero-info h2{margin:0 0 8px;font-size:30px}.muted{color:var(--muted);font-size:13px;line-height:1.5;font-weight:700}.badge,.tag{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:6px 10px;background:var(--brand-soft);color:var(--brand-deep);font-size:12px;font-weight:950}.hero-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px}.stat{padding:13px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.65)}.stat span{display:block;color:var(--muted);font-size:12px;font-weight:850}.stat b{display:block;margin-top:5px;font-size:20px}.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}.metric{padding:18px}.metric span{color:var(--muted);font-size:13px;font-weight:800}.metric b{display:block;margin-top:10px;font-size:24px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}.panel{padding:22px}.head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:16px}.head h2{margin:0;font-size:21px;letter-spacing:-.03em}.list{display:grid;gap:10px;max-height:320px;overflow:auto;padding-right:4px}.item{display:grid;gap:7px;padding:13px 14px;border:1px solid rgba(80,52,30,.1);border-radius:14px;background:rgba(255,255,255,.64)}.item-row{display:flex;justify-content:space-between;gap:14px;align-items:center}.title{font-weight:950;line-height:1.4}.bar{height:10px;border-radius:999px;background:#f1e8de;overflow:hidden}.bar span{display:block;height:100%;border-radius:999px;background:linear-gradient(135deg,var(--brand),var(--brand-deep));width:0}.actions{display:flex;gap:10px;flex-wrap:wrap}.btn,.ghost,.mini{min-height:40px;border-radius:14px;padding:0 15px;font-weight:950}.btn{background:linear-gradient(135deg,var(--brand),var(--brand-deep));color:white;box-shadow:0 14px 28px rgba(194,80,14,.18)}.ghost,.mini{border:1px solid var(--line);background:#fffdfa;color:var(--brand-deep)}.mini{min-height:32px;border-radius:999px;font-size:12px}.form{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}.form input{height:42px;border:1px solid var(--line);border-radius:13px;background:#fffdfa;padding:0 12px;font-weight:800}.form .wide{grid-column:span 2}.empty{padding:16px;text-align:center;border:1px dashed rgba(80,52,30,.18);border-radius:14px;color:var(--muted);font-weight:800;background:rgba(255,255,255,.42)}.red{color:var(--red)}.green{color:var(--green)}@media(max-width:1180px){.hero,.grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}}@media(max-width:880px){.app{grid-template-columns:1fr}.main{padding:22px}.cards,.form{grid-template-columns:1fr}.form .wide{grid-column:auto}}
 </style>
 </head>
 <body>
 <div class="app">
-  <aside class="sidebar"><div class="logo">GyuOS</div><div class="sub">Personal Concierge OS</div><nav class="nav"><a href="index.html"><span class="ico">⌂</span>홈</a><a href="gyuos_pc_briefing.html" ><span class="ico">▣</span>브리핑</a><a href="gyuos_pc_schedule.html"><span class="ico">▣</span>일정</a><a href="gyuos_pc_money.html"><span class="ico">▣</span>돈 관리</a><a href="gyuos_pc_car.html" class="active"><span class="ico">▣</span>자동차</a><a href="gyuos_pc_creator.html"><span class="ico">⌁</span>Creator Studio</a><a href="gyuos_pc_memory.html"><span class="ico">⌕</span>기억 검색</a><a href="gyuos_pc_memo.html"><span class="ico">▤</span>메모</a><a href="gyuos_pc_routine.html"><span class="ico">☑</span>루틴 & 목표</a><a href="gyuos_pc_settings.html"><span class="ico">⚙</span>설정</a></nav><div class="assistant"><div class="bot">🤖</div><b>Gyu Assistant</b><p class="muted">무엇이든 물어보세요!</p><button class="btn">AI와 대화</button></div><div class="ver">v1.0.0<br>© GyuOS All rights reserved.</div></aside>
-  <main class="main"><div class="topbar"><div class="search">✦ 무엇이든 물어보거나 명령해보세요. 예) 오늘 일정 알려줘, 점심 12,000원 기록해줘 <span class="kbd">⌘ K</span></div><div class="user">🔔 🌙 <span class="avatar"></span><b>Gyu⌄</b></div></div>
-  <section class="hero"><div><h1>자동차</h1><p>내 차량 상태와 정비 일정을 관리하세요.</p></div><div class="weather"><span class="sun">☀️</span><b style="font-size:25px">24°</b><span>맑음 · 서울 강남구</span><span>2024.04.26 (금)</span></div></section>
-  <section class="metrics"><div class="card metric"><div class="label">🗓 오늘 일정</div><div class="value">2 <small>건</small></div><div class="small">10:00 대표 미팅</div></div><div class="card metric"><div class="label">💳 이번 달 소비</div><div class="value">452,600 <small>원</small></div><div class="small">지난 달 대비 <span class="red">+12%</span></div></div><div class="card metric"><div class="label">🚘 차량 상태</div><div class="value">D-18</div><div class="small">보험 만기 예정</div></div><div class="card metric"><div class="label">✅ 루틴</div><div class="value">66<small>%</small></div><div class="small">목표 진행률</div></div><div class="card metric"><div class="label">📈 콘텐츠</div><div class="value">2,340</div><div class="small">최근 7일 조회수</div></div></section><section class="grid"><div class="card section"><h3>차량 상태</h3><div class="carbox"><div class="car">🚘</div><div><b>KIA K5 2.0</b><div class="muted">2022년식 · 34,560km</div><span class="badge">상세 보기</span></div></div><div class="row"><span>🔥 보험 만기</span><b class="red grow">D-18</b><span>2024.05.14</span></div><div class="row"><span>🛢 엔진오일</span><b class="grow">1,800km 남음</b><span>권장 36,000km</span></div><div class="row"><span>🔧 자동차 검사</span><b class="grow">D-154</b><span>2024.09.27</span></div></div><div class="card section"><h3>최근 주유 기록</h3><div class="row"><span>⛽</span><div class="grow"><b>4.20 SK 주유소</b><div class="muted">35.2L</div></div><b>₩65,000</b></div></div></section></main></div>
+  <gyuos-sidebar active="drive" card-title="Drive Center" card-text="차량 상태, 주유, 정비 일정을 관리합니다."></gyuos-sidebar>
+  <main class="main">
+    <gyuos-header title="자동차" subtitle="차량 상태, 정비 주기, 주유 기록을 한눈에 관리합니다."></gyuos-header>
+
+    <section class="hero">
+      <div>
+        <div class="badge">Drive Center</div>
+        <div class="hero-info">
+          <h2 id="carName">셀토스 / 1.6 T-GDI</h2>
+          <div class="muted" id="carMeta">2022년식 · 34,560km · 오너 Gyu</div>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><span>보험 만기</span><b class="red" id="insuranceDDay">D-18</b></div>
+          <div class="stat"><span>엔진오일</span><b id="oilRemain">1,800km</b></div>
+          <div class="stat"><span>자동차 검사</span><b id="inspectionDDay">D-154</b></div>
+          <div class="stat"><span>이번 달 주유비</span><b id="fuelMonth">0원</b></div>
+        </div>
+      </div>
+      <div class="car-visual"><div class="car-shape"><span class="wheel left"></span><span class="wheel right"></span></div></div>
+    </section>
+
+    <section class="cards">
+      <article class="metric"><span>현재 주행거리</span><b id="odometer">34,560km</b><small class="muted">최근 입력 기준</small></article>
+      <article class="metric"><span>평균 주유비</span><b id="avgFuel">0원</b><small class="muted">최근 기록 평균</small></article>
+      <article class="metric"><span>대기 정비</span><b id="openMaintenance">0건</b><small class="muted">예정/확인 필요</small></article>
+      <article class="metric"><span>차량 메모</span><b id="memoCount">0건</b><small class="muted">정비/주유 기록 합계</small></article>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <div class="head"><div><h2>정비 체크리스트</h2><div class="muted">보험, 엔진오일, 검사, 타이어 같은 반복 항목입니다.</div></div><button class="ghost" type="button" id="resetMaintenance">기본값</button></div>
+        <div class="list" id="maintenanceList"></div>
+        <form class="form" id="maintenanceForm">
+          <input class="wide" name="title" placeholder="정비 항목" required />
+          <input name="due" placeholder="D-30 또는 2026-06-01" />
+          <input name="note" placeholder="메모" />
+          <button class="btn" type="submit">추가</button>
+        </form>
+      </article>
+
+      <article class="panel">
+        <div class="head"><div><h2>주유 기록</h2><div class="muted">비용, 리터, 주유소를 기록합니다.</div></div><span class="tag" id="fuelCount">0건</span></div>
+        <div class="list" id="fuelList"></div>
+        <form class="form" id="fuelForm">
+          <input name="date" type="date" required />
+          <input name="station" placeholder="주유소" required />
+          <input name="liters" type="number" min="0" step="0.1" placeholder="리터" />
+          <input name="amount" type="number" min="0" step="1" placeholder="금액" required />
+          <button class="btn" type="submit">기록</button>
+        </form>
+      </article>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <div class="head"><div><h2>비용 흐름</h2><div class="muted">최근 주유 기록을 기준으로 간단히 계산합니다.</div></div></div>
+        <div class="list" id="costList"></div>
+      </article>
+      <article class="panel">
+        <div class="head"><div><h2>차량 정보</h2><div class="muted">브라우저 로컬 저장 설정입니다.</div></div><button class="ghost" type="button" id="saveVehicle">저장</button></div>
+        <div class="form">
+          <input id="vehicleName" class="wide" placeholder="차량명" />
+          <input id="vehicleYear" placeholder="연식" />
+          <input id="vehicleKm" type="number" placeholder="주행거리" />
+          <input id="vehicleOwner" placeholder="오너" />
+        </div>
+      </article>
+    </section>
+  </main>
+</div>
+<script>
+const $=(id)=>document.getElementById(id);
+const won=(v)=>`${Number(v||0).toLocaleString("ko-KR")}원`;
+const km=(v)=>`${Number(v||0).toLocaleString("ko-KR")}km`;
+const today=()=>new Date().toISOString().slice(0,10);
+const defaults={vehicle:{name:"셀토스 / 1.6 T-GDI",year:"2022년식",km:34560,owner:"Gyu"},maintenance:[{title:"보험 만기",due:"D-18",note:"갱신 일정 확인",progress:82,state:"red"},{title:"엔진오일",due:"1,800km 남음",note:"36,000km 전후 교체 권장",progress:72,state:"orange"},{title:"자동차 검사",due:"D-154",note:"검사 예약 필요",progress:34,state:"green"},{title:"타이어 공기압",due:"월 1회",note:"장거리 전 확인",progress:45,state:"green"}],fuel:[{date:today(),station:"최근 주유 기록 없음",liters:0,amount:0}]};
+let state={vehicle:{},maintenance:[],fuel:[]};
+function escapeHtml(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;")}
+function loadState(){state={...defaults,...JSON.parse(localStorage.getItem("gyuos_drive")||"{}")};state.vehicle={...defaults.vehicle,...(state.vehicle||{})};state.maintenance=state.maintenance||[];state.fuel=state.fuel||[]}
+function saveState(){localStorage.setItem("gyuos_drive",JSON.stringify(state))}
+function render(){
+  const v=state.vehicle;$("carName").textContent=v.name;$("carMeta").textContent=`${v.year} · ${km(v.km)} · 오너 ${v.owner}`;$("odometer").textContent=km(v.km);
+  $("vehicleName").value=v.name;$("vehicleYear").value=v.year;$("vehicleKm").value=v.km;$("vehicleOwner").value=v.owner;
+  const fuel=state.fuel.filter(x=>Number(x.amount)>0);const total=fuel.reduce((s,x)=>s+Number(x.amount||0),0);$("fuelMonth").textContent=won(total);$("avgFuel").textContent=won(fuel.length?Math.round(total/fuel.length):0);$("fuelCount").textContent=`${fuel.length}건`;
+  $("openMaintenance").textContent=`${state.maintenance.length}건`;$("memoCount").textContent=`${state.maintenance.length+fuel.length}건`;
+  const first=state.maintenance[0]||{};$("insuranceDDay").textContent=first.due||"-";$("oilRemain").textContent=state.maintenance[1]?.due||"-";$("inspectionDDay").textContent=state.maintenance[2]?.due||"-";
+  $("maintenanceList").innerHTML=state.maintenance.length?state.maintenance.map((x,i)=>`<article class="item"><div class="item-row"><div><div class="title ${x.state==="red"?"red":""}">${escapeHtml(x.title)}</div><div class="muted">${escapeHtml(x.note||"")}</div></div><div class="actions"><span class="tag">${escapeHtml(x.due||"-")}</span><button class="mini" data-delete-maint="${i}">삭제</button></div></div><div class="bar"><span style="width:${Math.min(100,Number(x.progress||20))}%"></span></div></article>`).join(""):`<div class="empty">정비 항목이 없습니다.</div>`;
+  $("fuelList").innerHTML=fuel.length?fuel.slice().reverse().map((x,i)=>`<article class="item"><div class="item-row"><div><div class="title">${escapeHtml(x.station)}</div><div class="muted">${escapeHtml(x.date)} · ${Number(x.liters||0).toLocaleString("ko-KR")}L</div></div><div class="actions"><span class="tag">${won(x.amount)}</span><button class="mini" data-delete-fuel="${fuel.length-1-i}">삭제</button></div></div></article>`).join(""):`<div class="empty">주유 기록이 없습니다.</div>`;
+  const rows=[["주유 합계",won(total)],["최근 주유",fuel[0]?`${fuel[fuel.length-1].station} · ${won(fuel[fuel.length-1].amount)}`:"-"],["예상 월 비용",won(total)],["정비 메모",`${state.maintenance.length}개 항목 관리 중`]];
+  $("costList").innerHTML=rows.map(([a,b])=>`<article class="item"><div class="item-row"><div class="title">${a}</div><b>${escapeHtml(b)}</b></div></article>`).join("");
+}
+$("maintenanceForm").addEventListener("submit",(e)=>{e.preventDefault();const f=new FormData(e.currentTarget);state.maintenance.push({title:f.get("title"),due:f.get("due")||"대기",note:f.get("note")||"",progress:30,state:"green"});saveState();e.currentTarget.reset();render()});
+$("fuelForm").addEventListener("submit",(e)=>{e.preventDefault();const f=new FormData(e.currentTarget);state.fuel.push({date:f.get("date"),station:f.get("station"),liters:Number(f.get("liters")||0),amount:Number(f.get("amount")||0)});saveState();e.currentTarget.reset();render()});
+$("resetMaintenance").addEventListener("click",()=>{state.maintenance=defaults.maintenance;saveState();render()});
+$("saveVehicle").addEventListener("click",()=>{state.vehicle={name:$("vehicleName").value||defaults.vehicle.name,year:$("vehicleYear").value||defaults.vehicle.year,km:Number($("vehicleKm").value||0),owner:$("vehicleOwner").value||"Gyu"};saveState();render()});
+document.addEventListener("click",(e)=>{const m=e.target.closest("[data-delete-maint]");if(m){state.maintenance.splice(Number(m.dataset.deleteMaint),1);saveState();render()}const f=e.target.closest("[data-delete-fuel]");if(f){const fuel=state.fuel.filter(x=>Number(x.amount)>0);const target=fuel[Number(f.dataset.deleteFuel)];state.fuel=state.fuel.filter(x=>x!==target);saveState();render()}});
+window.addEventListener("gyuos:refresh",()=>{loadState();render()});
+loadState();render();
+</script>
 </body>
 </html>

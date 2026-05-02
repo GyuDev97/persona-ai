@@ -1,5 +1,5 @@
-import json
-from datetime import date, datetime
+﻿import json
+from datetime import date, datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from typing import Any
 
@@ -8,6 +8,8 @@ from ..storage.database import execute, fetch_all, fetch_one
 
 AGENT1_ID = 1
 AGENT1_TOPIC = "IT 모바일 테크 기술 뉴스"
+AGENT1_DISPLAY_LABEL = "최신 IT 뉴스"
+NEWS_TIMEZONE = timezone(timedelta(hours=9))
 
 
 def save_news_items(agent_id: int, topic: str, items: list[dict[str, Any]]) -> int:
@@ -45,31 +47,72 @@ def save_news_items(agent_id: int, topic: str, items: list[dict[str, Any]]) -> i
 
 def get_agent_news_stats(agent_id: int = AGENT1_ID, report_date: str | None = None) -> dict[str, Any]:
     target_date = report_date or date.today().isoformat()
-    items = list_agent_news_items(agent_id=agent_id, report_date=target_date, limit=200)
+    today_items = list_agent_news_items(agent_id=agent_id, report_date=target_date, limit=200)
+    display_items = list_agent_news_display_items(agent_id=agent_id, report_date=target_date, limit=200)
     report = get_agent_report(agent_id=agent_id, report_date=target_date)
     return {
         "agent_id": agent_id,
         "report_date": target_date,
-        "collected_count": len(items),
-        "selected_count": min(len(items), 5),
-        "latest_titles": [item["title"] for item in items[:5]],
-        "last_collected_at": items[0]["collected_at"] if items else None,
+        "label": AGENT1_DISPLAY_LABEL,
+        "collected_count": len(display_items),
+        "today_count": len(today_items),
+        "selected_count": min(len(display_items), 5),
+        "latest_titles": [item["title"] for item in display_items[:5]],
+        "last_collected_at": display_items[0]["collected_at"] if display_items else None,
+        "scope_days": 1 if len(today_items) >= 3 else 3,
         "report": report,
     }
 
 
-def list_agent_news_items(agent_id: int = AGENT1_ID, report_date: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+def list_agent_news_items(
+    agent_id: int = AGENT1_ID,
+    report_date: str | None = None,
+    limit: int = 50,
+) -> list[dict[str, Any]]:
     target_date = report_date or date.today().isoformat()
     return fetch_all(
         """
         SELECT *
         FROM agent_news_items
-        WHERE agent_id = ? AND DATE(collected_at) = ?
-        ORDER BY importance_score DESC, published_at DESC, collected_at DESC, id DESC
+        WHERE agent_id = ? AND DATE(COALESCE(published_at, collected_at)) = ?
+        ORDER BY COALESCE(published_at, collected_at) DESC, importance_score DESC, collected_at DESC, id DESC
         LIMIT ?
         """,
         (agent_id, target_date, limit),
     )
+
+
+def list_agent_news_display_items(
+    agent_id: int = AGENT1_ID,
+    report_date: str | None = None,
+    limit: int = 5,
+    min_today: int = 3,
+    fallback_days: int = 3,
+) -> list[dict[str, Any]]:
+    target_date = report_date or date.today().isoformat()
+    today_items = list_agent_news_items(agent_id=agent_id, report_date=target_date, limit=max(limit * 4, limit))
+    today_display_items = _filter_display_news(today_items)
+    if len(today_display_items) >= min_today:
+        return today_display_items[:limit]
+
+    try:
+        target = date.fromisoformat(target_date)
+    except ValueError:
+        target = date.today()
+    start_date = (target - timedelta(days=max(1, fallback_days) - 1)).isoformat()
+    fallback_items = fetch_all(
+        """
+        SELECT *
+        FROM agent_news_items
+        WHERE agent_id = ?
+          AND DATE(COALESCE(published_at, collected_at)) BETWEEN ? AND ?
+        ORDER BY COALESCE(published_at, collected_at) DESC, importance_score DESC, collected_at DESC, id DESC
+        LIMIT ?
+        """,
+        (agent_id, start_date, target_date, max(limit * 6, limit)),
+    )
+    fallback_display_items = _filter_display_news(fallback_items)
+    return (fallback_display_items or fallback_items)[:limit]
 
 
 def get_agent_report(agent_id: int = AGENT1_ID, report_date: str | None = None) -> dict[str, Any] | None:
@@ -93,22 +136,21 @@ def get_agent_report(agent_id: int = AGENT1_ID, report_date: str | None = None) 
 
 def build_agent1_daily_report(report_date: str | None = None) -> dict[str, Any]:
     target_date = report_date or date.today().isoformat()
-    items = list_agent_news_items(agent_id=AGENT1_ID, report_date=target_date, limit=100)
+    today_count = len(list_agent_news_items(agent_id=AGENT1_ID, report_date=target_date, limit=200))
+    items = list_agent_news_display_items(agent_id=AGENT1_ID, report_date=target_date, limit=100)
     highlights = items[:5]
     if highlights:
         summary = (
-            f"에이전트 1번 {target_date} IT 뉴스 보고입니다. "
-            f"오늘 10시부터 18시 사이 수집 기준으로 총 {len(items)}건을 확인했고, "
-            f"그중 핵심 {len(highlights)}건을 우선 선별했습니다. "
-            "상세 화면에서 주요 헤드라인을 확인하시면 됩니다."
+            f"에이전트 1번 {target_date} 최신 IT 뉴스 보고입니다. "
+            f"오늘 발행 기준 {today_count}건을 확인했고, 부족할 경우 최근 3일 범위까지 확장해 "
+            f"최신순 {len(highlights)}건을 선별했습니다."
         )
     else:
         summary = (
-            f"에이전트 1번 {target_date} IT 뉴스 보고입니다. "
-            "오늘 수집된 IT 뉴스가 아직 없습니다. 수집기가 실행 중인지 확인이 필요합니다."
+            f"에이전트 1번 {target_date} 최신 IT 뉴스 보고입니다. "
+            "오늘과 최근 3일 범위에서 표시할 IT 뉴스가 아직 없습니다. 수집기를 다시 실행해 확인이 필요합니다."
         )
 
-    title = "오전 10시~오후 6시 IT 뉴스 요약"
     highlights_payload = [
         {
             "title": item["title"],
@@ -128,7 +170,7 @@ def build_agent1_daily_report(report_date: str | None = None) -> dict[str, Any]:
             )
             VALUES (?, ?, ?, ?, ?, 'completed')
             """,
-            (AGENT1_ID, target_date, title, summary, json.dumps(highlights_payload, ensure_ascii=False)),
+            (AGENT1_ID, target_date, AGENT1_DISPLAY_LABEL, summary, json.dumps(highlights_payload, ensure_ascii=False)),
         )
     else:
         execute(
@@ -138,7 +180,7 @@ def build_agent1_daily_report(report_date: str | None = None) -> dict[str, Any]:
             WHERE agent_id = ? AND report_date = ?
             """,
             (
-                title,
+                AGENT1_DISPLAY_LABEL,
                 summary,
                 json.dumps(highlights_payload, ensure_ascii=False),
                 datetime.now().replace(microsecond=0).isoformat(sep=" "),
@@ -152,14 +194,28 @@ def build_agent1_daily_report(report_date: str | None = None) -> dict[str, Any]:
 def score_news_title(title: str) -> int:
     keywords = {
         "AI": 3,
+        "OpenAI": 3,
+        "GPT": 3,
         "인공지능": 3,
         "반도체": 3,
+        "Mobile": 2,
         "스마트폰": 2,
+        "Smartphone": 2,
         "모바일": 2,
+        "Galaxy": 2,
         "갤럭시": 2,
+        "iPhone": 2,
         "아이폰": 2,
+        "iOS": 2,
+        "Android": 2,
+        "안드로이드": 2,
+        "Wearable": 2,
+        "웨어러블": 2,
+        "Apple": 2,
         "애플": 2,
+        "Google": 2,
         "구글": 2,
+        "Samsung": 2,
         "삼성": 2,
         "보안": 2,
         "업데이트": 1,
@@ -171,6 +227,10 @@ def score_news_title(title: str) -> int:
         if keyword.lower() in lowered or keyword in title:
             score += weight
     return min(score, 10)
+
+
+def _filter_display_news(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [item for item in items if score_news_title(str(item.get("title") or "")) > 1]
 
 
 def split_title_source(raw_title: str) -> tuple[str, str]:
@@ -188,7 +248,9 @@ def parse_rss_datetime(value: str | None) -> str | None:
         parsed = parsedate_to_datetime(value)
     except (TypeError, ValueError):
         return None
-    return parsed.replace(tzinfo=None, microsecond=0).isoformat(sep=" ")
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(NEWS_TIMEZONE).replace(tzinfo=None, microsecond=0).isoformat(sep=" ")
 
 
 def _normalize_datetime(value: Any) -> str | None:

@@ -180,6 +180,10 @@ def _detect_agent_task_type(text: str) -> str | None:
         and any(keyword in normalized for keyword in ["유튜브", "아이디어", "영상", "콘텐츠", "주제"])
     ):
         return "youtube_idea_research"
+    if any(keyword in normalized for keyword in ["소비", "재정", "돈", "카드", "지출", "가계부"]) and any(
+        keyword in normalized for keyword in ["요약", "브리핑", "정리", "분석", "알려"]
+    ):
+        return "finance_monthly_summary"
     if (
         "네이버" in normalized
         and "블로그" in normalized
@@ -317,6 +321,8 @@ def _build_search_query(text: str, task_type: str) -> str:
         return normalized
     if task_type == "youtube_idea_research":
         return "IT 모바일 AI 유튜브 아이디어"
+    if task_type == "finance_monthly_summary":
+        return "이번 달 소비 재정 요약"
     if task_type == "news_briefing":
         cleaned = _clean_search_query(normalized)
         cleaned = re.sub(r"\b(뉴스|헤드라인|속보)\b", "", cleaned).strip()
@@ -339,6 +345,8 @@ def _build_agent_waiting_summary(task_type: str) -> str:
         return "에이전트 3번에게 코딩/앱 업데이트 작업을 배정했습니다."
     if task_type == "youtube_idea_research":
         return "에이전트 4번에게 유튜브 아이디어 탐색 작업을 배정했습니다."
+    if task_type == "finance_monthly_summary":
+        return "Money Core에서 이번 달 소비와 카드 사용 현황을 요약하겠습니다."
     if task_type == "news_briefing":
         return "확인해보겠습니다. 핵심만 정리해드릴게요."
     if task_type == "weather_briefing":

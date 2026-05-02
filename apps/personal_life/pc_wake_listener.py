@@ -717,6 +717,7 @@ class GyuvisWakeListener:
 
         try:
             self._post_json(f"{SERVER_URL}/agent/standby-status/detail/{agent_id}", {})
+            self._open_url(f"{SERVER_URL}/agent/report-center?agent={agent_id}")
             if agent_id == 2 and "초안" in normalized:
                 self._pending_followup_action = "naver_blog_fill_draft"
             self._speak(f"네 보스. 에이전트 {agent_id}번 상세 화면을 열겠습니다.")
@@ -840,6 +841,28 @@ class GyuvisWakeListener:
 
     def _handle_browser_command(self, text: str) -> bool:
         normalized = self._normalize_text(text)
+
+        local_pages = [
+            (("에이전트", "리포트", "대시보드", "agent report"), f"{SERVER_URL}/agent/report-center", "네 보스. 에이전트 리포트 센터를 열겠습니다."),
+            (("크리에이터", "creator studio", "콘텐츠 작업실", "콘텐츠"), f"{SERVER_URL}/creator.html", "네 보스. 크리에이터 스튜디오를 열겠습니다."),
+            (("돈 관리", "재정", "money core", "머니코어"), f"{SERVER_URL}/money-core", "네 보스. Money Core를 열겠습니다."),
+            (("자동차", "차량", "drive"), f"{SERVER_URL}/drive.html", "네 보스. 자동차 관리 화면을 열겠습니다."),
+            (("설정", "setting"), f"{SERVER_URL}/settings.html", "네 보스. 설정 화면을 열겠습니다."),
+            (("일정", "스케줄", "schedule"), f"{SERVER_URL}/schedule.html", "네 보스. 일정 화면을 열겠습니다."),
+            (("브리핑", "briefing"), f"{SERVER_URL}/briefing.html", "네 보스. 브리핑 화면을 열겠습니다."),
+        ]
+        open_tokens = ("열어", "보여", "띄워", "이동", "실행", "open", "show")
+        if any(token in normalized for token in open_tokens):
+            agent_id = self._extract_agent_id(text)
+            if agent_id in {1, 2, 3, 4} and ("에이전트" in normalized or "agent" in normalized):
+                self._open_url(f"{SERVER_URL}/agent/report-center?agent={agent_id}")
+                self._speak(f"네 보스. 에이전트 {agent_id}번 상세 화면을 열겠습니다.")
+                return True
+            for keywords, url, reply in local_pages:
+                if any(self._normalize_text(keyword) in normalized for keyword in keywords):
+                    self._open_url(url)
+                    self._speak(reply)
+                    return True
 
         if "유튜브" in normalized and any(token in normalized for token in ("틀어", "재생", "음악", "ncs")):
             if "ncs" in normalized:

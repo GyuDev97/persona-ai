@@ -1,40 +1,10 @@
 from datetime import datetime
 
 from ..storage.database import fetch_all
+from .agent_definition_service import list_agent_definitions
 from .agent_news_service import get_agent_news_stats
 from .blog_draft_service import get_latest_blog_draft
 
-
-DEFAULT_AGENTS = [
-    {
-        "id": 1,
-        "title": "오전 10시~오후 6시 IT 뉴스 요약",
-        "status": "활성",
-        "processing": "완료",
-        "tone": "active",
-    },
-    {
-        "id": 2,
-        "title": "IT/모바일 관련 블로그 초안 추천",
-        "status": "활성",
-        "processing": "진행중",
-        "tone": "active",
-    },
-    {
-        "id": 3,
-        "title": "코딩 / 앱 업데이트 처리",
-        "status": "대기",
-        "processing": "대기중",
-        "tone": "idle",
-    },
-    {
-        "id": 4,
-        "title": "유튜브 아이디어 탐색",
-        "status": "대기",
-        "processing": "대기중",
-        "tone": "idle",
-    },
-]
 
 _active_agent_id: int | None = None
 _detail_agent_id: int | None = None
@@ -43,17 +13,21 @@ _detail_requested_at: str | None = None
 AGENT_TASK_TYPES = {
     1: ("agent1_it_news_window",),
     2: ("agent2_it_blog_draft", "naver_blog_fill_draft"),
-    3: ("coding_app_update",),
+    3: ("coding_app_update", "finance_monthly_summary"),
     4: ("youtube_idea_research",),
 }
 
 
 def get_agent_standby_status() -> dict:
-    agents = [dict(agent) for agent in DEFAULT_AGENTS]
-    _apply_agent1_news_state(agents[0])
-    _apply_agent2_draft_state(agents[1])
+    agents = [_standby_agent_payload(agent) for agent in list_agent_definitions()]
+    agent_by_id = {agent["id"]: agent for agent in agents}
+    if 1 in agent_by_id:
+        _apply_agent1_news_state(agent_by_id[1])
+    if 2 in agent_by_id:
+        _apply_agent2_draft_state(agent_by_id[2])
     for agent in agents:
-        _apply_agent_task_state(agent, AGENT_TASK_TYPES.get(agent["id"], ()))
+        task_types = tuple(agent.get("task_types") or AGENT_TASK_TYPES.get(agent["id"], ()))
+        _apply_agent_task_state(agent, task_types)
     return {
         "active_agent_id": _active_agent_id,
         "detail_agent_id": _detail_agent_id,
@@ -65,14 +39,14 @@ def get_agent_standby_status() -> dict:
 
 def focus_agent(agent_id: int | None) -> dict:
     global _active_agent_id
-    valid_ids = {agent["id"] for agent in DEFAULT_AGENTS}
+    valid_ids = {agent["id"] for agent in list_agent_definitions()}
     _active_agent_id = agent_id if agent_id in valid_ids else None
     return get_agent_standby_status()
 
 
 def open_agent_detail(agent_id: int | None) -> dict:
     global _active_agent_id, _detail_agent_id, _detail_requested_at
-    valid_ids = {agent["id"] for agent in DEFAULT_AGENTS}
+    valid_ids = {agent["id"] for agent in list_agent_definitions()}
     selected_agent_id = agent_id if agent_id in valid_ids else None
     _active_agent_id = selected_agent_id
     _detail_agent_id = selected_agent_id
@@ -82,7 +56,7 @@ def open_agent_detail(agent_id: int | None) -> dict:
 
 def recover_agent(agent_id: int | None) -> dict:
     global _active_agent_id
-    valid_ids = {agent["id"] for agent in DEFAULT_AGENTS}
+    valid_ids = {agent["id"] for agent in list_agent_definitions()}
     if agent_id not in valid_ids:
         return get_agent_standby_status()
 
@@ -96,7 +70,7 @@ def build_agent_status_reply(agent_id: int | None = None) -> str:
     if agent_id is not None:
         agent = next((item for item in agents if item["id"] == agent_id), None)
         if agent is None:
-            return "현재 표시 가능한 에이전트는 1번부터 4번까지입니다."
+            return "현재 표시 가능한 에이전트 목록에서 해당 번호를 찾지 못했습니다."
         return _build_single_agent_reply(agent)
 
     active_count = sum(1 for agent in agents if agent.get("tone") == "active")
@@ -258,3 +232,16 @@ def _build_single_agent_reply(agent: dict) -> str:
     if collected_count:
         return f"{base} 오늘 수집된 IT 뉴스는 {collected_count}건이며, 18시에 최종 보고로 정리됩니다."
     return f"{base} 상시 수집 시간은 10시부터 18시까지입니다. 아직 오늘 수집된 뉴스는 없습니다."
+
+
+def _standby_agent_payload(agent: dict) -> dict:
+    return {
+        "id": int(agent.get("id") or 0),
+        "title": agent.get("title") or "",
+        "description": agent.get("description") or "",
+        "task_types": agent.get("task_types") or [],
+        "status": agent.get("status") or "대기",
+        "processing": agent.get("processing") or "대기중",
+        "tone": agent.get("tone") or "idle",
+        "sort_order": int(agent.get("sort_order") or 100),
+    }

@@ -1,9 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .api.routes import router
 from .config import load_env_file
 from .storage.database import initialize_database
+from pathlib import Path
+
+
+FRONTEND_SHARED_DIR = Path(__file__).resolve().parent / "frontend" / "shared"
 
 
 def create_app() -> FastAPI:
@@ -24,5 +29,7 @@ def create_app() -> FastAPI:
     )
 
     initialize_database()
+    if FRONTEND_SHARED_DIR.exists():
+        app.mount("/shared", StaticFiles(directory=FRONTEND_SHARED_DIR), name="shared")
     app.include_router(router)
     return app

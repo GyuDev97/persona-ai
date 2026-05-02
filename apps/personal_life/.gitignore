@@ -1,12 +1,57 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# Environment / secrets
 .env
+.env.*
+!.env.example
+
+# Local data / databases
 data/
-__pycache__/
-*.py[cod]
-.tmp_tts/
-.tmp_hud_browser_profile/
-venv/
-.venv/
 *.db
+*.db-*
 *.sqlite
 *.sqlite3
+*.sqlite3-*
 *.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+venv/
+.venv/
+
+# GyuOS local runtime artifacts
+.tmp_tts/
+.tmp_hud_browser_profile/
+.tmp_naver_blog_profile/
+.tmp_comtypes_gen/
+
+# Browser caches inside temporary profiles
+Cache/
+Code Cache/
+GPUCache/
+ShaderCache/
+GrShaderCache/
+GraphiteDawnCache/
+DawnGraphiteCache/
+DawnWebGPUCache/
+component_crx_cache/
+extensions_crx_cache/
+optimization_guide_hint_cache_store/
+
+# Generated media
+*.mp3
+*.wav
+*.webm
+*.tmp
+*.temp

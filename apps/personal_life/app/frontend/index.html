@@ -1,16 +1,18 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GyuOS · Personal Concierge OS</title>
+  <link rel="stylesheet" href="/shared/gyuos-shell.css" />
+  <script src="/shared/gyuos-shell.js" defer></script>
   <style>
     :root {
       --bg:#f7f1e8; --panel:rgba(255,255,255,.78); --ink:#211b16; --muted:#75695e;
       --line:rgba(61,44,28,.10); --accent:#c5652f; --accent-deep:#924014;
       --accent-soft:rgba(197,101,47,.12); --green:#40ad71; --red:#e05243;
       --orange:#f4a21d; --shadow:0 18px 48px rgba(69,48,27,.10);
-      --radius-xl:28px; --radius-lg:22px; --font:"Malgun Gothic","Nanum Gothic";
+      --radius-xl:28px; --radius-lg:22px; --font:"Malgun Gothic","맑은 고딕","Nanum Gothic","나눔고딕",Arial,sans-serif;
     }
     *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:var(--font);color:var(--ink);
       background:radial-gradient(circle at top left,rgba(245,187,126,.42),transparent 34%),
@@ -66,67 +68,28 @@
     .smart-input{display:grid;grid-template-columns:1fr auto;gap:8px}.chips,.actions,.voice-controls{display:flex;flex-wrap:wrap;gap:8px}.suggest-chip{padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.7);border:1px solid var(--line);color:var(--muted);font-size:12px;font-weight:800}
     .empty{padding:12px;border:1px dashed rgba(61,44,28,.16);background:rgba(255,255,255,.42);border-radius:14px;text-align:center;font-weight:700}.item{background:rgba(255,255,255,.62);border:1px solid var(--line);border-radius:16px;padding:12px;display:grid;gap:6px}.item-title{font-weight:900}
     .tools{display:none;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.tools.open{display:grid}.form-card{background:rgba(255,255,255,.66);border:1px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:12px}.form-card form{display:grid;gap:10px}label{display:grid;gap:6px;font-size:13px;font-weight:800;color:var(--muted)}
-    @media(max-width:1420px){.app{grid-template-columns:240px minmax(0,1fr)}.right{grid-column:2;position:static}}@media(max-width:1060px){.app{grid-template-columns:1fr;width:min(100% - 20px,100%)}.sidebar,.right{position:static}.sidebar{min-height:auto}.nav{grid-template-columns:repeat(3,1fr)}.grid-2,.modules,.tools{grid-template-columns:1fr}.topbar,.welcome{grid-template-columns:1fr}}@media(max-width:640px){.nav{grid-template-columns:1fr 1fr}.brief-row{grid-template-columns:30px 1fr}.quick-grid{grid-template-columns:1fr 1fr}.money,.car{grid-template-columns:1fr}.memory-strip{grid-template-columns:1fr 1fr}}
+    .app{grid-template-columns:260px minmax(0,1fr) 390px;gap:20px;width:min(1720px,100%);margin:0 auto;align-items:start}
+    .gy-sidebar-shell.glass{top:0;height:100vh;border-radius:0;border-width:0 1px 0 0;box-shadow:none}
+    .gy-sidebar-shell.glass .gy-side-orb{background:radial-gradient(circle at center,#19e7d0,#123f3c 54%,#071817 76%);box-shadow:inset 0 0 28px rgba(104,255,238,.18),0 16px 34px rgba(13,72,66,.18)}
+    .main,.right{gap:18px;padding-top:26px}.right{top:26px;padding-right:22px}
+    .topbar{grid-template-columns:1fr auto auto auto;gap:14px}.command{height:50px;border-radius:14px;background:rgba(255,255,255,.86);box-shadow:0 12px 32px rgba(69,48,27,.08)}
+    .top-chip{height:50px;border-radius:14px;background:rgba(255,255,255,.82);box-shadow:0 12px 28px rgba(69,48,27,.06)}
+    .welcome{padding:18px 8px 4px}.welcome h1{font-size:clamp(30px,3vw,42px)}.weather{gap:14px}.sun{font-size:42px}
+    .card{border-radius:18px;padding:22px;background:rgba(255,255,255,.82);box-shadow:0 16px 42px rgba(69,48,27,.08)}
+    .grid-2{grid-template-columns:minmax(0,1.16fr) minmax(320px,.84fr);gap:18px}.modules{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+    .brief-row{grid-template-columns:34px 72px 1fr auto;padding:13px 0}.icon{background:#fff8f0;color:var(--accent-deep)}
+    .quick-grid{gap:16px}.quick{min-height:104px;border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.86),rgba(255,250,244,.74));box-shadow:inset 0 0 0 1px rgba(61,44,28,.04)}
+    .cta{border-radius:14px}.modules .card{min-height:246px}.right .card{border-radius:18px}.reco{grid-template-columns:42px 1fr}.smart-input input{height:44px}
+    @media(max-width:1420px){.app{grid-template-columns:240px minmax(0,1fr)}.right{grid-column:2;position:static;padding-right:0}}@media(max-width:1060px){.app{grid-template-columns:1fr;width:min(100% - 20px,100%);margin:10px auto}.right{position:static}.grid-2,.modules,.tools{grid-template-columns:1fr}.topbar,.welcome{grid-template-columns:1fr}.gy-sidebar-shell.glass{position:static;height:auto;border-radius:24px;border:1px solid var(--line);box-shadow:var(--shadow)}}@media(max-width:640px){.brief-row{grid-template-columns:30px 1fr}.quick-grid{grid-template-columns:1fr 1fr}.money,.car{grid-template-columns:1fr}.memory-strip{grid-template-columns:1fr 1fr}}
   </style>
 </head>
 <body>
   <div class="app">
-    <aside class="sidebar glass">
-      <div>
-        <div class="brand"><div class="brand-title">GyuOS</div><div class="brand-sub">Personal Concierge OS</div></div>
-        <nav class="nav">
-          <a class="active" href="#home">
-            <span>⌂</span>
-            <span>홈</span></a>
-          <a href="briefing.html">
-            <span>◴</span>
-            <span>브리핑</span>
-          </a>
-          <a href="schedule.html">
-            <span>□</span>
-            <span>일정</span>
-          </a>
-          <a href="money.html">
-            <span>◉</span>
-            <span>돈 관리</span>
-          </a>
-          <a href="drive.html">
-            <span>▱</span>
-            <span>자동차</span>
-          </a>
-          <a href="creator.html">
-            <span>✍</span>
-            <span>Creator Studio</span>
-          </a>
-          <a href="/agent/report-center">
-            <span>▦</span>
-            <span>에이전트 대시보드</span>
-          </a>
-          <a href="memory.html">
-            <span>⌕</span>
-            <span>기억 검색</span>
-          </a>
-          <a href="memo.html">
-            <span>▤</span>
-            <span>메모</span>
-          </a>
-          <a href="routine.html">
-            <span>◎</span>
-            <span>루틴 & 목표</span>
-          </a>
-          <a href="settings.html">
-            <span>⚙</span>
-            <span>설정</span>
-          </a>
-        </nav>
-      </div>
-      <div class="side-assistant"><div class="bot-face">🤖</div><strong>Gyu Assistant</strong><div class="small">무엇이든 물어보세요!</div><button class="primary" type="button" onclick="document.querySelector('#naturalCommandForm input[name=text]').focus()">AI와 대화</button></div>
-      <div class="small">v1.0.0<br>© GyuOS</div>
-    </aside>
+    <gyuos-sidebar active="home" variant="glass" card-title="Gyu Assistant" card-text="무엇이든 물어보세요!"></gyuos-sidebar>
 
     <main class="main">
       <section class="topbar"><input class="command" id="mainCommandInput" placeholder="✦ 무엇이든 물어보거나 명령해보세요. 예) 오늘 일정 알려줘, 점심 12,000원 기록해줘"><button class="top-chip" id="refreshAllButton" type="button">새로고침</button><button class="top-chip" id="notificationButton" type="button">알림 연결</button><button class="top-chip" id="toggleToolsButton" type="button">운영 패널</button></section>
-      <section class="welcome" id="home"><div><h1>안녕하세요, Gyu님!</h1><p>오늘도 멋진 하루가 될 거예요. 💪</p></div><div class="weather"><div class="sun">☀</div><div><div style="font-size:30px;color:var(--ink)">24°</div><div>맑음 · 서울 강남구</div></div><div><div style="color:var(--ink)" id="todayLabel">오늘</div><div>D-18</div></div></div></section>
+      <section class="welcome" id="home"><div><h1>안녕하세요, Gyu님! 👋</h1><p>오늘도 모든 일이 자동으로 잘 돌아가고 있어요.</p></div><div class="weather"><div class="sun">☀</div><div><div style="font-size:30px;color:var(--ink)">24°</div><div>맑음 · 서울 강남구</div></div><div><div style="color:var(--ink)" id="todayLabel">오늘</div><div>D-18</div></div></div></section>
 
       <section class="grid-2" id="brief">
         <article class="card">
@@ -134,7 +97,7 @@
           <div class="brief-row"><div class="icon">▣</div><div class="label">일정</div><div id="briefScheduleSummary">오늘 일정 정보를 불러오는 중입니다.</div><div class="small" id="briefScheduleTime">-</div></div>
           <div class="brief-row"><div class="icon">◈</div><div class="label">소비</div><div id="briefSpendSummary">지출 정보를 불러오는 중입니다.</div><div class="small" id="briefSpendTotal">-</div></div>
           <div class="brief-row"><div class="icon">▰</div><div class="label">자동차</div><div>보험 만기 D-18일 남았어요.</div><div class="small">엔진오일 1,800km</div></div>
-          <div class="brief-row"><div class="icon">▶</div><div class="label">콘텐츠</div><div>오늘 IT 뉴스 3건, 블로그 주제 2개 있어요.</div><div class="small">새 글감 보기 ›</div></div>
+          <div class="brief-row"><div class="icon">▶</div><div class="label">콘텐츠</div><div>최신 IT 뉴스 3건, 블로그 주제 2개 있어요.</div><div class="small">새 글감 보기 ›</div></div>
           <div class="brief-row"><div class="icon">✓</div><div class="label">목표</div><div>루틴 3개 중 2개 완료했어요.</div><div class="small">진행률 66%</div></div>
           <div class="cta"><span>↣ 전체 브리핑 듣기</span><span>3분 요약</span></div>
           <div class="status" id="briefingMeta"></div><div class="status" id="briefingMessage"></div>
@@ -157,7 +120,7 @@
       <section class="modules">
         <article class="card" id="money"><div class="head"><h2>소비 현황</h2><span class="tag" id="financeSourceLabel">이번 달</span></div><div class="big" id="financeHeadline">지출 정보를 불러오는 중입니다.</div><div class="up">지난 달 대비 +12%</div><div class="money"><div class="donut"><div>예산 대비<br>75%</div></div><div id="financeMetricList"><div class="mini-line"><span>식비</span><strong>168,000원</strong></div><div class="mini-line"><span>교통</span><strong>72,000원</strong></div></div></div><div id="financeBulletList"></div></article>
         <article class="card" id="drive"><div class="head"><h2>자동차 관리</h2><span class="tag">Drive Center</span></div><div class="car"><div class="car-img">🚗</div><div><strong>셀토스 /1.6 T-GDI</strong><div class="small">2022년식 · 34,560km</div><div class="mini-line"><span>보험 만기</span><strong style="color:var(--red)">D-18</strong></div><div class="mini-line"><span>엔진오일</span><strong>1,800km</strong></div><div class="mini-line"><span>자동차 검사</span><strong>D-154</strong></div><div class="mini-line"><span>이번 달 주유비</span><strong>98,000원</strong></div></div></div><div class="cta">차량 상세 관리 ›</div></article>
-        <article class="card" id="creator"><div class="head"><h2>Creator Studio</h2><a class="tag" href="creator.html">더보기 ›</a></div><div class="tabs"><button class="active" type="button" data-creator-tab="news">오늘의 뉴스</button><button type="button" data-creator-tab="drafts">블로그 주제</button><button type="button" data-creator-tab="ideas">유튜브 아이디어</button></div><div class="creator-list" id="creatorStudioList"></div><a class="creator-action" href="creator.html"><span>콘텐츠 작업실 열기</span><span>›</span></a></article>
+        <article class="card" id="creator"><div class="head"><h2>Creator Studio</h2><a class="tag" href="creator.html">더보기 ›</a></div><div class="tabs"><button class="active" type="button" data-creator-tab="news">최신 IT 뉴스</button><button type="button" data-creator-tab="drafts">블로그 주제</button><button type="button" data-creator-tab="ideas">유튜브 아이디어</button></div><div class="creator-list" id="creatorStudioList"></div><a class="creator-action" href="creator.html"><span>콘텐츠 작업실 열기</span><span>›</span></a></article>
         <article class="card" id="schedule"><div class="head"><h2>일정</h2><span class="tag">전체 일정 ›</span></div><div class="schedule-row"><strong>10:00<br><span class="small">AM</span></strong><div><strong>팀 미팅</strong><div class="small">1시간 30분 후 · 회의실 A</div></div></div><div class="schedule-row"><strong>15:00<br><span class="small">PM</span></strong><div><strong>헬스장 운동</strong><div class="small">6시간 30분 후</div></div></div><div id="scheduleList"></div></article>
         <article class="card" id="memory"><div class="head"><h2>기억 검색</h2><span class="tag">Memory</span></div><input placeholder="기억하고 싶은 것을 검색해보세요..."><div class="memory-strip"><div class="memory-img">제주도</div><div class="memory-img">카페</div><div class="memory-img">Mac</div><div class="memory-img">노트</div></div><div id="captureList"></div><div class="cta">모든 기억 보기 ›</div></article>
         <article class="card" id="routine"><div class="head"><h2>루틴 & 목표</h2><span class="tag">전체 보기 ›</span></div><div class="progress-row"><div class="ring done">✓</div><div>아침 운동</div><strong style="color:var(--green)">완료</strong></div><div class="progress-row"><div class="ring"></div><div>영어 공부</div><strong style="color:var(--accent)">60%</strong></div><div class="progress-row"><div class="ring"></div><div>블로그 포스팅</div><strong style="color:var(--accent)">2/4</strong></div><div style="display:none"><div id="statTasks">0</div><div id="statSchedules">0</div><div id="statRoutines">0 / 0</div><div id="taskList"></div><div id="insightList"></div><div id="assetList"></div><div id="assetSummaryList"></div><div id="conciergeGrid"></div></div></article>
@@ -207,8 +170,8 @@ function renderConversations(items){if(!els.conversationList)return;if(!items.le
 function renderSuggestionList(b){if(!els.suggestionList)return;const s=[];if(b.top_tasks?.length)s.push(`지금은 '${b.top_tasks[0].title}' 하나만 먼저 보면 좋겠습니다.`);if(b.schedule_count_today>0)s.push(`오늘 일정 ${b.schedule_count_today}개를 시간순으로 확인해두세요.`);if(!s.length)s.push("오늘은 작은 한 가지로 흐름만 잡아도 충분해 보여요.");setHtml(els.suggestionList,s.map(x=>`<article class="item"><div class="item-meta">${escapeHtml(x)}</div></article>`).join(""))}
 function fmtDate(v){if(!v)return"-";const d=new Date(v);return Number.isNaN(d.getTime())?String(v):d.toLocaleString("ko-KR")}
 function creatorThumb(label){const text=String(label||"AI").trim();if(/ios|아이폰|애플/i.test(text))return"iOS";if(/gpt|openai|오픈ai/i.test(text))return"GPT";if(/유튜브|영상|콘텐츠/.test(text))return"YT";if(/블로그|초안|글/.test(text))return"BLG";return text.slice(0,3).toUpperCase()}
-function renderCreatorStudio(){if(!els.creatorStudioList)return;const data=creatorState.report;if(!data)return setHtml(els.creatorStudioList,renderEmpty("콘텐츠 데이터를 불러오는 중입니다."));let rows=[];if(creatorState.tab==="news"){rows=(data.agent1?.items||[]).slice(0,3).map(x=>({title:x.title,meta:[x.source||"IT", "뉴스"].filter(Boolean).join(" · "),thumb:creatorThumb(x.source||"AI")}))}else if(creatorState.tab==="drafts"){rows=(data.agent2?.drafts||[]).slice(0,3).map(x=>({title:x.title,meta:`초안 · ${x.status||"draft"}`,thumb:"BLG"}))}else{rows=(data.agent4?.ideas||[]).slice(0,3).map(x=>({title:x.title,meta:`유튜브 · ${x.status||"idea"}`,thumb:"YT"}))}setHtml(els.creatorStudioList,rows.length?rows.map(x=>`<article class="news"><div class="thumb">${escapeHtml(creatorThumb(x.thumb))}</div><div><strong>${escapeHtml(x.title||"제목 없음")}</strong><div class="small">${escapeHtml(x.meta||"콘텐츠")}</div></div></article>`).join(""):renderEmpty(creatorState.tab==="news"?"오늘 수집한 뉴스가 아직 없습니다.":creatorState.tab==="drafts"?"최근 블로그 초안이 없습니다.":"유튜브 아이디어 후보가 아직 없습니다."))}
-async function loadAgentReportCenter(){try{const data=await request("/agent/report-center/data");creatorState.report=data;renderCreatorStudio();const newsCount=Number(data.agent1?.collected_count||0),draftCount=(data.agent2?.drafts||[]).length;setText(document.querySelector("#brief article .brief-row:nth-child(5) div:nth-child(3)"),`오늘 IT 뉴스 ${newsCount}건, 블로그 초안 ${draftCount}개 있어요.`)}catch(err){setHtml(els.creatorStudioList,renderEmpty("Creator Studio 데이터를 불러오지 못했습니다."))}}
+function renderCreatorStudio(){if(!els.creatorStudioList)return;const data=creatorState.report;if(!data)return setHtml(els.creatorStudioList,renderEmpty("콘텐츠 데이터를 불러오는 중입니다."));let rows=[];if(creatorState.tab==="news"){rows=(data.agent1?.items||[]).slice(0,3).map(x=>({title:x.title,meta:[x.source||"IT", "뉴스"].filter(Boolean).join(" · "),thumb:creatorThumb(x.source||"AI")}))}else if(creatorState.tab==="drafts"){rows=(data.agent2?.drafts||[]).slice(0,3).map(x=>({title:x.title,meta:`초안 · ${x.status||"draft"}`,thumb:"BLG"}))}else{rows=(data.agent4?.ideas||[]).slice(0,3).map(x=>({title:x.title,meta:`유튜브 · ${x.status||"idea"}`,thumb:"YT"}))}setHtml(els.creatorStudioList,rows.length?rows.map(x=>`<article class="news"><div class="thumb">${escapeHtml(creatorThumb(x.thumb))}</div><div><strong>${escapeHtml(x.title||"제목 없음")}</strong><div class="small">${escapeHtml(x.meta||"콘텐츠")}</div></div></article>`).join(""):renderEmpty(creatorState.tab==="news"?"최신 IT 뉴스가 아직 없습니다.":creatorState.tab==="drafts"?"최근 블로그 초안이 없습니다.":"유튜브 아이디어 후보가 아직 없습니다."))}
+async function loadAgentReportCenter(){try{const data=await request("/agent/report-center/data");creatorState.report=data;renderCreatorStudio();const newsCount=Number(data.agent1?.collected_count||0),draftCount=(data.agent2?.drafts||[]).length;setText(document.querySelector("#brief article .brief-row:nth-child(5) div:nth-child(3)"),`최신 IT 뉴스 ${newsCount}건, 블로그 초안 ${draftCount}개 있어요.`)}catch(err){setHtml(els.creatorStudioList,renderEmpty("Creator Studio 데이터를 불러오지 못했습니다."))}}
 async function loadAssistantStatus(){const s=await request("/assistant/status");setText(els.assistantStatusBadge,s.ai_enabled?`AI 활성화 · ${s.model}`:"규칙 기반 fallback")}
 async function loadBriefing(){const b=await request("/briefing/today");setText(els.todayLabel,b.today);setText(els.briefingMessage,b.message);setText(els.briefingMeta,`완료한 할 일 ${b.completed_today_count}개, 오늘 기록 ${b.capture_count_today}개`);setText(els.statTasks,b.open_task_count);setText(els.statSchedules,b.schedule_count_today);setText(els.statRoutines,`${b.completed_routine_count} / ${b.total_routine_count}`);renderTasks(b.top_tasks||[]);renderSchedules(b.schedules||[]);renderSuggestionList(b)}
 async function loadDigests(){const [m,e]=await Promise.all([request("/briefing/morning"),request("/briefing/evening")]);setText(els.morningHeadline,m.headline);setText(els.eveningHeadline,e.headline);renderBulletList(els.morningBullets,m.bullets);renderBulletList(els.eveningBullets,e.bullets)}
@@ -294,3 +257,4 @@ if (els.assistantReplyBubble) {
 </script>
 </body>
 </html>
+

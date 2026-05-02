@@ -80,6 +80,26 @@ def process_natural_command(payload: NaturalCommandCreate) -> NaturalCommandResp
         )
         return response
 
+    local_page = _match_local_page_request(stripped)
+    if local_page is not None:
+        url, summary = local_page
+        webbrowser.open(url)
+        response = NaturalCommandResponse(
+            text=payload.text,
+            interpreted_as="desktop_action",
+            summary=summary,
+            created_id=0,
+            created_type="desktop_action",
+            reminder_id=None,
+        )
+        log_conversation(
+            "assistant",
+            response.summary,
+            interpreted_as=response.interpreted_as,
+            created_type=response.created_type,
+        )
+        return response
+
     if _looks_like_dashboard_request(stripped):
         webbrowser.open("http://127.0.0.1:8000/")
         response = NaturalCommandResponse(
@@ -311,6 +331,40 @@ def _looks_like_dashboard_request(text: str) -> bool:
         for token in ("open", "show", "launch", "\ubcf4\uc5ec", "\uc5f4\uc5b4", "\uc2e4\ud589")
     )
     return has_target and has_open
+
+
+def _match_local_page_request(text: str) -> tuple[str, str] | None:
+    normalized = " ".join(text.strip().split())
+    lowered = normalized.lower()
+    compact = re.sub(r"[\s?!.,~]+", "", normalized)
+    has_open = any(
+        token in lowered or token in normalized
+        for token in ("open", "show", "launch", "\uc5f4\uc5b4", "\ubcf4\uc5ec", "\ub744\uc6cc", "\uc774\ub3d9", "\uc2e4\ud589")
+    )
+    if not has_open:
+        return None
+
+    agent_match = re.search(r"\uc5d0\uc774\uc804\ud2b8\s*([1-4])\ubc88|agent\s*([1-4])", lowered)
+    if agent_match:
+        agent_id = agent_match.group(1) or agent_match.group(2)
+        return (
+            f"http://127.0.0.1:8000/agent/report-center?agent={agent_id}",
+            f"\ub124 \ubcf4\uc2a4. \uc5d0\uc774\uc804\ud2b8 {agent_id}\ubc88 \uc0c1\uc138 \ud654\uba74\uc744 \uc5f4\uaca0\uc2b5\ub2c8\ub2e4.",
+        )
+
+    pages = [
+        (("\uc5d0\uc774\uc804\ud2b8", "\ub9ac\ud3ec\ud2b8", "agent report"), "http://127.0.0.1:8000/agent/report-center", "\ub124 \ubcf4\uc2a4. \uc5d0\uc774\uc804\ud2b8 \ub9ac\ud3ec\ud2b8 \uc13c\ud130\ub97c \uc5f4\uaca0\uc2b5\ub2c8\ub2e4."),
+        (("\ud06c\ub9ac\uc5d0\uc774\ud130", "creator studio", "\ucf58\ud150\uce20 \uc791\uc5c5\uc2e4"), "http://127.0.0.1:8000/creator.html", "\ub124 \ubcf4\uc2a4. \ud06c\ub9ac\uc5d0\uc774\ud130 \uc2a4\ud29c\ub514\uc624\ub97c \uc5f4\uaca0\uc2b5\ub2c8\ub2e4."),
+        (("\ub3c8 \uad00\ub9ac", "\uc7ac\uc815", "money core", "\uba38\ub2c8\ucf54\uc5b4"), "http://127.0.0.1:8000/money-core", "\ub124 \ubcf4\uc2a4. Money Core\ub97c \uc5f4\uaca0\uc2b5\ub2c8\ub2e4."),
+        (("\uc790\ub3d9\ucc28", "\ucc28\ub7c9", "drive"), "http://127.0.0.1:8000/drive.html", "\ub124 \ubcf4\uc2a4. \uc790\ub3d9\ucc28 \uad00\ub9ac \ud654\uba74\uc744 \uc5f4\uaca0\uc2b5\ub2c8\ub2e4."),
+        (("\uc124\uc815", "setting"), "http://127.0.0.1:8000/settings.html", "\ub124 \ubcf4\uc2a4. \uc124\uc815 \ud654\uba74\uc744 \uc5f4\uaca0\uc2b5\ub2c8\ub2e4."),
+        (("\uc77c\uc815", "\uc2a4\ucf00\uc904", "schedule"), "http://127.0.0.1:8000/schedule.html", "\ub124 \ubcf4\uc2a4. \uc77c\uc815 \ud654\uba74\uc744 \uc5f4\uaca0\uc2b5\ub2c8\ub2e4."),
+        (("\ube0c\ub9ac\ud551", "briefing"), "http://127.0.0.1:8000/briefing.html", "\ub124 \ubcf4\uc2a4. \ube0c\ub9ac\ud551 \ud654\uba74\uc744 \uc5f4\uaca0\uc2b5\ub2c8\ub2e4."),
+    ]
+    for keywords, url, summary in pages:
+        if any(keyword in normalized or keyword in lowered or keyword in compact for keyword in keywords):
+            return url, summary
+    return None
 
 
 def _looks_like_briefing_request(text: str) -> bool:

@@ -124,7 +124,7 @@ def route_intent_with_openai(text: str) -> RoutedIntent | None:
         "Allowed intents: agent_status_query, agent_detail_open, agent_task_create, "
         "blog_draft_fill_request, briefing_request, smalltalk, unknown.\n"
         "Allowed task_type values: agent1_it_news_window, agent2_it_blog_draft, "
-        "coding_app_update, youtube_idea_research, naver_blog_fill_draft, news_briefing, weather_briefing, web_search.\n"
+        "coding_app_update, youtube_idea_research, finance_monthly_summary, naver_blog_fill_draft, news_briefing, weather_briefing, web_search.\n"
         "Use agent_id 1 for IT news, 2 for blog draft/Naver blog, 3 for coding/app update, 4 for YouTube ideas.\n"
         "Set requires_confirmation true for browser writing, blog filling, file/code changes, or any risky action.\n"
         "Output keys: intent, confidence, agent_id, action, task_type, search_query, requires_confirmation, reply.\n"
@@ -287,6 +287,10 @@ def _detect_agent_task_type(normalized: str, compact: str, agent_id: int | None)
         and any(keyword in normalized for keyword in ("유튜브", "아이디어", "영상", "콘텐츠", "주제", "소재"))
     ):
         return "youtube_idea_research"
+    if any(keyword in normalized for keyword in ("소비", "재정", "돈", "카드", "지출", "가계부")) and any(
+        keyword in normalized for keyword in ("요약", "브리핑", "정리", "분석", "알려")
+    ):
+        return "finance_monthly_summary"
     if any(keyword in normalized for keyword in ("유튜브", "영상", "콘텐츠")) and any(
         keyword in normalized for keyword in ("아이디어", "소재", "주제", "뽑아", "찾아", "추천")
     ):
@@ -309,6 +313,7 @@ def _agent_id_for_task_type(task_type: str, fallback: int | None) -> int | None:
         "naver_blog_fill_draft": 2,
         "coding_app_update": 3,
         "youtube_idea_research": 4,
+        "finance_monthly_summary": 3,
     }.get(task_type, fallback)
 
 
@@ -323,6 +328,8 @@ def _build_search_query(text: str, task_type: str) -> str:
         return text
     if task_type == "youtube_idea_research":
         return "IT 모바일 AI 유튜브 아이디어"
+    if task_type == "finance_monthly_summary":
+        return "이번 달 소비 재정 요약"
     if task_type == "news_briefing":
         return _clean_search_query(text, ("뉴스", "헤드라인", "속보")) or "최신 뉴스"
     if task_type == "weather_briefing":
@@ -369,6 +376,7 @@ def _intent_from_payload(data: dict[str, Any]) -> RoutedIntent:
         "agent2_it_blog_draft",
         "coding_app_update",
         "youtube_idea_research",
+        "finance_monthly_summary",
         "naver_blog_fill_draft",
         "news_briefing",
         "weather_briefing",

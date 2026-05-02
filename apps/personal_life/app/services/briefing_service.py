@@ -5,6 +5,7 @@ from ..config import get_settings
 from ..domain.schemas import AssistantOpinion, BriefingDigestResponse, BriefingInsight, BriefingResponse
 from .capture_service import count_captures_for_day
 from .memory_service import get_memory_value, list_memory_highlights
+from .money_core_service import build_money_core_summary
 from .reminder_service import list_due_reminders
 from .routine_service import count_completed_routines_for_day, count_routines, list_routine_checkins
 from .schedule_service import count_schedules_for_day, list_schedules
@@ -193,6 +194,21 @@ def build_briefing_insights(
                 body=f"루틴은 {completed_routine_count} / {total_routine_count} 진행 중입니다.",
             )
         )
+
+    try:
+        finance = build_money_core_summary()
+        if finance.get("salary") or finance.get("monthly_spend_total"):
+            insights.append(
+                BriefingInsight(
+                    title="Money Core",
+                    body=(
+                        f"이번 달 소비는 {finance['monthly_spend_total']:,}원이고 "
+                        f"예상 남은 현금은 {finance['remaining_cash']:,}원입니다."
+                    ),
+                )
+            )
+    except Exception:
+        pass
 
     if not insights:
         insights.append(
