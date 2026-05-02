@@ -1,6 +1,7 @@
 import json
 import os
 import pathlib
+import re
 import subprocess
 import sys
 import time
@@ -106,7 +107,7 @@ def handle_task(task_type: str, query: str) -> tuple[str, dict]:
     if task_type == "agent2_it_blog_draft":
         return build_agent2_it_blog_draft()
     if task_type == "naver_blog_fill_draft":
-        return fill_latest_naver_blog_draft()
+        return fill_latest_naver_blog_draft(query)
     if task_type == "coding_app_update":
         return build_coding_app_update_report(query)
     if task_type == "youtube_idea_research":
@@ -129,11 +130,14 @@ def build_agent2_it_blog_draft() -> tuple[str, dict]:
     return summary, {"draft_id": draft["id"], "title": draft["title"], "platform": draft["platform"]}
 
 
-def fill_latest_naver_blog_draft() -> tuple[str, dict]:
+def fill_latest_naver_blog_draft(query: str = "") -> tuple[str, dict]:
     script_path = pathlib.Path(__file__).resolve().parent / "naver_blog_writer.py"
     mode = os.getenv("GYUVIS_NAVER_BLOG_MODE", "edge-existing")
     input_mode = os.getenv("GYUVIS_NAVER_INPUT_MODE", "direct")
     command = [sys.executable, str(script_path), "--mode", mode, "--input-mode", input_mode]
+    draft_id = extract_draft_id_from_query(query)
+    if draft_id is not None:
+        command.extend(["--draft-id", str(draft_id)])
     if mode == "edge-existing":
         completed = subprocess.run(command, cwd=str(script_path.parent), capture_output=True, text=True)
         if completed.stdout:
@@ -144,9 +148,24 @@ def fill_latest_naver_blog_draft() -> tuple[str, dict]:
     else:
         subprocess.Popen(command, cwd=str(script_path.parent))
     return (
-        "열려 있는 Edge의 네이버 블로그 화면에 최신 초안을 입력했습니다. 발행은 하지 않았습니다.",
-        {"platform": "naver_blog", "publish": False, "mode": mode, "input_mode": input_mode},
+        "열려 있는 Edge의 네이버 블로그 화면에 초안을 입력했습니다. 발행은 하지 않았습니다.",
+        {
+            "platform": "naver_blog",
+            "publish": False,
+            "mode": mode,
+            "input_mode": input_mode,
+            "draft_id": draft_id,
+        },
     )
+
+
+def extract_draft_id_from_query(value: str | None) -> int | None:
+    if not value:
+        return None
+    match = re.search(r"draft_id\s*=\s*(\d+)|초안\s*#?\s*(\d+)", value)
+    if not match:
+        return None
+    return int(next(group for group in match.groups() if group))
 
 
 def build_coding_app_update_report(query: str) -> tuple[str, dict]:

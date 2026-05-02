@@ -4,17 +4,15 @@ from ..domain.schemas import MobileAssistantCommandCreate, MobileAssistantComman
 from .agent_standby_service import build_agent_status_reply, open_agent_detail
 from .agent_task_service import create_agent_task
 from .conversation_service import log_conversation
+from .intent_router_service import RoutedIntent, route_intent
 from .natural_language_service import classify_natural_intent, process_natural_command
 
 
 def process_mobile_assistant_command(payload: MobileAssistantCommandCreate) -> MobileAssistantCommandResponse:
-    if _looks_like_incomplete_agent_fragment(payload.text):
-        return MobileAssistantCommandResponse(
-            mode="assistant_reply",
-            spoken_text=payload.text,
-            summary="네 보스. 에이전트들의 상태를 확인할까요, 아니면 전체 에이전트 브리핑을 진행할까요?",
-            task=None,
-        )
+    routed = route_intent(payload.text)
+    routed_response = _process_routed_intent(payload, routed)
+    if routed_response is not None:
+        return routed_response
 
     natural_intent = classify_natural_intent(payload.text)
     print(f"[mobile] text={payload.text!r} intent={natural_intent}")
@@ -39,21 +37,12 @@ def process_mobile_assistant_command(payload: MobileAssistantCommandCreate) -> M
 
     task_type = _detect_agent_task_type(payload.text)
     if task_type is not None:
-        log_conversation("user", payload.text, interpreted_as="mobile_command", created_type="mobile")
-        task = create_agent_task(
-            command_text=payload.text,
+        return _create_agent_task_response(
+            payload=payload,
             task_type=task_type,
             search_query=_build_search_query(payload.text, task_type),
-            source=payload.source,
+            interpreted_as="mobile_command",
         )
-        response = MobileAssistantCommandResponse(
-            mode="agent_task",
-            spoken_text=payload.text,
-            summary=_build_agent_waiting_summary(task_type),
-            task=task,
-        )
-        log_conversation("assistant", response.summary, interpreted_as="agent_task", created_type=task_type)
-        return response
 
     if natural_intent in {"assistant_chat", "self_state_question", "general_question"}:
         response = process_natural_command(NaturalCommandCreate(text=payload.text))
@@ -71,6 +60,89 @@ def process_mobile_assistant_command(payload: MobileAssistantCommandCreate) -> M
         summary=response.summary,
         task=None,
     )
+
+
+def _process_routed_intent(
+    payload: MobileAssistantCommandCreate,
+    routed: RoutedIntent,
+) -> MobileAssistantCommandResponse | None:
+    if routed.intent == "smalltalk" and routed.reply:
+        return MobileAssistantCommandResponse(
+            mode="assistant_reply",
+            spoken_text=payload.text,
+            summary=routed.reply,
+            task=None,
+        )
+
+    if routed.intent == "agent_detail_open":
+        if routed.agent_id is None:
+            return MobileAssistantCommandResponse(
+                mode="assistant_reply",
+                spoken_text=payload.text,
+                summary=routed.reply or "어떤 에이전트를 열지 번호를 말씀해주시면 바로 표시하겠습니다.",
+                task=None,
+            )
+        open_agent_detail(routed.agent_id)
+        return MobileAssistantCommandResponse(
+            mode="assistant_reply",
+            spoken_text=payload.text,
+            summary=f"네 보스. 에이전트 {routed.agent_id}번 상세 화면을 열겠습니다.",
+            task=None,
+        )
+
+    if routed.intent == "agent_status_query":
+        return MobileAssistantCommandResponse(
+            mode="assistant_reply",
+            spoken_text=payload.text,
+            summary=build_agent_status_reply(routed.agent_id),
+            task=None,
+        )
+
+    if routed.intent in {"agent_task_create", "blog_draft_fill_request"} and routed.task_type:
+        if routed.requires_confirmation and routed.intent == "blog_draft_fill_request":
+            # Blog filling is allowed as a queued job, not as immediate publish/submit.
+            pass
+        return _create_agent_task_response(
+            payload=payload,
+            task_type=routed.task_type,
+            search_query=routed.search_query or _build_search_query(payload.text, routed.task_type),
+            interpreted_as=f"intent_router:{routed.intent}:{routed.source}",
+        )
+
+    if routed.intent == "briefing_request":
+        response = process_natural_command(NaturalCommandCreate(text=payload.text))
+        return MobileAssistantCommandResponse(
+            mode="assistant_reply",
+            spoken_text=payload.text,
+            summary=response.summary,
+            task=None,
+        )
+
+    return None
+
+
+def _create_agent_task_response(
+    *,
+    payload: MobileAssistantCommandCreate,
+    task_type: str,
+    search_query: str,
+    interpreted_as: str,
+) -> MobileAssistantCommandResponse:
+    log_conversation("user", payload.text, interpreted_as=interpreted_as, created_type="mobile")
+    task = create_agent_task(
+        command_text=payload.text,
+        task_type=task_type,
+        search_query=search_query,
+        source=payload.source,
+    )
+    response = MobileAssistantCommandResponse(
+        mode="agent_task",
+        spoken_text=payload.text,
+        summary=_build_agent_waiting_summary(task_type),
+        task=task,
+    )
+    log_conversation("assistant", response.summary, interpreted_as="agent_task", created_type=task_type)
+    return response
 
 
 def _looks_like_incomplete_agent_fragment(text: str) -> bool:
@@ -114,7 +186,9 @@ def _detect_agent_task_type(text: str) -> str | None:
         and any(keyword in normalized for keyword in ["넣어", "입력", "올려", "채워", "글쓰기"])
     ):
         return "naver_blog_fill_draft"
-    if any(keyword in normalized for keyword in ["뉴스", "헤드라인", "속보"]):
+    if any(keyword in normalized for keyword in ["뉴스", "헤드라인", "속보"]) and any(
+        keyword in normalized for keyword in ["가져와", "가져와봐", "불러와", "알려", "보여", "요약", "정리", "브리핑", "찾아"]
+    ):
         return "news_briefing"
     if any(keyword in normalized for keyword in ["전쟁", "분쟁", "사태", "이슈", "정세", "흐름"]) and any(
         keyword in normalized for keyword in ["어때", "어떻게", "요새", "요즘", "최근", "흐름", "상황"]
@@ -279,11 +353,12 @@ def _clean_search_query(text: str) -> str:
         r"(흐름이|흐름은|상황이|상황은)\s*",
         r"(어떻게 돼|어떻게 돼요|어떻게 되어가|어떻게 되어가요)\s*",
         r"(어때|어떄)\s*",
-        r"((알려|요약해|정리해|검색해|보여|말해)\s*줘)\s*",
-        r"((알려|요약해|정리해|검색해|보여|말해)\s*주)\s*",
-        r"((알려|요약해|정리해|검색해|보여|말해)\s*볼래)\s*",
-        r"((알려|요약해|정리해|검색해|보여|말해)\s*볼까)\s*",
-        r"((알려|요약해|정리해|검색해|보여|말해)\s*줄래)\s*",
+        r"((알려|요약해|정리해|검색해|보여|말해|가져와|불러와)\s*줘)\s*",
+        r"((알려|요약해|정리해|검색해|보여|말해|가져와|불러와)\s*주)\s*",
+        r"((알려|요약해|정리해|검색해|보여|말해|가져와|불러와)\s*봐)\s*",
+        r"((알려|요약해|정리해|검색해|보여|말해|가져와|불러와)\s*볼래)\s*",
+        r"((알려|요약해|정리해|검색해|보여|말해|가져와|불러와)\s*볼까)\s*",
+        r"((알려|요약해|정리해|검색해|보여|말해|가져와|불러와)\s*줄래)\s*",
         r"((찾아봐|알아봐)\s*줘)\s*",
         r"((찾아봐|알아봐)\s*주)\s*",
         r"((찾아봐|알아봐)\s*볼래)\s*",

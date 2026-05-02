@@ -44,6 +44,7 @@ from ..services.agent_task_service import (
     get_agent_task,
     list_agent_tasks,
 )
+from ..services.agent_report_center_service import build_agent_report_center, create_naver_blog_fill_task
 from ..services.agent_standby_service import focus_agent, get_agent_standby_status, open_agent_detail, recover_agent
 from ..config import get_settings
 from ..services.asset_service import build_asset_summary, create_asset, list_assets, update_asset
@@ -65,6 +66,7 @@ FRONTEND_PATH = Path(__file__).resolve().parents[1] / "frontend" / "index.html"
 FRONTEND_DIR = Path(__file__).resolve().parents[1] / "frontend"
 GYUVIS_HUD_DIR = Path(__file__).resolve().parents[3] / "javis-app"
 GYUVIS_STANDBY_V2_PATH = GYUVIS_HUD_DIR / "standby-v2.html"
+AGENT_REPORT_CENTER_PATH = FRONTEND_DIR / "agent_report_center.html"
 
 
 class AssistantSubtitleUpdate(BaseModel):
@@ -91,6 +93,14 @@ def gyuvis_standby_v2() -> FileResponse:
         raise HTTPException(status_code=404, detail="GYUVIS standby UI not found")
 
     return FileResponse(GYUVIS_STANDBY_V2_PATH)
+
+
+@router.get("/agent/report-center", include_in_schema=False)
+def agent_report_center_page() -> FileResponse:
+    if not AGENT_REPORT_CENTER_PATH.exists():
+        raise HTTPException(status_code=404, detail="Agent Report Center not found")
+
+    return FileResponse(AGENT_REPORT_CENTER_PATH)
     
 @router.get("/health")
 def health_check() -> dict[str, str]:
@@ -191,6 +201,19 @@ def post_agent_task_fail(task_id: int, payload: AgentTaskFailRequest) -> AgentTa
 @router.get("/agent/standby-status")
 def get_agent_standby_status_route() -> dict:
     return get_agent_standby_status()
+
+
+@router.get("/agent/report-center/data")
+def get_agent_report_center_data() -> dict:
+    return build_agent_report_center()
+
+
+@router.post("/agent/blog-drafts/{draft_id}/fill")
+def post_agent_blog_draft_fill(draft_id: int) -> dict:
+    try:
+        return create_naver_blog_fill_task(draft_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
 
 
 @router.post("/agent/standby-status/focus/{agent_id}")
