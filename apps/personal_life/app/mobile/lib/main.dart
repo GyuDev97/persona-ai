@@ -1,11 +1,17 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import 'package:http/http.dart' as http;
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+
+import 'config/app_config.dart';
+import 'models/chat_bubble_data.dart';
+import 'services/gyuvis_api_client.dart';
+import 'services/speech_text_formatter.dart';
+import 'widgets/core_action_button.dart';
+import 'widgets/core_orb.dart';
+import 'widgets/quick_prompt_chip.dart';
+import 'widgets/status_chip.dart';
 
 void main() {
   runApp(const GyuvisApp());
@@ -43,7 +49,7 @@ class AssistantHomePage extends StatefulWidget {
 }
 
 class _AssistantHomePageState extends State<AssistantHomePage> with SingleTickerProviderStateMixin {
-  final TextEditingController _serverController = TextEditingController(text: 'http://192.168.0.19:8000');
+  final TextEditingController _serverController = TextEditingController(text: AppConfig.defaultServerBaseUrl);
   final TextEditingController _inputController = TextEditingController();
   final stt.SpeechToText _speechToText = stt.SpeechToText();
   final FlutterTts _tts = FlutterTts();
@@ -54,7 +60,7 @@ class _AssistantHomePageState extends State<AssistantHomePage> with SingleTicker
     ),
   ];
 
-Timer? _pollTimer;
+  Timer? _pollTimer;
   Timer? _wakeResumeTimer;
   Timer? _voiceFinalizeTimer;
   Timer? _serverStatusTimer;
@@ -70,7 +76,6 @@ Timer? _pollTimer;
   bool _voiceSubmitDispatched = false;
   bool _serverOnline = false;
   String _serverMode = 'unknown';
-  String _serverModel = '';
   String _serverStatusMessage = '서버 상태 확인 전';
   String _bestVoiceNormalized = '';
   String _lastVoiceRaw = '';
@@ -94,7 +99,7 @@ Timer? _pollTimer;
   }
 
   @override
-void dispose() {
+  void dispose() {
     _pollTimer?.cancel();
     _wakeResumeTimer?.cancel();
     _voiceFinalizeTimer?.cancel();
@@ -134,42 +139,25 @@ void dispose() {
       setState(() {
         _serverOnline = false;
         _serverMode = 'unknown';
-        _serverModel = '';
         _serverStatusMessage = '서버 주소가 비어 있습니다.';
       });
       return;
     }
 
     try {
-      final healthResponse = await http.get(Uri.parse('$baseUrl/health'));
-      if (healthResponse.statusCode < 200 || healthResponse.statusCode >= 300) {
-        throw Exception('health ${healthResponse.statusCode}');
-      }
-
-      var mode = 'fallback';
-      var model = '';
-      try {
-        final assistantResponse = await http.get(Uri.parse('$baseUrl/assistant/status'));
-        if (assistantResponse.statusCode >= 200 && assistantResponse.statusCode < 300) {
-          final assistantData = jsonDecode(assistantResponse.body) as Map<String, dynamic>;
-          mode = (assistantData['mode'] as String?) ?? mode;
-          model = (assistantData['model'] as String?) ?? '';
-        }
-      } catch (_) {}
+      final status = await GyuvisApiClient(baseUrl: baseUrl).fetchServerStatus();
 
       if (!mounted) return;
       setState(() {
         _serverOnline = true;
-        _serverMode = mode;
-        _serverModel = model;
-        _serverStatusMessage = mode == 'openai' ? 'AI 응답 준비 완료' : '기본 응답 모드 연결';
+        _serverMode = status.mode;
+        _serverStatusMessage = status.mode == 'openai' ? 'AI 응답 준비 완료' : '기본 응답 모드 연결';
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _serverOnline = false;
         _serverMode = 'offline';
-        _serverModel = '';
         _serverStatusMessage = '서버 연결을 확인해 주세요.';
       });
     }
@@ -221,7 +209,7 @@ void dispose() {
     await _startVoiceListening();
   }
 
-Future<void> _startVoiceListening() async {
+  Future<void> _startVoiceListening() async {
     _wakeResumeTimer?.cancel();
     _voiceFinalizeTimer?.cancel();
     _voiceFinalReady = false;
@@ -245,8 +233,8 @@ Future<void> _startVoiceListening() async {
       pauseFor: const Duration(seconds: 10),
       listenFor: const Duration(seconds: 90),
       onResult: (result) {
-        final normalized = _normalizeVoiceTranscript(result.recognizedWords);
-        final bestNormalized = _chooseBetterVoiceCandidate(_bestVoiceNormalized, normalized);
+        final normalized = SpeechTextFormatter.normalizeTranscript(result.recognizedWords);
+        final bestNormalized = SpeechTextFormatter.chooseBetterCandidate(_bestVoiceNormalized, normalized);
         _bestVoiceNormalized = bestNormalized;
         debugPrint('[Gyuvis][voice][raw] ${result.recognizedWords}');
         debugPrint('[Gyuvis][voice][normalized] $normalized');
@@ -291,37 +279,25 @@ Future<void> _startVoiceListening() async {
     unawaited(_speak('잠시만 기다려주세요.'));
 
     try {
-      final response = await http.post(
-        Uri.parse('${_serverController.text.trim()}/mobile/assistant/command'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'text': text, 'source': 'mobile'}),
-      );
-
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw Exception(_extractErrorMessage(response));
-      }
-
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final summary = (data['summary'] ?? '') as String;
-      final mode = (data['mode'] ?? 'assistant_reply') as String;
+      final result = await GyuvisApiClient(
+        baseUrl: _serverController.text.trim(),
+      ).sendAssistantCommand(text);
 
       setState(() {
-        _messages.add(ChatBubbleData(role: BubbleRole.assistant, text: summary));
-        _statusText = mode == 'agent_task'
+        _messages.add(ChatBubbleData(role: BubbleRole.assistant, text: result.summary));
+        _statusText = result.mode == 'agent_task'
             ? 'PC 에이전트가 작업을 시작했습니다.'
             : '응답을 받았습니다.';
       });
 
       _inputController.clear();
-      await _speak(summary);
+      await _speak(result.summary);
 
-      final task = data['task'];
-      if (mode == 'agent_task' && task is Map<String, dynamic>) {
-        final taskId = task['id'] as int;
+      if (result.mode == 'agent_task' && result.taskId != null) {
         setState(() {
-          _pendingTaskId = taskId;
+          _pendingTaskId = result.taskId;
         });
-        _startPollingTask(taskId);
+        _startPollingTask(result.taskId!);
       } else {
         shouldResumeListening = true;
       }
@@ -349,18 +325,14 @@ Future<void> _startVoiceListening() async {
 
   Future<void> _pollTask(int taskId) async {
     try {
-      final response = await http.get(Uri.parse('${_serverController.text.trim()}/agent/tasks/$taskId'));
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw Exception(_extractErrorMessage(response));
-      }
-
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final status = data['status'] as String? ?? 'pending';
+      final task = await GyuvisApiClient(
+        baseUrl: _serverController.text.trim(),
+      ).fetchAgentTask(taskId);
       if (!mounted) return;
 
-      if (status == 'completed') {
+      if (task.status == 'completed') {
         _pollTimer?.cancel();
-        final resultSummary = (data['result_summary'] ?? '작업은 끝났는데 결과 요약이 비어 있습니다.') as String;
+        final resultSummary = task.resultSummary ?? '작업은 끝났는데 결과 요약이 비어 있습니다.';
         setState(() {
           _pendingTaskId = null;
           _messages.add(ChatBubbleData(role: BubbleRole.assistant, text: resultSummary));
@@ -371,9 +343,9 @@ Future<void> _startVoiceListening() async {
         return;
       }
 
-      if (status == 'failed') {
+      if (task.status == 'failed') {
         _pollTimer?.cancel();
-        final message = (data['error_message'] ?? 'PC 에이전트 작업이 실패했습니다.') as String;
+        final message = task.errorMessage ?? 'PC 에이전트 작업이 실패했습니다.';
         setState(() {
           _pendingTaskId = null;
           _messages.add(ChatBubbleData(role: BubbleRole.assistant, text: 'PC 작업 중 문제가 생겼습니다.\n\n$message'));
@@ -394,7 +366,7 @@ Future<void> _startVoiceListening() async {
 
   Future<void> _speak(String text) async {
     if (!_speakReplies) return;
-    final speakText = _buildSpeakFriendlyText(text);
+    final speakText = SpeechTextFormatter.speakFriendly(text);
     if (mounted) {
       setState(() {
         _isSpeaking = true;
@@ -553,119 +525,6 @@ void _handleSpeechStatus(String status) {
     });
   }
 
-  String _normalizeVoiceTranscript(String value) {
-    var text = value.trim();
-    if (text.isEmpty) {
-      return text;
-    }
-
-    final looksLikeQuestion = [
-      '있나',
-      '있어',
-      '있지',
-      '어때',
-      '어떨까',
-      '뭐야',
-      '뭐지',
-      '뭐가',
-      '뭐부터',
-      '할까',
-      '말까',
-      '일까',
-      '인가',
-      '맞나',
-      '되나',
-      '되려나',
-      '흐름이 어떻게 돼',
-      '상황이 어때',
-    ].any((pattern) => text.endsWith(pattern) || text.contains('$pattern '));
-
-    if (looksLikeQuestion && !text.endsWith('?')) {
-      text = '$text?';
-    }
-
-    return text;
-  }
-
-  String _chooseBetterVoiceCandidate(String current, String incoming) {
-    final currentText = current.trim();
-    final incomingText = incoming.trim();
-    if (incomingText.isEmpty) {
-      return currentText;
-    }
-    if (currentText.isEmpty) {
-      return incomingText;
-    }
-    if (incomingText.length >= currentText.length + 2) {
-      return incomingText;
-    }
-    if (incomingText.endsWith('?') && !currentText.endsWith('?')) {
-      return incomingText;
-    }
-    if (_looksMoreComplete(currentText, incomingText)) {
-      return incomingText;
-    }
-    return currentText;
-  }
-
-  bool _looksMoreComplete(String current, String incoming) {
-    if (incoming.length <= current.length) {
-      return false;
-    }
-    final completionSignals = ['어때', '어떨까', '뭐야', '뭐지', '가능해', '할 수', '있나', '맞아', '?'];
-    final incomingHasSignal = completionSignals.any((token) => incoming.contains(token));
-    final currentHasSignal = completionSignals.any((token) => current.contains(token));
-    return incomingHasSignal && !currentHasSignal;
-  }
-
-  String _buildSpeakFriendlyText(String text) {
-    var value = text.trim();
-    if (value.isEmpty) {
-      return value;
-    }
-
-    value = value
-        .replaceAll("'", "")
-        .replaceAll('"', '')
-        .replaceAll('%', ' 퍼센트')
-        .replaceAll('·', ', ')
-        .replaceAll('\n\n', '. ')
-        .replaceAll('\n', '. ')
-        .replaceAllMapped(RegExp(r'(\d+)\.'), (match) => '${match.group(1)}번, ')
-        .replaceAllMapped(RegExp(r'\s+'), (match) => ' ');
-
-    final sentences = value
-        .split('. ')
-        .map((item) => item.trim())
-        .where((item) => item.isNotEmpty)
-        .toList();
-
-    if (sentences.length > 2) {
-      value = '${sentences.take(2).join('. ')}.';
-    } else {
-      value = sentences.join('. ');
-      if (!value.endsWith('.')) {
-        value = '$value.';
-      }
-    }
-
-    if (value.length > 140) {
-      value = '${value.substring(0, 140).trim()}...';
-    }
-
-    return value.replaceAll('..', '.').trim();
-  }
-
-  String _extractErrorMessage(http.Response response) {
-    try {
-      final data = jsonDecode(response.body);
-      if (data is Map<String, dynamic> && data['detail'] != null) {
-        return data['detail'].toString();
-      }
-    } catch (_) {}
-    return 'HTTP ${response.statusCode}: ${response.body}';
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -770,7 +629,7 @@ void _handleSpeechStatus(String status) {
                                   final glow = 0.72 + (_coreController.value * 0.28);
                                     return Transform.scale(
                                      scale: 0.96 + (_coreController.value * 0.03),
-                                     child: _CoreOrb(
+                                     child: CoreOrb(
                                        size: coreSize.clamp(200.0, 340.0),
                                         glowOpacity: glow,
                                        animationValue: _coreController.value,
@@ -829,12 +688,12 @@ void _handleSpeechStatus(String status) {
                                       spacing: 8,
                                       runSpacing: 8,
                                       children: [
-                                        _StatusChip(
+                                        StatusChip(
                                           icon: _serverOnline ? Icons.wifi_tethering_rounded : Icons.portable_wifi_off_rounded,
                                           label: _serverOnline ? '연결됨' : '오프라인',
                                           color: _serverOnline ? const Color(0xFF7CEADD) : const Color(0xFFFFB4A2),
                                         ),
-                                        _StatusChip(
+                                        StatusChip(
                                           icon: Icons.smart_toy_outlined,
                                           label: _serverMode == 'openai' ? 'AI 응답' : '기본 응답',
                                           color: const Color(0xFFA7FFF3),
@@ -901,13 +760,13 @@ void _handleSpeechStatus(String status) {
                                 spacing: 12,
                                 runSpacing: 12,
                                 children: [
-                                  _CoreActionButton(
+                                  CoreActionButton(
                                     icon: _isListening ? Icons.mic_off_rounded : Icons.mic_rounded,
                                     label: _isListening ? '듣기 중지' : '말하기',
                                     onTap: _toggleListening,
                                     accent: true,
                                   ),
-                                  _CoreActionButton(
+                                  CoreActionButton(
                                     icon: Icons.keyboard_outlined,
                                     label: '텍스트',
                                     onTap: _openCommandSheet,
@@ -1026,21 +885,21 @@ void _handleSpeechStatus(String status) {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _QuickPromptChip(
+                      QuickPromptChip(
                         label: '최신 뉴스',
                         onTap: () {
                           _inputController.text = '최신 뉴스 요약해줘';
                           setModalState(() {});
                         },
                       ),
-                      _QuickPromptChip(
+                      QuickPromptChip(
                         label: '내일 날씨',
                         onTap: () {
                           _inputController.text = '내일 날씨 알려줘';
                           setModalState(() {});
                         },
                       ),
-                      _QuickPromptChip(
+                      QuickPromptChip(
                         label: '오늘 할 일',
                         onTap: () {
                           _inputController.text = '오늘 내가 해야 할 거 뭐 있어?';
@@ -1097,287 +956,4 @@ void _handleSpeechStatus(String status) {
   }
 }
 
-class _QuickPromptChip extends StatelessWidget {
-  const _QuickPromptChip({required this.label, required this.onTap});
 
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return ActionChip(
-      label: Text(label),
-      onPressed: onTap,
-      backgroundColor: const Color(0x220FD8C8),
-      labelStyle: const TextStyle(color: Color(0xFFD7FFFA)),
-      side: const BorderSide(color: Color(0x3348CFC2)),
-    );
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TaskWaitingBubble extends StatelessWidget {
-  const _TaskWaitingBubble();
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 320),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF3ECE2),
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0x1440341E)),
-        ),
-        child: const Text(
-          'PC가 지금 검색하고 있어요.\n\n브라우저를 열고 결과를 읽는 중이니, 조금만 기다리면 다시 말씀드릴게요.',
-          style: TextStyle(height: 1.55),
-        ),
-      ),
-    );
-  }
-}
-
-class _CoreOrb extends StatelessWidget {
-  const _CoreOrb({
-    required this.size,
-    required this.glowOpacity,
-    required this.animationValue,
-    required this.isListening,
-    required this.isBusy,
-    required this.isSpeaking,
-  });
-
-  final double size;
-  final double glowOpacity;
-  final double animationValue;
-  final bool isListening;
-  final bool isBusy;
-  final bool isSpeaking;
-
-  @override
-  Widget build(BuildContext context) {
-    final accent = isListening
-        ? const Color(0xFF6EFFF1)
-        : isBusy
-            ? const Color(0xFF3EE3D4)
-            : const Color(0xFF2FD4C4);
-    final speakingPulse = isSpeaking
-        ? 1 + (math.sin(animationValue * math.pi * 6) * 0.09)
-        : 1 + (math.sin(animationValue * math.pi * 2) * 0.02);
-    final innerScale = isListening ? 1.03 : 1.0;
-
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          CustomPaint(
-            size: Size.square(size),
-            painter: _ParticleRingPainter(
-              accent: accent,
-              animationValue: animationValue,
-              speakingPulse: speakingPulse,
-              intensity: isListening ? 1.0 : (isBusy ? 0.8 : 0.65),
-            ),
-          ),
-          Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: accent.withOpacity(0.18 * glowOpacity),
-                  blurRadius: 46,
-                  spreadRadius: 18,
-                ),
-              ],
-            ),
-          ),
-          Container(
-            width: size * 0.96 * speakingPulse,
-            height: size * 0.96 * speakingPulse,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: accent.withOpacity(0.32), width: 3),
-              gradient: RadialGradient(
-                colors: [
-                  accent.withOpacity(0.12),
-                  const Color(0x14000000),
-                ],
-              ),
-            ),
-          ),
-          Container(
-            width: size * 0.78 * innerScale,
-            height: size * 0.78 * innerScale,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: accent.withOpacity(0.22), width: 2),
-            ),
-          ),
-          Container(
-            width: size * 0.54,
-            height: size * 0.54,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: accent.withOpacity(0.18), width: 1.5),
-            ),
-          ),
-          Container(
-            width: size * 0.2 * speakingPulse,
-            height: size * 0.2 * speakingPulse,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: accent.withOpacity(0.22),
-              border: Border.all(color: accent.withOpacity(0.62), width: 1.4),
-              boxShadow: [
-                BoxShadow(
-                  color: accent.withOpacity(0.24),
-                  blurRadius: 20,
-                  spreadRadius: 4,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CoreActionButton extends StatelessWidget {
-  const _CoreActionButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.accent = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return FilledButton.icon(
-      onPressed: onTap,
-      style: FilledButton.styleFrom(
-        backgroundColor: accent ? const Color(0xFF1CCAB8) : const Color(0x2217FFF0),
-        foregroundColor: accent ? const Color(0xFF03211E) : const Color(0xFFD9FFFA),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        side: accent ? BorderSide.none : const BorderSide(color: Color(0x3348CFC2)),
-      ),
-      icon: Icon(icon),
-      label: Text(label),
-    );
-  }
-}
-
-class _ParticleRingPainter extends CustomPainter {
-  const _ParticleRingPainter({
-    required this.accent,
-    required this.animationValue,
-    required this.speakingPulse,
-    required this.intensity,
-  });
-
-  final Color accent;
-  final double animationValue;
-  final double speakingPulse;
-  final double intensity;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
-    final ringRadius = size.width * 0.34;
-    final particlePaint = Paint()
-      ..style = PaintingStyle.fill
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-
-    for (var i = 0; i < 130; i++) {
-      final baseAngle = (i / 130) * math.pi * 2;
-      final orbit = animationValue * math.pi * 2 * (0.6 + (i % 7) * 0.045);
-      final angle = baseAngle + orbit;
-      final wobble = math.sin(animationValue * math.pi * 8 + i) * (size.width * 0.015);
-      final radius = ringRadius + wobble;
-      final depth = 0.78 + ((i % 11) / 40);
-      final pulse = 0.75 + ((math.sin(animationValue * math.pi * 6 + i * 0.5) + 1) * 0.18);
-      final dotRadius = (i % 5 == 0 ? 2.4 : 1.6) * speakingPulse * pulse;
-      final position = Offset(
-        center.dx + math.cos(angle) * radius * depth,
-        center.dy + math.sin(angle) * radius * depth,
-      );
-
-      particlePaint.color = accent.withOpacity((0.18 + ((i % 9) / 18)) * intensity);
-      canvas.drawCircle(position, dotRadius * 2.1, particlePaint);
-
-      particlePaint
-        ..maskFilter = null
-        ..color = accent.withOpacity((0.48 + ((i % 7) / 18)) * intensity);
-      canvas.drawCircle(position, dotRadius, particlePaint);
-      particlePaint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _ParticleRingPainter oldDelegate) {
-    return oldDelegate.animationValue != animationValue ||
-        oldDelegate.speakingPulse != speakingPulse ||
-        oldDelegate.intensity != intensity ||
-        oldDelegate.accent != accent;
-  }
-}
-
-enum BubbleRole { user, assistant }
-
-class ChatBubbleData {
-  const ChatBubbleData({required this.role, required this.text});
-
-  final BubbleRole role;
-  final String text;
-}

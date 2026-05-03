@@ -187,10 +187,10 @@ def default_handler(task_type: str, query: str) -> tuple[str, dict]:
 def build_agent2_it_blog_draft() -> tuple[str, dict]:
     draft = create_it_blog_draft_from_agent1()
     summary = (
-        "?먯씠?꾪듃 2踰?蹂닿퀬?낅땲??\n\n"
-        f"?ㅼ씠踰?釉붾줈洹몄슜 IT/紐⑤컮???댁뒪 珥덉븞 #{draft['id']}踰덉쓣 ?앹꽦?덉뒿?덈떎.\n\n"
-        f"?쒕ぉ: {draft['title']}\n\n"
-        "諛쒗뻾? ?섏? ?딆븯怨? ?붿껌 ??湲?곌린 ?붾㈃???쒕ぉ怨?蹂몃Ц留??낅젰?섍쿋?듬땲??"
+        "에이전트 2번 보고입니다.\n\n"
+        f"네이버 블로그용 IT/모바일 뉴스 초안 #{draft['id']}번을 생성했습니다.\n\n"
+        f"제목: {draft['title']}\n\n"
+        "발행은 하지 않고, 요청 시 글쓰기 화면에 제목과 본문만 입력하겠습니다."
     )
     return summary, {"draft_id": draft["id"], "title": draft["title"], "platform": draft["platform"]}
 
@@ -204,16 +204,23 @@ def fill_latest_naver_blog_draft(query: str = "") -> tuple[str, dict]:
     if draft_id is not None:
         command.extend(["--draft-id", str(draft_id)])
     if mode == "edge-existing":
-        completed = subprocess.run(command, cwd=str(script_path.parent), capture_output=True, text=True)
+        completed = subprocess.run(
+            command,
+            cwd=str(script_path.parent),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
         if completed.stdout:
             print(completed.stdout.strip())
         if completed.returncode != 0:
-            details = (completed.stderr or completed.stdout or "?ㅼ씠踰?釉붾줈洹??먮룞 ?낅젰???ㅽ뙣?덉뒿?덈떎.").strip()
+            details = (completed.stderr or completed.stdout or "네이버 블로그 자동 입력에 실패했습니다.").strip()
             raise RuntimeError(details)
     else:
         subprocess.Popen(command, cwd=str(script_path.parent))
     return (
-        "?대젮 ?덈뒗 Edge???ㅼ씠踰?釉붾줈洹??붾㈃??珥덉븞???낅젰?덉뒿?덈떎. 諛쒗뻾? ?섏? ?딆븯?듬땲??",
+        "열려 있는 Edge의 네이버 블로그 화면에 초안을 입력했습니다. 발행은 하지 않습니다.",
         {
             "platform": "naver_blog",
             "publish": False,
@@ -227,7 +234,7 @@ def fill_latest_naver_blog_draft(query: str = "") -> tuple[str, dict]:
 def extract_draft_id_from_query(value: str | None) -> int | None:
     if not value:
         return None
-    match = re.search(r"draft_id\s*=\s*(\d+)|珥덉븞\s*#?\s*(\d+)", value)
+    match = re.search(r"draft_id\s*=\s*(\d+)|초안\s*#?\s*(\d+)", value)
     if not match:
         return None
     return int(next(group for group in match.groups() if group))

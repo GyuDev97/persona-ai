@@ -106,6 +106,13 @@ def fill_existing_edge_window(title: str, body: str, input_mode: str = DEFAULT_I
 
 
 def find_edge_blog_window(application_class, desktop):
+    handle = find_edge_window_handle_with_win32()
+    if handle:
+        try:
+            return application_class(backend="uia").connect(handle=handle).window(handle=handle)
+        except Exception:
+            return application_class(backend="win32").connect(handle=handle).window(handle=handle)
+
     try:
         application = application_class(backend="uia").connect(path="msedge.exe", timeout=5)
         windows = list(application.windows())
@@ -123,15 +130,7 @@ def find_edge_blog_window(application_class, desktop):
     ]
     if preferred:
         return preferred[0]
-    if visible_windows:
-        return visible_windows[0]
-    handle = find_edge_window_handle_with_win32()
-    if handle:
-        try:
-            return application_class(backend="uia").connect(handle=handle).window(handle=handle)
-        except Exception:
-            return application_class(backend="win32").connect(handle=handle).window(handle=handle)
-    raise RuntimeError("Open Edge with the Naver Blog main page first, then run this command again.")
+    raise RuntimeError("Activate an Edge tab on Naver Blog first, then run this command again.")
 
 
 def find_edge_window_handle_with_win32() -> int | None:
@@ -139,6 +138,19 @@ def find_edge_window_handle_with_win32() -> int | None:
         import win32gui
     except Exception:
         return None
+
+    preferred_keywords = ("naver", "blog", "네이버", "블로그")
+
+    try:
+        foreground = win32gui.GetForegroundWindow()
+        foreground_title = win32gui.GetWindowText(foreground)
+        foreground_class = win32gui.GetClassName(foreground)
+        if foreground_class == "Chrome_WidgetWin_1" and any(
+            keyword in foreground_title.lower() for keyword in preferred_keywords
+        ):
+            return foreground
+    except Exception:
+        pass
 
     candidates: list[tuple[int, str]] = []
 
@@ -160,12 +172,11 @@ def find_edge_window_handle_with_win32() -> int | None:
     if not candidates:
         return None
 
-    preferred_keywords = ("naver", "blog", "네이버", "블로그")
     for hwnd, title in candidates:
         lowered = title.lower()
         if any(keyword in lowered for keyword in preferred_keywords):
             return hwnd
-    return candidates[0][0]
+    return None
 
 
 def wait_for_editor_window(application_class, desktop, timeout_seconds: float = 12):
@@ -201,14 +212,14 @@ def wait_for_editor_window(application_class, desktop, timeout_seconds: float = 
 
 def focus_window(window) -> None:
     try:
-        window.restore()
-    except Exception:
-        pass
-    try:
         window.set_focus()
     except Exception:
         force_foreground_window(window)
     sleep_seconds(0.4)
+    if not is_edge_foreground(window):
+        force_foreground_window(window)
+        sleep_seconds(0.4)
+    ensure_edge_foreground(window)
 
 
 def force_foreground_window(window) -> None:
@@ -218,7 +229,8 @@ def force_foreground_window(window) -> None:
         import win32gui
 
         hwnd = int(window.handle)
-        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        if win32gui.IsIconic(hwnd):
+            win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
         shell = win32com.client.Dispatch("WScript.Shell")
         shell.SendKeys("%")
         win32gui.SetForegroundWindow(hwnd)
@@ -228,28 +240,44 @@ def force_foreground_window(window) -> None:
 
 def click_write_button(window) -> None:
     focus_window(window)
-    candidates = find_named_controls(window, "글쓰기")
+    candidates = sorted(find_named_controls(window, "글쓰기"), key=write_button_priority)
     for candidate in candidates:
         try:
             focus_window(window)
+            ensure_edge_foreground(window)
             candidate.click_input()
             sleep_seconds(2.5)
             return
         except Exception:
             try:
                 focus_window(window)
+                ensure_edge_foreground(window)
                 candidate.invoke()
                 sleep_seconds(2.5)
                 return
             except Exception:
                 continue
-    raise RuntimeError("Could not find the Naver Blog '글쓰기' button in the open Edge window.")
+    raise RuntimeError("Could not find the Naver Blog '글쓰기' button in the active Edge tab.")
+
+
+def write_button_priority(control) -> tuple[int, int]:
+    try:
+        control_type = control.element_info.control_type
+    except Exception:
+        control_type = ""
+    try:
+        name = control.window_text()
+    except Exception:
+        name = ""
+    type_rank = {"Button": 0, "Hyperlink": 1, "Text": 2, "Custom": 3}.get(control_type, 9)
+    exact_rank = 0 if name.strip() == "글쓰기" else 1
+    return type_rank, exact_rank
 
 
 def fill_editor_with_ui_automation(window, title: str, body: str, keyboard, input_mode: str = DEFAULT_INPUT_MODE) -> None:
     title_control = find_title_control(window)
     if title_control is None:
-        raise RuntimeError("Could not find the title placeholder in the Naver Blog editor.")
+        raise RuntimeError("Could not find the Naver Blog title field. Nothing was pasted.")
 
     focus_window(window)
     title_control.click_input()
@@ -262,24 +290,99 @@ def fill_editor_with_ui_automation(window, title: str, body: str, keyboard, inpu
         body_control.click_input()
         input_text(body_control, body, keyboard, input_mode=input_mode)
     else:
-        keyboard.send_keys("{TAB}")
-        sleep_seconds(0.2)
-        paste_text(body, keyboard)
+        raise RuntimeError("Could not find the Naver Blog body placeholder. Nothing was pasted.")
+
+
+def ensure_safe_editor_foreground() -> None:
+    _hwnd, title, class_name = get_foreground_window_info()
+    lowered = title.lower()
+    is_edge = class_name == "Chrome_WidgetWin_1"
+    is_naver_blog = any(keyword in lowered for keyword in ("naver", "blog", "네이버", "블로그", "글쓰기", "write"))
+    if not (is_edge and is_naver_blog):
+        raise RuntimeError(
+            f"Refusing to paste because the foreground window is not Naver Blog: {title or '(unknown)'}"
+        )
+
+
+def get_foreground_window_title() -> str:
+    return get_foreground_window_info()[1]
+
+
+def get_foreground_window_info() -> tuple[int, str, str]:
+    try:
+        import win32gui
+
+        hwnd = win32gui.GetForegroundWindow()
+        return hwnd, win32gui.GetWindowText(hwnd), win32gui.GetClassName(hwnd)
+    except Exception:
+        return 0, "", ""
+
+
+def ensure_edge_foreground(window) -> None:
+    if is_edge_foreground(window):
+        return
+    hwnd, title, _class_name = get_foreground_window_info()
+    raise RuntimeError(f"Could not focus the Naver Blog Edge window. Foreground is: {title or '(unknown)'}")
+
+
+def is_edge_foreground(window) -> bool:
+    target_handle = 0
+    try:
+        target_handle = int(window.handle)
+    except Exception:
+        pass
+    hwnd, title, class_name = get_foreground_window_info()
+    if target_handle and hwnd == target_handle:
+        return True
+    if class_name == "Chrome_WidgetWin_1" and any(
+        keyword in title.lower() for keyword in ("naver", "blog", "네이버", "블로그", "글쓰기", "write")
+    ):
+        return True
+    return False
+
+
+def ensure_focused_control_is_not_browser_chrome() -> None:
+    try:
+        from pywinauto import Desktop
+
+        focused = Desktop(backend="uia").get_focus()
+    except Exception:
+        return
+    if is_browser_chrome_control(focused):
+        raise RuntimeError(
+            "Refusing to paste because the focused control is the browser address/search bar: "
+            f"{describe_control(focused)}"
+        )
+
+
+def describe_control(control) -> str:
+    try:
+        name = str(control.window_text() or "")
+    except Exception:
+        name = ""
+    try:
+        automation_id = str(control.element_info.automation_id or "")
+    except Exception:
+        automation_id = ""
+    try:
+        control_type = str(control.element_info.control_type or "")
+    except Exception:
+        control_type = ""
+    return f"name={name!r}, automation_id={automation_id!r}, control_type={control_type!r}"
 
 
 def find_title_control(window):
     for control in find_named_controls(window, "제목"):
         if is_text_input_candidate(control):
             return control
-    edit_controls = safe_descendants(window, control_type="Edit")
-    return edit_controls[0] if edit_controls else None
+    return None
 
 
 def find_body_control(window, title_control):
-    body_keywords = ("글감과", "일상을", "기록", "본문", "내용")
+    body_keywords = ("글감과 함께 나의 일상을 기록해보세요", "글감과", "일상을", "기록", "본문", "내용")
     for keyword in body_keywords:
         for control in find_named_controls(window, keyword):
-            if control.element_info != title_control.element_info:
+            if control.element_info != title_control.element_info and is_text_input_candidate(control):
                 return control
 
     candidates = []
@@ -287,7 +390,7 @@ def find_body_control(window, title_control):
         candidates.extend(safe_descendants(window, control_type=control_type))
 
     for control in candidates:
-        if control.element_info != title_control.element_info:
+        if control.element_info != title_control.element_info and is_editor_input_candidate(control):
             return control
     return None
 
@@ -318,7 +421,45 @@ def is_text_input_candidate(control) -> bool:
         control_type = control.element_info.control_type
     except Exception:
         return False
-    return control_type in {"Edit", "Document", "Pane", "Custom", "Text"}
+    return control_type in {"Edit", "Document", "Pane", "Custom", "Text"} and not is_browser_chrome_control(control)
+
+
+def is_editor_input_candidate(control) -> bool:
+    try:
+        control_type = control.element_info.control_type
+    except Exception:
+        return False
+    return control_type in {"Edit", "Document", "Pane", "Custom"} and not is_browser_chrome_control(control)
+
+
+def is_browser_chrome_control(control) -> bool:
+    try:
+        name = str(control.window_text() or "").lower()
+    except Exception:
+        name = ""
+    try:
+        automation_id = str(control.element_info.automation_id or "").lower()
+    except Exception:
+        automation_id = ""
+    blocked_terms = (
+        "주소",
+        "검색",
+        "address",
+        "search",
+        "url",
+        "omnibox",
+        "location",
+        "즐겨찾기",
+        "favorites",
+        "toolbar",
+        "omnibar",
+        "omnibox",
+        "searchbox",
+        "edit address",
+        "주소 및 검색",
+        "웹 주소",
+    )
+    return any(term in name or term in automation_id for term in blocked_terms)
 
 
 def paste_text(text: str, keyboard) -> None:

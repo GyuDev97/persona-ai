@@ -22,7 +22,7 @@ def create_it_blog_draft_from_agent1(limit: int = 5) -> dict[str, Any]:
             "수집 데이터가 쌓이면 실제 헤드라인을 기반으로 본문을 자동 보강하겠습니다."
         )
     else:
-        processed = build_blog_ready_news(news_items, limit=8)
+        processed = build_blog_ready_news(news_items, limit=5)
         title = build_blog_title_from_grouped_news(processed["grouped"])
         body = processed["draft"]
 
