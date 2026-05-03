@@ -216,6 +216,18 @@ def create_expense(payload: dict[str, Any]) -> dict[str, Any]:
     return {"id": item_id, "month": month, "category": category, "amount": amount}
 
 
+def update_expense(item_id: int, payload: dict[str, Any]) -> dict[str, Any]:
+    month = _normalize_month(payload.get("month"))
+    category = _required_text(payload.get("category"), "category")
+    amount = _to_int(payload.get("amount"))
+    _ensure_money_item("expenses", item_id)
+    execute(
+        "UPDATE expenses SET month = ?, category = ?, amount = ? WHERE id = ?",
+        (month, category, amount, item_id),
+    )
+    return {"id": item_id, "month": month, "category": category, "amount": amount}
+
+
 def create_card_usage(payload: dict[str, Any]) -> dict[str, Any]:
     card_name = _required_text(payload.get("card_name"), "card_name")
     item_id = execute(
@@ -229,6 +241,28 @@ def create_card_usage(payload: dict[str, Any]) -> dict[str, Any]:
             _to_int(payload.get("payment_amount")),
             _optional_text(payload.get("billing_cycle_start")),
             _optional_text(payload.get("billing_cycle_end")),
+        ),
+    )
+    return {"id": item_id, "card_name": card_name}
+
+
+def update_card_usage(item_id: int, payload: dict[str, Any]) -> dict[str, Any]:
+    card_name = _required_text(payload.get("card_name"), "card_name")
+    _ensure_money_item("card_usage", item_id)
+    execute(
+        """
+        UPDATE card_usage
+        SET card_name = ?, total_amount = ?, payment_amount = ?,
+            billing_cycle_start = ?, billing_cycle_end = ?
+        WHERE id = ?
+        """,
+        (
+            card_name,
+            _to_int(payload.get("total_amount")),
+            _to_int(payload.get("payment_amount")),
+            _optional_text(payload.get("billing_cycle_start")),
+            _optional_text(payload.get("billing_cycle_end")),
+            item_id,
         ),
     )
     return {"id": item_id, "card_name": card_name}
@@ -248,6 +282,29 @@ def create_installment(payload: dict[str, Any]) -> dict[str, Any]:
             _to_int(payload.get("monthly_amount")),
             str(payload.get("card_name") or ""),
             _optional_text(payload.get("start_date")),
+        ),
+    )
+    return {"id": item_id, "title": title}
+
+
+def update_installment(item_id: int, payload: dict[str, Any]) -> dict[str, Any]:
+    title = _required_text(payload.get("title"), "title")
+    _ensure_money_item("installments", item_id)
+    execute(
+        """
+        UPDATE installments
+        SET title = ?, total_month = ?, current_month = ?, monthly_amount = ?,
+            card_name = ?, start_date = ?
+        WHERE id = ?
+        """,
+        (
+            title,
+            max(1, _to_int(payload.get("total_month"), 1)),
+            max(1, _to_int(payload.get("current_month"), 1)),
+            _to_int(payload.get("monthly_amount")),
+            str(payload.get("card_name") or ""),
+            _optional_text(payload.get("start_date")),
+            item_id,
         ),
     )
     return {"id": item_id, "title": title}
@@ -274,10 +331,22 @@ def create_auto_transfer(payload: dict[str, Any]) -> dict[str, Any]:
     return {"id": item_id, "title": title, "amount": amount}
 
 
+def update_auto_transfer(item_id: int, payload: dict[str, Any]) -> dict[str, Any]:
+    title = _required_text(payload.get("title"), "title")
+    amount = _to_int(payload.get("amount"))
+    _ensure_money_item("auto_transfer", item_id)
+    execute(
+        "UPDATE auto_transfer SET title = ?, amount = ?, transfer_date = ? WHERE id = ?",
+        (title, amount, _optional_text(payload.get("transfer_date")), item_id),
+    )
+    return {"id": item_id, "title": title, "amount": amount}
+
+
 def delete_money_core_item(table_name: str, item_id: int) -> dict[str, Any]:
     allowed = {"expenses", "card_usage", "installments", "auto_transfer"}
     if table_name not in allowed:
         raise ValueError("삭제할 수 없는 Money Core 항목입니다.")
+    _ensure_money_item(table_name, item_id)
     execute(f"DELETE FROM {table_name} WHERE id = ?", (item_id,))
     return {"deleted": True, "table": table_name, "id": item_id}
 
@@ -408,3 +477,9 @@ def _required_text(value: Any, field_name: str) -> str:
 def _optional_text(value: Any) -> str | None:
     text = str(value or "").strip()
     return text or None
+
+
+def _ensure_money_item(table_name: str, item_id: int) -> None:
+    row = fetch_one(f"SELECT id FROM {table_name} WHERE id = ?", (item_id,))
+    if row is None:
+        raise ValueError("Money Core 항목을 찾을 수 없습니다.")

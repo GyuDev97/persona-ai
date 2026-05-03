@@ -4,6 +4,7 @@ from typing import Any
 
 from ..storage.database import execute, fetch_all, fetch_one
 from .agent_news_service import AGENT1_ID, list_agent_news_items
+from .news_processing_service import build_blog_ready_news, build_blog_title_from_grouped_news
 
 
 def create_it_blog_draft_from_agent1(limit: int = 5) -> dict[str, Any]:
@@ -21,8 +22,9 @@ def create_it_blog_draft_from_agent1(limit: int = 5) -> dict[str, Any]:
             "수집 데이터가 쌓이면 실제 헤드라인을 기반으로 본문을 자동 보강하겠습니다."
         )
     else:
-        title = _build_blog_title(news_items)
-        body = _build_blog_body(news_items)
+        processed = build_blog_ready_news(news_items, limit=8)
+        title = build_blog_title_from_grouped_news(processed["grouped"])
+        body = processed["draft"]
 
     draft_id = execute(
         """
@@ -35,7 +37,14 @@ def create_it_blog_draft_from_agent1(limit: int = 5) -> dict[str, Any]:
             AGENT1_ID,
             title,
             body,
-            json.dumps({"news_items": news_items}, ensure_ascii=False, default=str),
+            json.dumps(
+                {
+                    "news_items": news_items,
+                    "processed_news": processed if news_items else None,
+                },
+                ensure_ascii=False,
+                default=str,
+            ),
         ),
     )
     return get_blog_draft(draft_id)

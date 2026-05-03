@@ -8,6 +8,7 @@ set "PROJECT_VENV=%APP_DIR%\venv\Scripts\activate.bat"
 set "PROJECT_PYTHON=%APP_DIR%\venv\Scripts\python.exe"
 set "DEFAULT_VENV=D:\python\venv\Scripts\activate.bat"
 set "DEFAULT_PYTHON=D:\python\venv\Scripts\python.exe"
+set "PYTHON_BOOT="
 set "HOST=127.0.0.1"
 set "PORT=8000"
 
@@ -44,28 +45,44 @@ if not exist "%APP_DIR%" (
 
 echo [1/4] Checking Python environment...
 if exist "%PROJECT_PYTHON%" (
-    set "PYTHON_BOOT=call ""%PROJECT_VENV%"""
+    set "PYTHON_BOOT=call ""%PROJECT_VENV%"" && "
     echo Using project venv: %PROJECT_VENV%
 ) else if exist "%DEFAULT_PYTHON%" (
-    set "PYTHON_BOOT=call ""%DEFAULT_VENV%"""
+    set "PYTHON_BOOT=call ""%DEFAULT_VENV%"" && "
     echo Using default venv: %DEFAULT_VENV%
 ) else (
-    set "PYTHON_BOOT=python --version"
     echo [INFO] No venv found. Using Python from PATH.
+)
+%PYTHON_BOOT%python --version
+if errorlevel 1 (
+    echo [ERROR] Python is not available.
+    set "EXIT_CODE=1"
+    goto :always_pause
 )
 
 echo [2/4] Starting API server window...
-start "GyuVIS API Server" cmd /k "cd /d ""%APP_DIR%"" && %PYTHON_BOOT% && python -m uvicorn main:app --reload --host 0.0.0.0 --port %PORT%"
+start "GyuVIS API Server" cmd /k "cd /d ""%APP_DIR%"" && %PYTHON_BOOT%python -m uvicorn main:app --reload --host 0.0.0.0 --port %PORT%"
 
 echo [3/4] Starting PC agent runner window...
-start "GyuVIS PC Agent Runner" cmd /k "cd /d ""%APP_DIR%"" && %PYTHON_BOOT% && python pc_agent_runner.py"
+start "GyuVIS PC Agent Runner" cmd /k "cd /d ""%APP_DIR%"" && %PYTHON_BOOT%python pc_agent_runner.py"
 
 echo [4/4] Starting PC wake listener window...
-start "GyuVIS PC Wake Listener" cmd /k "cd /d ""%APP_DIR%"" && %PYTHON_BOOT% && python pc_wake_listener.py"
+start "GyuVIS PC Wake Listener" cmd /k "cd /d ""%APP_DIR%"" && %PYTHON_BOOT%python pc_wake_listener.py"
 
 echo.
-echo Waiting before opening UI...
-timeout /t 3 /nobreak > nul
+echo Waiting for API health check...
+set "HEALTH_OK=0"
+for /l %%I in (1,1,12) do (
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $r = Invoke-WebRequest -UseBasicParsing 'http://%HOST%:%PORT%/health' -TimeoutSec 2; if ($r.StatusCode -eq 200) { exit 0 } } catch { exit 1 }"
+    if not errorlevel 1 (
+        set "HEALTH_OK=1"
+        goto :open_ui
+    )
+    timeout /t 1 /nobreak > nul
+)
+echo [WARN] API health check did not respond yet. Opening UI anyway.
+
+:open_ui
 start "" "http://%HOST%:%PORT%/"
 
 set "EXIT_CODE=0"

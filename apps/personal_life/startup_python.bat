@@ -8,6 +8,7 @@ set "PROJECT_VENV=%APP_DIR%\venv\Scripts\activate.bat"
 set "PROJECT_PYTHON=%APP_DIR%\venv\Scripts\python.exe"
 set "DEFAULT_VENV=D:\python\venv\Scripts\activate.bat"
 set "DEFAULT_PYTHON=D:\python\venv\Scripts\python.exe"
+set "VENV_ACTIVATE="
 set "HOST=127.0.0.1"
 set "PORT=8000"
 
@@ -31,14 +32,15 @@ if errorlevel 1 (
 
 echo [2/4] Activating Python environment...
 if exist "%PROJECT_PYTHON%" (
+    set "VENV_ACTIVATE=%PROJECT_VENV%"
     echo Using project venv: %PROJECT_VENV%
-    call "%PROJECT_VENV%"
 ) else if exist "%DEFAULT_PYTHON%" (
+    set "VENV_ACTIVATE=%DEFAULT_VENV%"
     echo Using default venv: %DEFAULT_VENV%
-    call "%DEFAULT_VENV%"
 ) else (
     echo [INFO] No venv found. Using Python from PATH.
 )
+if not "%VENV_ACTIVATE%"=="" call "%VENV_ACTIVATE%"
 
 echo [3/4] Checking Python...
 python --version

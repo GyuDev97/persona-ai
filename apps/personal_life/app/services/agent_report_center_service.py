@@ -104,7 +104,7 @@ def _build_card_summary(agent_id: int, task: dict[str, Any]) -> str:
     result_summary = str(task.get("result_summary") or "").strip()
 
     if status == "failed":
-        return "理쒓렐 ?묒뾽 ?뺤씤???꾩슂?⑸땲??"
+        return "최근 작업 확인이 필요합니다."
 
     if agent_id == 1:
         inserted = payload.get("inserted")
@@ -117,14 +117,14 @@ def _build_card_summary(agent_id: int, task: dict[str, Any]) -> str:
         title = payload.get("title")
         draft_id = payload.get("draft_id")
         if title and draft_id:
-            return f"釉붾줈洹?珥덉븞 #{draft_id} 以鍮??꾨즺: {title}"
+            return f"블로그 초안 #{draft_id} 준비 완료: {title}"
         if draft_id:
-            return f"釉붾줈洹?珥덉븞 #{draft_id} 以鍮??꾨즺"
+            return f"블로그 초안 #{draft_id} 준비 완료"
 
     if agent_id == 3:
         if payload.get("requires_codex"):
-            return "Codex ?뱀씤 ??肄붾뱶 ?섏젙怨?寃利앹쓣 吏꾪뻾?????덉뒿?덈떎."
-        return "肄붾뵫/???낅뜲?댄듃 ?묒뾽 ?곹깭瑜??뺤씤?덉뒿?덈떎."
+            return "Codex 승인 후 코드 수정과 검증을 진행할 수 있습니다."
+        return "코딩/앱 업데이트 작업 상태를 확인했습니다."
 
     if agent_id == 4:
         ideas = payload.get("ideas") or []
@@ -132,7 +132,7 @@ def _build_card_summary(agent_id: int, task: dict[str, Any]) -> str:
             return f"유튜브 아이디어 후보 {len(ideas)}개를 확인했습니다."
 
     cleaned = _clean_report_text(result_summary or command_text)
-    return _truncate(cleaned or "理쒓렐 寃곌낵媛 ?놁뒿?덈떎.", 150)
+    return _truncate(cleaned or "최근 결과가 없습니다.", 150)
 
 
 def _build_card_highlights(agent_id: int, task: dict[str, Any]) -> list[str]:
@@ -291,8 +291,8 @@ def _payload_dict(task: dict[str, Any]) -> dict[str, Any]:
 
 def _clean_report_text(value: str) -> str:
     text = " ".join(str(value or "").split())
-    text = re.sub(r"^?먯씠?꾪듃\s*\d+踰?s*蹂닿퀬?낅땲??.?\s*", "", text)
-    text = re.sub(r"^蹂닿퀬?낅땲??.?\s*", "", text)
+    text = re.sub(r"^에이전트\s*\d+번?\s*보고입니다\.?\s*", "", text)
+    text = re.sub(r"^보고입니다\.?\s*", "", text)
     text = re.sub(r"\s*\d+\.\s*", " / ", text)
     text = re.sub(r"\s*/\s*/\s*", " / ", text).strip(" /")
     return text

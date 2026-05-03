@@ -173,6 +173,22 @@ CREATE TABLE IF NOT EXISTS agent_reports (
     UNIQUE (agent_id, report_date)
 );
 
+CREATE TABLE IF NOT EXISTS agent_status (
+    agent_id INTEGER PRIMARY KEY,
+    status TEXT NOT NULL DEFAULT 'idle',
+    last_run_at TEXT,
+    last_success_at TEXT,
+    last_error TEXT
+);
+
+CREATE TABLE IF NOT EXISTS agent_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_id INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    level TEXT NOT NULL DEFAULT 'info',
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
 CREATE TABLE IF NOT EXISTS agent_blog_drafts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     agent_id INTEGER NOT NULL DEFAULT 2,
@@ -423,6 +439,24 @@ MARIADB_SCHEMA = [
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         UNIQUE KEY uniq_agent_report_day (agent_id, report_date)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS agent_status (
+        agent_id INT PRIMARY KEY,
+        status VARCHAR(20) NOT NULL DEFAULT 'idle',
+        last_run_at DATETIME NULL,
+        last_success_at DATETIME NULL,
+        last_error TEXT NULL
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS agent_log (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        agent_id INT NOT NULL,
+        message TEXT NOT NULL,
+        level VARCHAR(20) NOT NULL DEFAULT 'info',
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
     """,
     """

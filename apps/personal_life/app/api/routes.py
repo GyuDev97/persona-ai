@@ -55,6 +55,7 @@ from ..services.agent_report_center_service import build_agent_report_center, cr
 from ..services.agent_standby_service import focus_agent, get_agent_standby_status, open_agent_detail, recover_agent
 from ..config import get_settings
 from ..services.asset_service import build_asset_summary, create_asset, list_assets, update_asset
+from ..services.blog_draft_service import get_blog_draft
 from ..services.briefing_service import build_evening_briefing, build_morning_briefing, build_today_briefing
 from ..services.capture_service import create_quick_capture, list_quick_captures
 from ..services.conversation_service import list_conversations
@@ -75,11 +76,16 @@ from ..services.money_core_service import (
     list_installments,
     save_asset_history,
     save_income_summary,
+    update_auto_transfer,
+    update_card_usage,
+    update_expense,
+    update_installment,
 )
 from ..services.natural_language_service import process_natural_command
 from ..services.reminder_service import list_reminders
 from ..services.routine_service import create_routine, create_routine_checkin, list_routines
 from ..services.schedule_service import create_schedule, list_schedules
+from ..services.system_status_service import build_system_status
 from ..services.subtitle_service import get_subtitles, update_subtitles
 from ..services.task_service import create_task, list_tasks, mark_task_done
 
@@ -149,6 +155,11 @@ def health_check() -> dict[str, str]:
     return {"status": "ok", "timestamp": datetime.now().isoformat()}
 
 
+@router.get("/system/status")
+def get_system_status() -> dict:
+    return build_system_status()
+
+
 @router.get("/assistant/status", response_model=AssistantStatusResponse)
 def get_assistant_status() -> AssistantStatusResponse:
     settings = get_settings()
@@ -205,9 +216,20 @@ def post_money_core_expense(payload: dict) -> dict:
         raise HTTPException(status_code=400, detail=str(error)) from error
 
 
+@router.put("/finance/expenses/{item_id}")
+def put_money_core_expense(item_id: int, payload: dict) -> dict:
+    try:
+        return update_expense(item_id, payload)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
 @router.delete("/finance/expenses/{item_id}")
 def delete_money_core_expense(item_id: int) -> dict:
-    return delete_money_core_item("expenses", item_id)
+    try:
+        return delete_money_core_item("expenses", item_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
 
 
 @router.get("/finance/card")
@@ -223,9 +245,20 @@ def post_money_core_card(payload: dict) -> dict:
         raise HTTPException(status_code=400, detail=str(error)) from error
 
 
+@router.put("/finance/card/{item_id}")
+def put_money_core_card(item_id: int, payload: dict) -> dict:
+    try:
+        return update_card_usage(item_id, payload)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
 @router.delete("/finance/card/{item_id}")
 def delete_money_core_card(item_id: int) -> dict:
-    return delete_money_core_item("card_usage", item_id)
+    try:
+        return delete_money_core_item("card_usage", item_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
 
 
 @router.get("/finance/installments")
@@ -241,9 +274,20 @@ def post_money_core_installment(payload: dict) -> dict:
         raise HTTPException(status_code=400, detail=str(error)) from error
 
 
+@router.put("/finance/installments/{item_id}")
+def put_money_core_installment(item_id: int, payload: dict) -> dict:
+    try:
+        return update_installment(item_id, payload)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
 @router.delete("/finance/installments/{item_id}")
 def delete_money_core_installment(item_id: int) -> dict:
-    return delete_money_core_item("installments", item_id)
+    try:
+        return delete_money_core_item("installments", item_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
 
 
 @router.get("/finance/assets")
@@ -272,9 +316,20 @@ def post_money_core_auto_transfer(payload: dict) -> dict:
         raise HTTPException(status_code=400, detail=str(error)) from error
 
 
+@router.put("/finance/auto-transfer/{item_id}")
+def put_money_core_auto_transfer(item_id: int, payload: dict) -> dict:
+    try:
+        return update_auto_transfer(item_id, payload)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
 @router.delete("/finance/auto-transfer/{item_id}")
 def delete_money_core_auto_transfer(item_id: int) -> dict:
-    return delete_money_core_item("auto_transfer", item_id)
+    try:
+        return delete_money_core_item("auto_transfer", item_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
 
 
 @router.post("/assets", response_model=AssetResponse)
@@ -346,6 +401,23 @@ def get_agent_standby_status_route() -> dict:
 @router.get("/agent/report-center/data")
 def get_agent_report_center_data() -> dict:
     return build_agent_report_center()
+
+
+@router.get("/agent/blog-drafts/{draft_id}")
+def get_agent_blog_draft_detail(draft_id: int) -> dict:
+    try:
+        draft = get_blog_draft(draft_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    return {
+        "id": int(draft.get("id")),
+        "title": draft.get("title"),
+        "body": draft.get("body"),
+        "status": draft.get("status"),
+        "platform": draft.get("platform"),
+        "created_at": str(draft.get("created_at")) if draft.get("created_at") is not None else None,
+        "updated_at": str(draft.get("updated_at")) if draft.get("updated_at") is not None else None,
+    }
 
 
 @router.get("/agent/definitions")

@@ -11,6 +11,7 @@ import webbrowser
 import xml.etree.ElementTree as ET
 from datetime import date, datetime, time as dt_time, timedelta
 
+from app.agents import Agent1News, Agent2Blog, Agent3Codex, Agent4Youtube, BaseAgent
 from app.config import load_env_file
 from app.services.blog_draft_service import create_it_blog_draft_from_agent1
 from app.services.money_core_service import build_money_core_summary
@@ -26,6 +27,12 @@ from app.services.agent_news_service import (
     split_title_source,
 )
 from app.services.agent_task_service import claim_next_agent_task, complete_agent_task, fail_agent_task
+from app.services.agent_status_service import (
+    agent_id_for_task_type,
+    mark_agent_error,
+    mark_agent_running,
+    mark_agent_success,
+)
 from app.storage.database import initialize_database
 
 
@@ -49,6 +56,14 @@ AGENT1_NEWS_QUERIES = [
 _last_agent1_collect_at = 0.0
 _last_agent1_report_date: str | None = None
 
+AGENT_HANDLERS: dict[str, BaseAgent] = {
+    "agent1_it_news_window": Agent1News(),
+    "agent2_it_blog_draft": Agent2Blog(),
+    "naver_blog_fill_draft": Agent2Blog(mode="fill"),
+    "coding_app_update": Agent3Codex(),
+    "youtube_idea_research": Agent4Youtube(),
+}
+
 
 def main() -> None:
     load_env_file()
@@ -62,12 +77,16 @@ def main() -> None:
             continue
 
         print(f"[{datetime.now().isoformat(timespec='seconds')}] claimed task #{task.id} ({task.task_type})")
+        agent_id = agent_id_for_task_type(task.task_type)
+        mark_agent_running(agent_id, f"Task #{task.id} started: {task.task_type}")
         try:
             summary, payload = handle_task(task.task_type, task.search_query or task.command_text)
             complete_agent_task(task.id, summary, payload)
+            mark_agent_success(agent_id, f"Task #{task.id} completed: {task.task_type}")
             print(f"[{datetime.now().isoformat(timespec='seconds')}] completed task #{task.id}")
         except Exception as error:
             fail_agent_task(task.id, str(error))
+            mark_agent_error(agent_id, f"Task #{task.id} failed: {error}")
             print(f"[{datetime.now().isoformat(timespec='seconds')}] failed task #{task.id}: {error}")
 
 
@@ -89,22 +108,28 @@ def run_agent1_it_news_collector(force: bool = False) -> None:
         elapsed = time.monotonic() - _last_agent1_collect_at
         if force or elapsed >= AGENT1_COLLECT_INTERVAL_SECONDS:
             try:
+                mark_agent_running(AGENT1_ID, "Scheduled Agent 1 IT news collection started")
                 inserted = collect_agent1_it_news()
+                mark_agent_success(AGENT1_ID, f"Scheduled Agent 1 IT news collection completed: {inserted} new items")
                 _last_agent1_collect_at = time.monotonic()
                 print(
                     f"[{datetime.now().isoformat(timespec='seconds')}] agent1 collected {inserted} new IT news items"
                 )
             except Exception as error:
+                mark_agent_error(AGENT1_ID, f"Scheduled Agent 1 IT news collection failed: {error}")
                 print(f"[{datetime.now().isoformat(timespec='seconds')}] agent1 collect failed: {error}")
 
     if is_report_window and _last_agent1_report_date != today:
         try:
+            mark_agent_running(AGENT1_ID, f"Scheduled Agent 1 daily report started: {today}")
             report = build_agent1_daily_report(today)
+            mark_agent_success(AGENT1_ID, f"Scheduled Agent 1 daily report completed: {report.get('title')}")
             _last_agent1_report_date = today
             print(
                 f"[{datetime.now().isoformat(timespec='seconds')}] agent1 daily report ready: {report.get('title')}"
             )
         except Exception as error:
+            mark_agent_error(AGENT1_ID, f"Scheduled Agent 1 daily report failed: {error}")
             print(f"[{datetime.now().isoformat(timespec='seconds')}] agent1 report failed: {error}")
 
 
@@ -143,16 +168,13 @@ def build_agent1_news_query(keyword: str) -> str:
 
 
 def handle_task(task_type: str, query: str) -> tuple[str, dict]:
-    if task_type == "agent1_it_news_window":
-        return build_agent1_it_news_window(query)
-    if task_type == "agent2_it_blog_draft":
-        return build_agent2_it_blog_draft()
-    if task_type == "naver_blog_fill_draft":
-        return fill_latest_naver_blog_draft(query)
-    if task_type == "coding_app_update":
-        return build_coding_app_update_report(query)
-    if task_type == "youtube_idea_research":
-        return build_youtube_idea_report(query)
+    handler = AGENT_HANDLERS.get(task_type)
+    if handler is not None:
+        return handler.run(query)
+    return default_handler(task_type, query)
+
+
+def default_handler(task_type: str, query: str) -> tuple[str, dict]:
     if task_type == "finance_monthly_summary":
         return build_finance_monthly_summary()
     if task_type == "news_briefing":

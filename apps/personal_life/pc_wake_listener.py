@@ -1,5 +1,4 @@
 import json
-import json
 import os
 import pathlib
 import re
@@ -22,6 +21,7 @@ import sounddevice as sd
 import speech_recognition as sr
 
 from app.config import load_env_file
+from app.core.intent_router import parse_intent
 from app.services.jarvis_hud_service import launch_jarvis_hud
 
 
@@ -420,6 +420,10 @@ class GyuvisWakeListener:
         return any(self._normalize_text(phrase) in normalized for phrase in SOCIAL_CLOSE_PHRASES)
 
     def _handle_explicit_followup_command(self, text: str) -> bool:
+        if self._handle_parsed_intent(text):
+            self._pending_briefing_period = None
+            return True
+
         handlers = (
             self._handle_incomplete_agent_fragment,
             self._handle_agent_news_readout_command,
@@ -439,6 +443,70 @@ class GyuvisWakeListener:
                 self._pending_briefing_period = None
                 return True
         return False
+
+    def _handle_parsed_intent(self, text: str) -> bool:
+        parsed = parse_intent(text)
+        intent = parsed.get("intent")
+        if float(parsed.get("confidence") or 0) < 0.72:
+            return False
+
+        if intent == "OPEN_PAGE":
+            return self._open_page_from_intent(parsed.get("target"))
+        if intent == "RUN_AGENT":
+            return self._run_agent_from_intent(parsed.get("target"))
+        if intent == "SHOW_STATUS":
+            return self._handle_agent_status_query(text)
+        if intent == "START_BRIEFING":
+            return self._handle_briefing_command(text)
+        if intent == "CONTROL_BROWSER":
+            return self._handle_browser_command(text)
+        if intent == "CONTROL_PC":
+            return self._handle_desktop_monitor_command(text)
+        return False
+
+    def _open_page_from_intent(self, target: Any) -> bool:
+        if isinstance(target, int) and target in {1, 2, 3, 4}:
+            try:
+                self._post_json(f"{SERVER_URL}/agent/standby-status/detail/{target}", {})
+            except Exception as error:
+                self._log(f"에이전트 상세 상태 반영 실패: {error}")
+            self._open_url(f"{SERVER_URL}/agent/report-center?agent={target}")
+            self._speak(f"네 보스. 에이전트 {target}번 상세 화면을 열겠습니다.")
+            return True
+
+        pages = {
+            "agent_report": (f"{SERVER_URL}/agent/report-center", "네 보스. 에이전트 리포트 센터를 열겠습니다."),
+            "creator": (f"{SERVER_URL}/creator.html", "네 보스. 크리에이터 스튜디오를 열겠습니다."),
+            "money": (f"{SERVER_URL}/money-core", "네 보스. Money Core를 열겠습니다."),
+            "car": (f"{SERVER_URL}/drive.html", "네 보스. 자동차 관리 화면을 열겠습니다."),
+            "settings": (f"{SERVER_URL}/settings.html", "네 보스. 설정 화면을 열겠습니다."),
+            "schedule": (f"{SERVER_URL}/schedule.html", "네 보스. 일정 화면을 열겠습니다."),
+            "briefing": (f"{SERVER_URL}/briefing.html", "네 보스. 브리핑 화면을 열겠습니다."),
+            "naver": ("https://www.naver.com", "네 보스. 네이버를 열겠습니다."),
+            "google": ("https://www.google.com", "네 보스. 구글을 열겠습니다."),
+            "youtube": ("https://www.youtube.com", "네 보스. 유튜브를 열겠습니다."),
+            "gpt": ("https://chatgpt.com", "네 보스. GPT를 열겠습니다."),
+        }
+        page = pages.get(str(target or ""))
+        if page is None:
+            return False
+        self._open_url(page[0])
+        self._speak(page[1])
+        return True
+
+    def _run_agent_from_intent(self, target: Any) -> bool:
+        commands = {
+            1: "1번 에이전트 최신 IT 뉴스 가져와봐",
+            2: "에이전트 2번 블로그 초안 작성해 줘",
+            4: "4번 에이전트 유튜브 아이디어 찾아줘",
+        }
+        command = commands.get(target)
+        if not command or not SEND_FOLLOWUP_TO_SERVER:
+            return False
+        response_text = self._send_followup_to_server(command)
+        if response_text:
+            self._speak(response_text)
+        return True
 
     def _handle_incomplete_agent_fragment(self, text: str) -> bool:
         normalized = self._normalize_text(text)
