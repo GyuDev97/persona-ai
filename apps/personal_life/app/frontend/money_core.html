@@ -9,8 +9,11 @@
 <style>
 :root{--bg:#fbf7f1;--panel:rgba(255,255,255,.84);--line:#efe4d9;--text:#211b17;--muted:#8d8379;--brand:#d35a12;--brand-deep:#a6420b;--brand-soft:#fff1e5;--green:#24b261;--red:#ef4740;--blue:#2584dd;--orange:#f29524;--shadow:0 18px 46px rgba(91,61,35,.08)}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;color:var(--text);font-family:"Malgun Gothic","맑은 고딕","Nanum Gothic","나눔고딕",Arial,sans-serif;background:radial-gradient(circle at 18% 0,rgba(245,221,190,.56),transparent 33%),radial-gradient(circle at 88% 7%,rgba(225,239,246,.72),transparent 30%),linear-gradient(135deg,#fffaf3,#fbf7f1 48%,#f7efe7)}
-button{font:inherit;border:0;cursor:pointer}a{color:inherit;text-decoration:none}.app{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100vh}.main{padding:34px 36px 38px;max-width:1760px;width:100%}.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);backdrop-filter:blur(16px)}.workbench{display:flex;justify-content:space-between;gap:14px;align-items:center;margin:0 0 18px;padding:16px 18px}.workbench-actions{display:flex;gap:10px;flex-wrap:wrap}.primary-btn,.ghost-btn,.danger-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 17px;border-radius:14px;font-weight:950}.primary-btn{background:linear-gradient(135deg,var(--brand),var(--brand-deep));color:#fff;box-shadow:0 14px 28px rgba(194,80,14,.18)}.ghost-btn{border:1px solid var(--line);background:#fffdfa;color:var(--brand-deep)}.danger-btn{border:1px solid rgba(239,71,64,.25);background:#fff4f3;color:var(--red)}.top-cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-bottom:18px}.top-card{padding:18px;display:grid;gap:9px;min-height:124px}.top-card span{color:var(--muted);font-size:13px;font-weight:800}.top-card b{font-size:22px;letter-spacing:-.04em}.top-card small{color:var(--muted);line-height:1.45;font-weight:700}.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;margin-bottom:18px}.panel{padding:22px}.head{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:16px}.head h2,.head h3{margin:0;letter-spacing:-.04em}.tag{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;background:var(--brand-soft);color:var(--brand-deep);font-size:12px;font-weight:950}.muted{color:var(--muted);font-size:13px;line-height:1.5;font-weight:700}.amount{font-size:34px;font-weight:950;letter-spacing:-.05em}.money-layout{display:grid;grid-template-columns:210px minmax(0,1fr);gap:22px;align-items:center}.donut{width:190px;height:190px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--brand) var(--donut),#f2e9df 0)}.donut-inner{width:112px;height:112px;border-radius:50%;background:#fffdfa;display:grid;place-items:center;text-align:center;font-weight:950}.metric-list{display:grid;gap:9px}.metric{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-weight:850}.metric span{color:var(--muted)}.bars{display:grid;gap:16px}.bar-row{display:grid;gap:8px}.bar-head{display:flex;justify-content:space-between;font-weight:900}.bar{height:12px;border-radius:999px;background:#f1e8de;overflow:hidden}.bar span{display:block;height:100%;border-radius:999px;background:linear-gradient(135deg,var(--brand),var(--brand-deep));width:0}.list{display:grid;gap:10px;max-height:330px;overflow:auto;padding-right:4px}.item{display:grid;gap:7px;padding:13px 14px;border:1px solid rgba(80,52,30,.1);border-radius:14px;background:rgba(255,255,255,.64)}.item-row{display:flex;justify-content:space-between;gap:14px;align-items:center}.item-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.title{font-weight:950;line-height:1.4}.badge{display:inline-flex;padding:5px 9px;border-radius:999px;background:#fff1e5;color:var(--brand-deep);font-size:12px;font-weight:950}.mini-btn{border:1px solid var(--line);background:#fffdfa;color:var(--brand-deep);min-height:32px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:950}.mini-btn.danger{border-color:rgba(239,71,64,.25);background:#fff4f3;color:var(--red)}.chart{height:260px;display:flex;align-items:end;gap:14px;padding:18px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.5)}.point{flex:1;display:grid;align-items:end;gap:8px;height:100%;text-align:center}.point-bar{border-radius:12px 12px 4px 4px;background:linear-gradient(180deg,#2abc6d,#0c9b50);min-height:4px}.tips{display:grid;gap:10px}.tip{padding:14px 15px;border-radius:14px;background:var(--brand-soft);color:#6f3c1d;font-weight:850;line-height:1.5}.empty{padding:16px;text-align:center;border:1px dashed rgba(80,52,30,.18);border-radius:14px;color:var(--muted);font-weight:800;background:rgba(255,255,255,.42)}.modal-backdrop{position:fixed;inset:0;background:rgba(27,19,13,.38);display:none;place-items:center;padding:22px;z-index:100}.modal-backdrop.open{display:grid}.modal{width:min(760px,100%);max-height:92vh;overflow:auto;background:#fffdfa;border:1px solid var(--line);border-radius:24px;box-shadow:0 30px 80px rgba(54,34,19,.22);padding:22px}.modal-head{display:flex;justify-content:space-between;gap:14px;align-items:start;margin-bottom:18px}.modal-head h2{margin:0;font-size:24px;letter-spacing:-.04em}.entry-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}.entry-tabs button{min-height:42px;border-radius:14px;background:#fff;border:1px solid var(--line);font-weight:950;color:#6f6258}.entry-tabs button.active{background:var(--brand-soft);color:var(--brand-deep);border-color:#f1d8c6}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:grid;gap:7px}.field.full{grid-column:1/-1}.field label{font-size:13px;color:#6f6258;font-weight:950}.field input,.field select{width:100%;height:48px;border:1px solid var(--line);border-radius:14px;padding:0 13px;background:#fff;color:var(--text);font:inherit;font-weight:800}.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}.toast{position:fixed;right:24px;bottom:24px;z-index:110;background:#211b17;color:#fff;padding:13px 16px;border-radius:14px;font-weight:850;box-shadow:0 16px 36px rgba(0,0,0,.18);display:none}.toast.open{display:block}
+button{font:inherit;border:0;cursor:pointer}a{color:inherit;text-decoration:none}.app{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100vh}.main{padding:34px 36px 38px;max-width:1760px;width:100%}.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);backdrop-filter:blur(16px)}.workbench{display:flex;justify-content:space-between;gap:14px;align-items:center;margin:0 0 18px;padding:16px 18px}.workbench-actions{display:flex;gap:10px;flex-wrap:wrap}.primary-btn,.ghost-btn,.danger-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 17px;border-radius:14px;font-weight:950}.primary-btn{background:linear-gradient(135deg,var(--brand),var(--brand-deep));color:#fff;box-shadow:0 14px 28px rgba(194,80,14,.18)}.ghost-btn{border:1px solid var(--line);background:#fffdfa;color:var(--brand-deep)}.danger-btn{border:1px solid rgba(239,71,64,.25);background:#fff4f3;color:var(--red)}.top-cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-bottom:28px}.top-card{padding:18px;display:grid;gap:9px;min-height:124px}.top-card span{color:var(--muted);font-size:13px;font-weight:800}.top-card b{font-size:22px;letter-spacing:-.04em}.top-card small{color:var(--muted);line-height:1.45;font-weight:700}.grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;margin-bottom:18px}.panel{padding:22px}.head{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:16px}.head h2,.head h3{margin:0;letter-spacing:-.04em}.tag{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;background:var(--brand-soft);color:var(--brand-deep);font-size:12px;font-weight:950}.muted{color:var(--muted);font-size:13px;line-height:1.5;font-weight:700}.amount{font-size:34px;font-weight:950;letter-spacing:-.05em}.money-layout{display:grid;grid-template-columns:210px minmax(0,1fr);gap:22px;align-items:center}.donut{width:190px;height:190px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--brand) var(--donut),#f2e9df 0)}.donut-inner{width:112px;height:112px;border-radius:50%;background:#fffdfa;display:grid;place-items:center;text-align:center;font-weight:950}.metric-list{display:grid;gap:9px}.metric{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-weight:850}.metric span{color:var(--muted)}.bars{display:grid;gap:16px}.bar-row{display:grid;gap:8px}.bar-head{display:flex;justify-content:space-between;font-weight:900}.bar{height:12px;border-radius:999px;background:#f1e8de;overflow:hidden}.bar span{display:block;height:100%;border-radius:999px;background:linear-gradient(135deg,var(--brand),var(--brand-deep));width:0}.list{display:grid;gap:10px;max-height:330px;overflow:auto;padding-right:4px}.item{display:grid;gap:7px;padding:13px 14px;border:1px solid rgba(80,52,30,.1);border-radius:14px;background:rgba(255,255,255,.64)}.item-row{display:flex;justify-content:space-between;gap:14px;align-items:center}.item-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.title{font-weight:950;line-height:1.4}.badge{display:inline-flex;padding:5px 9px;border-radius:999px;background:#fff1e5;color:var(--brand-deep);font-size:12px;font-weight:950}.mini-btn{border:1px solid var(--line);background:#fffdfa;color:var(--brand-deep);min-height:32px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:950}.mini-btn.danger{border-color:rgba(239,71,64,.25);background:#fff4f3;color:var(--red)}.chart{position:relative;height:260px;display:grid;grid-template-rows:minmax(0,1fr) 28px;gap:8px;padding:18px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.5);overflow:hidden}.chart-plot{position:relative;display:flex;align-items:end;gap:14px;min-height:0}.trend-line{position:absolute;inset:0;z-index:3;overflow:visible;pointer-events:none}.trend-line polyline{fill:none;stroke:var(--red);stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}.point{flex:1;display:grid;grid-template-rows:minmax(0,1fr);align-items:end;height:100%;text-align:center}.point-bar{border-radius:12px 12px 4px 4px;background:linear-gradient(180deg,#2abc6d,#0c9b50);min-height:4px;z-index:2}.chart-labels{display:flex;gap:14px;align-items:start}.chart-labels small{flex:1;text-align:center;color:#4c453f;font-weight:750}.tips{display:grid;gap:10px}.tip{padding:14px 15px;border-radius:14px;background:var(--brand-soft);color:#6f3c1d;font-weight:850;line-height:1.5}.empty{padding:16px;text-align:center;border:1px dashed rgba(80,52,30,.18);border-radius:14px;color:var(--muted);font-weight:800;background:rgba(255,255,255,.42)}.modal-backdrop{position:fixed;inset:0;background:rgba(27,19,13,.38);display:none;place-items:center;padding:22px;z-index:100}.modal-backdrop.open{display:grid}.modal{width:min(760px,100%);max-height:92vh;overflow:auto;background:#fffdfa;border:1px solid var(--line);border-radius:24px;box-shadow:0 30px 80px rgba(54,34,19,.22);padding:22px}.modal-head{display:flex;justify-content:space-between;gap:14px;align-items:start;margin-bottom:18px}.modal-head h2{margin:0;font-size:24px;letter-spacing:-.04em}.entry-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}.entry-tabs button{min-height:42px;border-radius:14px;background:#fff;border:1px solid var(--line);font-weight:950;color:#6f6258}.entry-tabs button.active{background:var(--brand-soft);color:var(--brand-deep);border-color:#f1d8c6}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:grid;gap:7px}.field.full{grid-column:1/-1}.field label{font-size:13px;color:#6f6258;font-weight:950}.field input,.field select{width:100%;height:48px;border:1px solid var(--line);border-radius:14px;padding:0 13px;background:#fff;color:var(--text);font:inherit;font-weight:800}.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}.toast{position:fixed;right:24px;bottom:24px;z-index:110;background:#211b17;color:#fff;padding:13px 16px;border-radius:14px;font-weight:850;box-shadow:0 16px 36px rgba(0,0,0,.18);display:none}.toast.open{display:block}
 @media(max-width:1300px){.top-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}}@media(max-width:880px){.app{grid-template-columns:1fr}.main{padding:22px}.top-cards{grid-template-columns:1fr}.money-layout{grid-template-columns:1fr}}
+.asset-change-positive{color:var(--green)!important}.asset-change-negative{color:var(--red)!important}.asset-change-flat{color:var(--muted)!important}.chart{height:300px;grid-template-rows:minmax(0,1fr) 46px;gap:6px;overflow:visible}.trend-line polyline{stroke:var(--blue);stroke-width:3}.trend-line circle{fill:#fffdfa;stroke:var(--blue);stroke-width:2.5;vector-effect:non-scaling-stroke}.point{position:relative}.point-bar{opacity:.26;background:linear-gradient(180deg,#31bf73,#13a357)}.asset-tooltip{position:absolute;left:50%;bottom:calc(100% + 10px);z-index:6;min-width:168px;transform:translateX(-50%) translateY(6px);padding:10px 11px;border:1px solid rgba(80,52,30,.16);border-radius:12px;background:#211b17;color:#fffdfa;box-shadow:0 14px 30px rgba(33,27,23,.18);opacity:0;pointer-events:none;transition:opacity .16s ease,transform .16s ease;text-align:left}.asset-tooltip b{display:block;font-size:13px;margin-bottom:5px}.asset-tooltip span{display:block;font-size:12px;line-height:1.55;color:#eadfd4;font-weight:800}.point:hover .asset-tooltip,.point:focus-within .asset-tooltip{opacity:1;transform:translateX(-50%) translateY(0)}.chart-labels small{display:grid;gap:3px;line-height:1.25}.chart-labels .asset-rate{font-size:11px;font-weight:950}.chart-labels .up{color:var(--green)}.chart-labels .down{color:var(--red)}.chart-labels .flat{color:var(--muted)}
+.ai-chat{display:grid;gap:14px}.ai-chat-box{display:grid;gap:10px;max-height:360px;overflow:auto;padding-right:4px}.chat-msg{max-width:86%;padding:13px 15px;border:1px solid rgba(80,52,30,.1);border-radius:16px;background:#fffdfa;font-weight:800;line-height:1.65;white-space:pre-wrap}.chat-msg.user{justify-self:end;background:var(--brand-soft);color:#6f3c1d}.chat-msg.assistant{justify-self:start}.ai-quick{display:flex;gap:8px;flex-wrap:wrap}.ai-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px}.ai-form textarea{width:100%;min-height:58px;max-height:140px;resize:vertical;border:1px solid var(--line);border-radius:14px;padding:12px 13px;background:#fff;color:var(--text);font:inherit;font-weight:800;line-height:1.5}.privacy-note{padding:11px 13px;border-radius:13px;background:#fff7ef;color:#7d4a26;font-size:12px;line-height:1.55;font-weight:850}
+@media(max-width:880px){.ai-form{grid-template-columns:1fr}.chat-msg{max-width:100%}}
 </style>
 </head>
 <body>
@@ -32,27 +35,50 @@ button{font:inherit;border:0;cursor:pointer}a{color:inherit;text-decoration:none
 
     <section class="top-cards">
       <article class="card top-card"><span>오늘 일정</span><b id="scheduleSummary">-</b><small>오늘 일정과 소비 리듬을 같이 봅니다.</small></article>
-      <article class="card top-card"><span>이번 달 소비</span><b id="monthlySpend">0원</b><small id="monthlySpendMeta">월급 대비 소비율 계산 대기</small></article>
+      <article class="card top-card"><span>이번 달 배분</span><b id="monthlySpend">0원</b><small id="monthlySpendMeta">월급 대비 배분율 계산 대기</small></article>
       <article class="card top-card"><span>차량 상태</span><b>D-18</b><small>보험 만기와 차량 고정비를 체크합니다.</small></article>
       <article class="card top-card"><span>루틴</span><b id="routineSummary">-</b><small>재정 루틴과 일상 루틴을 함께 추적합니다.</small></article>
       <article class="card top-card"><span>콘텐츠</span><b id="contentSummary">-</b><small>소비 데이터는 외부로 자동 전송하지 않습니다.</small></article>
     </section>
 
+    <section class="card panel ai-chat">
+      <div class="head">
+        <div>
+          <h2>Money Core AI 상담</h2>
+          <div class="muted">현재 등록된 Money Core 요약 데이터를 기준으로 질문합니다.</div>
+        </div>
+        <span class="tag">GPT API</span>
+      </div>
+      <div class="privacy-note">질문하기를 누를 때만 월 요약, 카드/할부/자산/자동이체 요약 데이터가 GPT API로 전송됩니다. 결제, 송금, 투자 실행은 하지 않습니다.</div>
+      <div class="ai-quick">
+        <button class="mini-btn" type="button" data-ai-question="현재 내 재정상태는 괜찮은가?">현재 재정상태</button>
+        <button class="mini-btn" type="button" data-ai-question="3억 집을 사려면 내 재정으로 얼마나 걸릴까?">3억 집 목표</button>
+        <button class="mini-btn" type="button" data-ai-question="이번 달 카드 사용과 고정비에서 조심할 부분을 알려줘">주의할 지출</button>
+      </div>
+      <div class="ai-chat-box" id="moneyAiMessages">
+        <div class="chat-msg assistant">궁금한 걸 물어보세요. 예: “현재 내 재정상태는 괜찮은가?”, “3억 집을 사려면 얼마나 걸릴까?”</div>
+      </div>
+      <form class="ai-form" id="moneyAiForm">
+        <textarea id="moneyAiQuestion" placeholder="Money Core 데이터 기준으로 질문하기"></textarea>
+        <button class="primary-btn" type="submit" id="moneyAiSubmit">질문하기</button>
+      </form>
+    </section>
+
     <section class="grid">
       <article class="card panel">
-        <div class="head"><div><h2>이번 달 소비</h2><div class="muted" id="summaryMonth">-</div></div><span class="tag">Monthly Flow</span></div>
+        <div class="head"><div><h2>이번 달 현금 흐름</h2><div class="muted" id="summaryMonth">-</div></div><span class="tag">Monthly Flow</span></div>
         <div class="money-layout">
-          <div class="donut" id="spendDonut"><div class="donut-inner"><div><span id="spendRate">0%</span><br><small>소비율</small></div></div></div>
+          <div class="donut" id="spendDonut"><div class="donut-inner"><div><span id="spendRate">0%</span><br><small>배분 완료</small></div></div></div>
           <div>
             <div class="amount" id="remainingCash">0원</div>
-            <div class="muted">월급 - 고정비 - 체크카드 - 신용카드 기준 남은 현금</div>
+            <div class="muted">월급에서 저축, 자동이체, 소비 카테고리, 카드 결제를 배분한 뒤 남은 자유 현금</div>
             <div class="metric-list" id="incomeMetrics"></div>
           </div>
         </div>
       </article>
 
       <article class="card panel">
-        <div class="head"><div><h2>카드 사용</h2><div class="muted">결제 예정액과 카드 한도를 기준으로 봅니다.</div></div><span class="tag" id="cardRateTag">0%</span></div>
+        <div class="head"><div><h2>카드 사용</h2><div class="muted">카드별 총 사용금액과 결제 예정액을 봅니다.</div></div><span class="tag" id="cardRateTag">결제 예정</span></div>
         <div class="bars" id="cardBars"></div>
       </article>
     </section>
@@ -123,10 +149,15 @@ const $=(id)=>document.getElementById(id);
 function won(v){return `${Number(v||0).toLocaleString("ko-KR")}원`}
 function pct(v){return `${Math.round(Number(v||0)*100)}%`}
 function escapeHtml(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;")}
-function currentMonth(){return new Date().toISOString().slice(0,7)}
+function changeClass(value){const n=Number(value||0);return n>0?"asset-change-positive":n<0?"asset-change-negative":"asset-change-flat"}
+function shortMonth(value){const text=String(value||"");return text.includes("-")?text.slice(5):text}
+function currentMonth(){
+  const now=new Date();
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+}
 const entryConfig={
   summary:{endpoint:"/finance/summary",fields:[
-    ["month","월","month",currentMonth()],["salary","월급","number","0"],["saving","저축","number","0"],["fixed_expense","고정비","number","0"],["check_card","체크카드","number","0"],["credit_card","신용카드","number","0"],["card_limit","카드 한도","number","0"]
+    ["month","월","month",currentMonth()],["salary","월급","number","0"],["saving","저축","number","0"]
   ]},
   expense:{endpoint:"/finance/expenses",fields:[["month","월","month",currentMonth()],["category","카테고리","text","식비"],["amount","금액","number","0"]]},
   card:{endpoint:"/finance/card",fields:[["card_name","카드명","text","삼성카드"],["total_amount","총 사용금액","number","0"],["payment_amount","결제 예정금액","number","0"],["billing_cycle_start","이용 시작일","date",""],["billing_cycle_end","이용 종료일","date",""]]},
@@ -136,28 +167,36 @@ const entryConfig={
 };
 const editableEndpoints={expense:"/finance/expenses",card:"/finance/card",installment:"/finance/installments",autoTransfer:"/finance/auto-transfer"};
 let editingEntry=null;
+let moneyAiMessages=[];
 async function request(url){const r=await fetch(url);if(!r.ok)throw new Error(await r.text());return r.json()}
 async function sendJson(url,payload){const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});if(!r.ok)throw new Error(await r.text());return r.json()}
 async function updateJson(url,payload){const r=await fetch(url,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});if(!r.ok)throw new Error(await r.text());return r.json()}
 async function deleteJson(url){const r=await fetch(url,{method:"DELETE"});if(!r.ok)throw new Error(await r.text());return r.json()}
 function empty(msg){return `<div class="empty">${escapeHtml(msg)}</div>`}
+function appendMoneyAiMessage(role,text){
+  moneyAiMessages.push({role,text});
+  $("moneyAiMessages").innerHTML=moneyAiMessages.map((message)=>`<div class="chat-msg ${message.role}">${escapeHtml(message.text)}</div>`).join("");
+  $("moneyAiMessages").scrollTop=$("moneyAiMessages").scrollHeight;
+}
 function renderSummary(data){
   $("summaryMonth").textContent=`${data.month} 기준`;
   $("monthlySpend").textContent=won(data.monthly_spend_total);
-  $("monthlySpendMeta").textContent=`카드 사용률 ${pct(data.card_usage_rate)} · 저축률 ${pct(data.saving_rate)}`;
+  $("monthlySpendMeta").textContent=`카드 결제 ${won(data.credit_card)} · 자유 현금 ${won(data.remaining_cash)}`;
   $("remainingCash").textContent=won(data.remaining_cash);
   const spendRate=data.salary?data.monthly_spend_total/data.salary:0;
   $("spendRate").textContent=pct(spendRate);
   $("spendDonut").style.setProperty("--donut", `${Math.min(100,Math.round(spendRate*100))}%`);
-  $("cardRateTag").textContent=pct(data.card_usage_rate);
+  $("cardRateTag").textContent=won(data.credit_card);
   $("incomeMetrics").innerHTML=[
-    ["월급",data.salary],["저축",data.saving],["고정",data.fixed_expense],["체크카드",data.check_card],["신용카드",data.credit_card],["카드 한도",data.card_limit]
+    ["월급",data.salary],["저축",data.saving],["자동이체",data.fixed_expense],["소비 카테고리",data.check_card],["카드 결제",data.credit_card],["할부 참고",data.installment_total]
   ].map(([k,v])=>`<div class="metric"><span>${k}</span><strong>${won(v)}</strong></div>`).join("");
   $("savingTips").innerHTML=(data.tips||[]).map(t=>`<div class="tip">${escapeHtml(t)}</div>`).join("")||empty("절약 팁을 만들 데이터가 아직 없습니다.");
-  $("assetChange").textContent=`전월 대비 ${won(data.asset_change?.amount||0)} · ${pct(data.asset_change?.rate||0)}`;
+  const assetChangeAmount=Number(data.asset_change?.amount||0);
+  $("assetChange").textContent=`전월 대비 ${won(assetChangeAmount)} · ${pct(data.asset_change?.rate||0)}`;
+  $("assetChange").className=`muted ${changeClass(assetChangeAmount)}`;
 }
 function renderCards(cards, limit){
-  const max=Math.max(1,Number(limit||1));
+  const max=Math.max(1,...(cards||[]).map(c=>Number(c.total_amount||c.payment_amount||0)));
   return (cards||[]).map(c=>{
     const rate=max?Math.min(100,Math.round((Number(c.total_amount||c.payment_amount||0)/max)*100)):0;
     return `<div class="bar-row"><div class="bar-head"><span>${escapeHtml(c.card_name)}</span><strong>${won(c.total_amount)}</strong></div><div class="bar"><span style="width:${rate}%"></span></div><div class="item-row"><div class="muted">결제 예정 ${won(c.payment_amount)} · ${escapeHtml(c.billing_cycle_start||"-")}~${escapeHtml(c.billing_cycle_end||"-")}</div><div class="item-actions"><button class="mini-btn" type="button" data-edit-money="card" data-item='${escapeHtml(JSON.stringify(c))}'>수정</button><button class="mini-btn danger" type="button" data-delete-money="card" data-id="${c.id}">삭제</button></div></div></div>`
@@ -167,11 +206,53 @@ function renderExpenses(items){
   $("expenseList").innerHTML=(items||[]).map(x=>`<article class="item"><div class="item-row"><div><div class="title">${escapeHtml(x.category)}</div><div class="muted">지난달 ${won(x.previous_amount)} · 변화 ${pct(x.change_rate)}</div></div><div class="item-actions"><span class="badge">${won(x.amount)}</span><button class="mini-btn" type="button" title="이 카테고리의 최근 입력 1건을 수정합니다." data-edit-money="expense" data-item='${escapeHtml(JSON.stringify({id:x.id,month:currentMonth(),category:x.category,amount:x.amount}))}' ${x.id?"":"disabled"}>최근 1건 수정</button><button class="mini-btn danger" type="button" title="이 카테고리의 최근 입력 1건을 삭제합니다." data-delete-money="expenses" data-id="${x.id||""}" ${x.id?"":"disabled"}>최근 1건 삭제</button></div></div></article>`).join("")||empty("카테고리 소비 데이터가 없습니다.");
 }
 function renderInstallments(items){
-  $("installmentList").innerHTML=(items||[]).map(x=>`<article class="item"><div class="item-row"><div><div class="title">${escapeHtml(x.title)}</div><div class="muted">${escapeHtml(x.card_name)} · ${x.current_month}/${x.total_month}개월 · 남은 ${x.remaining_month}개월</div></div><div class="item-actions"><span class="badge">${won(x.monthly_amount)}</span><button class="mini-btn" type="button" data-edit-money="installment" data-item='${escapeHtml(JSON.stringify(x))}'>수정</button><button class="mini-btn danger" type="button" data-delete-money="installments" data-id="${x.id}">삭제</button></div></div><div class="bar"><span style="width:${Math.round((x.progress_rate||0)*100)}%"></span></div></article>`).join("")||empty("할부 데이터가 없습니다.");
+  $("installmentList").innerHTML=(items||[]).map(x=>`<article class="item"><div class="item-row"><div><div class="title">${escapeHtml(x.title)}</div><div class="muted">${escapeHtml(x.card_name)} · ${x.current_month}/${x.total_month}개월 · 남은 ${x.remaining_month}개월${x.expected_current_month&&x.expected_current_month!==x.current_month?` · 시작일 기준 ${x.expected_current_month}회차`:""}</div></div><div class="item-actions"><span class="badge">${won(x.monthly_amount)}</span><button class="mini-btn" type="button" data-edit-money="installment" data-item='${escapeHtml(JSON.stringify(x))}'>수정</button><button class="mini-btn danger" type="button" data-delete-money="installments" data-id="${x.id}">삭제</button></div></div><div class="bar"><span style="width:${Math.round((x.progress_rate||0)*100)}%"></span></div></article>`).join("")||empty("할부 데이터가 없습니다.");
 }
 function renderAssets(items){
-  const max=Math.max(...(items||[]).map(x=>Number(x.total_asset||0)),1);
-  $("assetChart").innerHTML=(items||[]).map(x=>`<div class="point"><div class="point-bar" style="height:${Math.max(4,Math.round(Number(x.total_asset||0)/max*100))}%"></div><small>${escapeHtml(x.month.slice(5)||x.month)}</small></div>`).join("")||empty("자산 기록이 없습니다.");
+  const ordered=[...(items||[])].sort((a,b)=>String(a.month||"").localeCompare(String(b.month||"")));
+  const max=Math.max(...ordered.map(x=>Number(x.total_asset||0)),1);
+  const min=Math.min(...ordered.map(x=>Number(x.total_asset||0)),0);
+  const range=Math.max(max-min,1);
+  const values=ordered.map(x=>Number(x.total_asset||0));
+  if(!values.length){
+    $("assetChart").innerHTML=empty("자산 기록이 없습니다.");
+    return;
+  }
+  const count=Math.max(values.length,1);
+  const points=values.map((value,index)=>{
+    const x=count===1?50:(index/(count-1))*100;
+    const y=92-((value-min)/range)*78;
+    return {x,y:Math.min(94,Math.max(8,y)),value,index};
+  });
+  const polyline=points.map((point)=>`${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(" ");
+  $("assetChart").innerHTML=`
+    <div class="chart-plot">
+      <svg class="trend-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <polyline points="${polyline}"></polyline>
+        ${points.map((point)=>`<circle cx="${point.x.toFixed(2)}" cy="${point.y.toFixed(2)}" r="1.7"></circle>`).join("")}
+      </svg>
+      ${ordered.map((x,index)=>{
+        const value=Number(x.total_asset||0);
+        const previous=index>0?Number(ordered[index-1].total_asset||0):value;
+        const diff=value-previous;
+        const rate=previous?diff/previous:0;
+        const tone=diff>0?"up":diff<0?"down":"flat";
+        return `<div class="point" tabindex="0">
+          <div class="asset-tooltip"><b>${escapeHtml(x.month)}</b><span>총 자산 ${won(value)}</span><span>전월 대비 ${won(diff)} · ${pct(rate)}</span></div>
+          <div class="point-bar" style="height:${Math.max(6,Math.round(((value-min)/range)*100))}%"></div>
+        </div>`;
+      }).join("")}
+    </div>
+    <div class="chart-labels">${ordered.map((x,index)=>{
+      const value=Number(x.total_asset||0);
+      const previous=index>0?Number(ordered[index-1].total_asset||0):value;
+      const diff=value-previous;
+      const rate=previous?diff/previous:0;
+      const tone=diff>0?"up":diff<0?"down":"flat";
+      const sign=diff>0?"+":"";
+      return `<small><span>${escapeHtml(shortMonth(x.month))}</span><span class="asset-rate ${tone}">${sign}${pct(rate)}</span></small>`;
+    }).join("")}</div>
+  `;
 }
 function renderAutoTransfer(items){
   $("autoTransferList").innerHTML=(items||[]).map(x=>`<article class="item"><div class="item-row"><div><div class="title">${escapeHtml(x.title)}</div><div class="muted">${escapeHtml(x.transfer_date||"날짜 미지정")}</div></div><div class="item-actions"><span class="badge">${won(x.amount)}</span><button class="mini-btn" type="button" data-edit-money="autoTransfer" data-item='${escapeHtml(JSON.stringify(x))}'>수정</button><button class="mini-btn danger" type="button" data-delete-money="auto-transfer" data-id="${x.id}">삭제</button></div></div></article>`).join("")||empty("자동이체 데이터가 없습니다.");
@@ -242,18 +323,47 @@ async function load(){
     request("/finance/summary"),request("/finance/expenses"),request("/finance/card"),request("/finance/installments"),request("/finance/assets"),request("/finance/auto-transfer"),request("/briefing/today"),request("/agent/report-center/data")
   ]);
   renderSummary(summary);renderExpenses(expenses);renderInstallments(installments);renderAssets(assets);renderAutoTransfer(autoTransfers);
-  $("cardBars").innerHTML=renderCards(cards,summary.card_limit);
+  $("cardBars").innerHTML=renderCards(cards);
   $("scheduleSummary").textContent=`${briefing.schedule_count_today||0}건`;
   $("routineSummary").textContent=`${briefing.completed_routine_count||0}/${briefing.total_routine_count||0}`;
   const news=Number(report.agent1?.collected_count||0), drafts=(report.agent2?.drafts||[]).length;
   $("contentSummary").textContent=`뉴스 ${news} · 초안 ${drafts}`;
 }
+async function askMoneyAi(question){
+  const clean=String(question||"").trim();
+  if(!clean){
+    showToast("질문을 입력해주세요.");
+    return;
+  }
+  const button=$("moneyAiSubmit");
+  button.setAttribute("disabled","disabled");
+  button.textContent="분석 중";
+  appendMoneyAiMessage("user",clean);
+  $("moneyAiQuestion").value="";
+  try{
+    const response=await fetch("/finance/ai-chat",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({question:clean,month:currentMonth()})
+    });
+    if(!response.ok)throw new Error(await response.text());
+    const data=await response.json();
+    appendMoneyAiMessage("assistant",data.answer||"답변을 생성하지 못했습니다.");
+  }catch(error){
+    appendMoneyAiMessage("assistant",`분석에 실패했습니다.\n${error.message}`);
+  }finally{
+    button.removeAttribute("disabled");
+    button.textContent="질문하기";
+  }
+}
 $("openEntryModal").addEventListener("click",openEntryModal);
 $("closeEntryModal").addEventListener("click",closeEntryModal);
 $("refreshButton").addEventListener("click",load);
-$("entryTabs").addEventListener("click",(event)=>{const button=event.target.closest("[data-entry-type]");if(!button)return;$("entryType").value=button.dataset.entryType;renderEntryFields();});
+$("entryTabs").addEventListener("click",(event)=>{const button=event.target.closest("[data-entry-type]");if(!button)return;if(editingEntry&&button.dataset.entryType!==editingEntry.type)editingEntry=null;$("entryType").value=button.dataset.entryType;renderEntryFields();});
 $("resetEntryForm").addEventListener("click",renderEntryFields);
 $("entryForm").addEventListener("submit",submitEntry);
+$("moneyAiForm").addEventListener("submit",(event)=>{event.preventDefault();askMoneyAi($("moneyAiQuestion").value)});
+document.querySelectorAll("[data-ai-question]").forEach((button)=>button.addEventListener("click",()=>askMoneyAi(button.dataset.aiQuestion||"")));
 $("entryModal").addEventListener("click",(event)=>{if(event.target.id==="entryModal")closeEntryModal()});
 document.addEventListener("click",async(event)=>{
   const editButton=event.target.closest("[data-edit-money]");

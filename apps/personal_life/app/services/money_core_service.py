@@ -20,13 +20,14 @@ def build_money_core_summary(month: str | None = None) -> dict[str, Any]:
     auto_transfers = list_auto_transfer()
 
     salary = int(income.get("salary") or 0)
-    fixed_expense = int(income.get("fixed_expense") or 0)
-    check_card = int(income.get("check_card") or 0)
-    credit_card = int(income.get("credit_card") or 0)
     saving = int(income.get("saving") or 0)
-    card_limit = int(income.get("card_limit") or 0)
-    calculated_remaining = salary - (fixed_expense + check_card + credit_card)
-    card_usage_rate = round(credit_card / card_limit, 4) if card_limit else 0.0
+    fixed_expense = sum(int(item.get("amount") or 0) for item in auto_transfers)
+    check_card = sum(int(item.get("amount") or 0) for item in expenses)
+    credit_card = sum(int(item.get("payment_amount") or item.get("total_amount") or 0) for item in list_card_usage())
+    installment_total = sum(int(item.get("monthly_amount") or 0) for item in installments)
+    calculated_remaining = salary - (saving + fixed_expense + check_card + credit_card)
+    card_usage_total = sum(int(item.get("total_amount") or item.get("payment_amount") or 0) for item in list_card_usage())
+    card_usage_rate = round(credit_card / salary, 4) if salary else 0.0
 
     previous_month = _previous_month(target_month)
     previous_expense_total = sum(int(item.get("amount") or 0) for item in list_expenses(previous_month))
@@ -43,9 +44,14 @@ def build_money_core_summary(month: str | None = None) -> dict[str, Any]:
         "credit_card": credit_card,
         "remaining_cash": calculated_remaining,
         "stored_remaining_cash": int(income.get("remaining_cash") or 0),
-        "card_limit": card_limit,
+        "stored_fixed_expense": int(income.get("fixed_expense") or 0),
+        "stored_check_card": int(income.get("check_card") or 0),
+        "stored_credit_card": int(income.get("credit_card") or 0),
+        "card_limit": 0,
         "card_usage_rate": card_usage_rate,
-        "monthly_spend_total": fixed_expense + check_card + credit_card,
+        "card_usage_total": card_usage_total,
+        "installment_total": installment_total,
+        "monthly_spend_total": saving + fixed_expense + check_card + credit_card,
         "expense_category_total": current_expense_total,
         "expense_change_rate": expense_change_rate,
         "cards": cards,
@@ -56,6 +62,7 @@ def build_money_core_summary(month: str | None = None) -> dict[str, Any]:
         "saving_rate": round(saving / salary, 4) if salary else 0.0,
         "tips": build_saving_tips(
             salary=salary,
+            saving=saving,
             fixed_expense=fixed_expense,
             check_card=check_card,
             credit_card=credit_card,
@@ -68,7 +75,7 @@ def build_money_core_summary(month: str | None = None) -> dict[str, Any]:
 
 
 def list_expenses(month: str | None = None) -> list[dict[str, Any]]:
-    target_month = month or current_month()
+    target_month = _normalize_month(month) if month else current_month()
     rows = fetch_all(
         """
         SELECT MAX(id) AS id, category, SUM(amount) AS amount
@@ -104,19 +111,30 @@ def list_expenses(month: str | None = None) -> list[dict[str, Any]]:
 
 
 def list_card_usage(month: str | None = None) -> list[dict[str, Any]]:
-    target_month = month or current_month()
-    rows = fetch_all(
-        """
-        SELECT *
-        FROM card_usage
-        WHERE billing_cycle_start IS NULL
-           OR billing_cycle_end IS NULL
-           OR substr(billing_cycle_start, 1, 7) <= ?
-          AND substr(billing_cycle_end, 1, 7) >= ?
-        ORDER BY total_amount DESC, id DESC
-        """,
-        (target_month, target_month),
-    )
+    if month is None:
+        rows = fetch_all(
+            """
+            SELECT *
+            FROM card_usage
+            ORDER BY created_at DESC, id DESC
+            """
+        )
+    else:
+        target_month = _normalize_month(month)
+        rows = fetch_all(
+            """
+            SELECT *
+            FROM card_usage
+            WHERE billing_cycle_start IS NULL
+               OR billing_cycle_end IS NULL
+               OR (
+                    substr(billing_cycle_start, 1, 7) <= ?
+                AND substr(billing_cycle_end, 1, 7) >= ?
+               )
+            ORDER BY total_amount DESC, id DESC
+            """,
+            (target_month, target_month),
+        )
     return [
         {
             "id": int(row.get("id") or 0),
@@ -131,7 +149,7 @@ def list_card_usage(month: str | None = None) -> list[dict[str, Any]]:
 
 
 def list_installments(month: str | None = None) -> list[dict[str, Any]]:
-    target_month = month or current_month()
+    target_month = _normalize_month(month) if month else current_month()
     rows = fetch_all(
         """
         SELECT *
@@ -150,7 +168,14 @@ def list_assets_history() -> list[dict[str, Any]]:
         ORDER BY month ASC
         """
     )
-    return [{"month": row["month"], "total_asset": int(row.get("total_asset") or 0)} for row in rows]
+    return [
+        {
+            "id": int(row.get("id") or 0),
+            "month": row["month"],
+            "total_asset": int(row.get("total_asset") or 0),
+        }
+        for row in rows
+    ]
 
 
 def list_auto_transfer() -> list[dict[str, Any]]:
@@ -176,11 +201,8 @@ def save_income_summary(payload: dict[str, Any]) -> dict[str, Any]:
     month = _normalize_month(payload.get("month"))
     salary = _to_int(payload.get("salary"))
     saving = _to_int(payload.get("saving"))
-    fixed_expense = _to_int(payload.get("fixed_expense"))
-    check_card = _to_int(payload.get("check_card"))
-    credit_card = _to_int(payload.get("credit_card"))
-    card_limit = _to_int(payload.get("card_limit"))
-    remaining_cash = salary - (fixed_expense + check_card + credit_card)
+    card_limit = 0
+    remaining_cash = salary - saving
     existing = fetch_one("SELECT id FROM income_summary WHERE month = ?", (month,))
     if existing:
         execute(
@@ -190,7 +212,7 @@ def save_income_summary(payload: dict[str, Any]) -> dict[str, Any]:
                 remaining_cash = ?, card_limit = ?, updated_at = CURRENT_TIMESTAMP
             WHERE month = ?
             """,
-            (salary, saving, fixed_expense, check_card, credit_card, remaining_cash, card_limit, month),
+            (salary, saving, 0, 0, 0, remaining_cash, card_limit, month),
         )
     else:
         execute(
@@ -200,7 +222,7 @@ def save_income_summary(payload: dict[str, Any]) -> dict[str, Any]:
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (month, salary, saving, fixed_expense, check_card, credit_card, remaining_cash, card_limit),
+            (month, salary, saving, 0, 0, 0, remaining_cash, card_limit),
         )
     return build_money_core_summary(month)
 
@@ -353,6 +375,7 @@ def delete_money_core_item(table_name: str, item_id: int) -> dict[str, Any]:
 
 def build_saving_tips(
     salary: int,
+    saving: int,
     fixed_expense: int,
     check_card: int,
     credit_card: int,
@@ -366,6 +389,8 @@ def build_saving_tips(
         tips.append(f"이번 달 계획상 {-remaining_cash:,}원이 부족합니다. 체크카드나 신용카드 변동비부터 줄이는 편이 좋겠습니다.")
     elif salary:
         tips.append(f"이번 달 예상 잔액은 {remaining_cash:,}원입니다. 남은 현금 흐름은 월급 대비 {remaining_cash / salary * 100:.1f}%입니다.")
+    if saving and salary:
+        tips.append(f"이번 달 저축 예정액은 {saving:,}원이며 월급 대비 {saving / salary * 100:.1f}%입니다.")
     if card_usage_rate >= 1:
         tips.append("신용카드 사용액이 설정 한도를 넘었습니다. 다음 결제 전 할부와 플랫폼 결제를 먼저 점검해보세요.")
     elif card_usage_rate >= 0.8:
@@ -375,6 +400,8 @@ def build_saving_tips(
     if expenses:
         top = expenses[0]
         tips.append(f"현재 가장 큰 소비 카테고리는 {top['category']}이며 {top['amount']:,}원입니다.")
+    if fixed_expense or credit_card:
+        tips.append(f"고정 흐름은 자동이체 {fixed_expense:,}원, 카드 결제 예정 {credit_card:,}원입니다.")
     if not tips:
         tips.append("아직 분석할 재정 데이터가 많지 않습니다. 월급, 카드, 카테고리 소비부터 입력하면 절약 팁이 정교해집니다.")
     return tips[:4]
@@ -397,19 +424,21 @@ def _installment_payload(row: dict[str, Any], month: str) -> dict[str, Any]:
     total_month = max(1, int(row.get("total_month") or 1))
     stored_current = max(1, int(row.get("current_month") or 1))
     elapsed = _month_diff(str(row.get("start_date") or ""), month)
-    computed_current = min(total_month, max(stored_current, elapsed + 1 if elapsed >= 0 else stored_current))
-    remaining_month = max(total_month - computed_current, 0)
+    expected_current = min(total_month, max(1, elapsed + 1)) if elapsed >= 0 else stored_current
+    current_month = min(total_month, stored_current)
+    remaining_month = max(total_month - current_month, 0)
     return {
         "id": int(row.get("id") or 0),
         "title": row.get("title") or "",
         "total_month": total_month,
-        "current_month": computed_current,
+        "current_month": current_month,
         "stored_current_month": stored_current,
+        "expected_current_month": expected_current,
         "remaining_month": remaining_month,
         "monthly_amount": int(row.get("monthly_amount") or 0),
         "card_name": row.get("card_name") or "",
         "start_date": _stringify(row.get("start_date")),
-        "progress_rate": round(computed_current / total_month, 4),
+        "progress_rate": round(current_month / total_month, 4),
     }
 
 

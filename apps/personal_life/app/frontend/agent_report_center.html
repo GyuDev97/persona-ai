@@ -22,16 +22,18 @@ button,input,textarea,select{font:inherit}button{border:0;cursor:pointer}a{color
 .side-card{margin:auto 8px 26px;padding:22px 18px;text-align:center;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.74);box-shadow:var(--shadow)}.side-orb{width:82px;height:82px;margin:0 auto 14px;border-radius:50%;background:radial-gradient(circle at 38% 28%,#ffd8a9,#d76714 55%,#9c3300);box-shadow:0 16px 26px rgba(188,82,18,.24),inset 0 0 18px rgba(255,255,255,.34)}.side-card b{font-size:15px}.side-card p{margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.5;font-weight:650}
 .profile{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid var(--line);border-radius:14px;background:#fffdfa}.avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#5ab7e8,#f7b46c);display:grid;place-items:center;font-weight:950;color:#fff}.profile small{display:block;color:var(--muted);font-weight:700;margin-top:2px}
 .main{padding:34px 36px 38px;max-width:1760px;width:100%}.topbar{display:flex;align-items:center;justify-content:space-between;gap:22px;margin-bottom:28px}.title-wrap{display:flex;align-items:center;gap:18px}.bot-icon{width:58px;height:58px;border:1px solid var(--line);border-radius:16px;background:#fffdfa;display:grid;place-items:center;box-shadow:var(--shadow);color:#6b3a24}.bot-icon svg{width:30px;height:30px}.title-wrap h1{margin:0;font-size:30px;letter-spacing:-.04em}.title-wrap p{margin:5px 0 0;color:var(--muted);font-weight:650}.top-actions{display:flex;align-items:center;gap:18px;color:var(--muted);font-size:13px;font-weight:750}.bell{position:relative;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#fffdfa;border:1px solid var(--line)}.bell::after{content:"";position:absolute;right:7px;top:6px;width:10px;height:10px;border-radius:50%;background:#ef3028}.updated{text-align:right}
-.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:18px}.card,.panel{background:rgba(255,253,249,.84);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);backdrop-filter:blur(16px)}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:18px 0}.card,.panel{background:rgba(255,253,249,.84);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);backdrop-filter:blur(16px)}
 .agent-card{min-height:210px;padding:22px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:18px;align-items:start}.agent-icon{width:64px;height:64px;border-radius:14px;display:grid;place-items:center}.agent-icon svg{width:32px;height:32px}.agent-icon.green{background:#e8f8ed;color:#0dad59}.agent-icon.orange{background:#fff2df;color:#f38b16}.agent-icon.blue{background:#edf6ff;color:#2584dd}.agent-icon.purple{background:#f6edff;color:#8f4be8}.agent-label{font-size:11px;font-weight:950;color:#7a3d18;letter-spacing:.16em;text-transform:uppercase}.agent-card h2{margin:9px 0 8px;font-size:21px;letter-spacing:-.04em;line-height:1.25}.summary{margin:0;color:#7b6e64;font-size:13px;line-height:1.5;font-weight:700;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.agent-stats{grid-column:2 / 4;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:12px;border-top:1px solid var(--line)}.stat{display:grid;gap:4px}.stat span{color:#9a8e84;font-size:12px;font-weight:750}.stat b{font-size:20px}.status{display:inline-flex;white-space:nowrap;align-items:center;padding:7px 11px;border-radius:999px;font-size:12px;font-weight:950;background:#f6efe8;color:#95611e}.status.active{background:#e5f8ed;color:#169b53}.status.error{background:#fdebea;color:#c52f2a}.status.idle{background:#fff1dd;color:#a86615}.details-link{grid-column:2 / 4;color:var(--brand-deep);font-size:13px;font-weight:950;display:flex;gap:10px;align-items:center;margin-top:2px}
 .layout{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(360px,.75fr);gap:18px;margin-bottom:18px}.panel{padding:22px}.panel-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:16px}.panel h3{margin:0;font-size:20px;letter-spacing:-.04em}.notice{margin-top:5px;color:var(--muted);font-size:13px;line-height:1.45;font-weight:650}.btn{border-radius:12px;padding:10px 18px;font-weight:950;color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand-deep));box-shadow:0 10px 20px rgba(190,81,15,.18)}.ghost,.small-btn{border:1px solid var(--line);background:#fffdfa;color:var(--brand-deep);box-shadow:none}.small-btn{border-radius:999px;padding:8px 12px;font-size:12px;font-weight:950}.small-btn[disabled],.btn[disabled]{opacity:.55;cursor:not-allowed}
 .manager-grid{display:grid}.agent-table{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-height:300px;overflow:auto;padding-right:4px}.agent-row{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border:1px solid rgba(80,52,30,.1);border-radius:13px;background:rgba(255,255,255,.72)}.agent-row.selected{background:#effaf3;border-color:#ccefd9}.agent-row-title{font-weight:950}.agent-row-meta{margin-top:2px;color:var(--muted);font-size:12px;font-weight:750;line-height:1.4}.dot{width:9px;height:9px;border-radius:50%;background:var(--orange)}.dot.active{background:var(--green)}.dot.error{background:var(--red)}
-.modal-backdrop{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(31,24,18,.32);backdrop-filter:blur(10px)}.modal-backdrop.show{display:flex}.modal{width:min(760px,100%);max-height:min(760px,calc(100vh - 48px));overflow:auto;padding:24px;border:1px solid var(--line);border-radius:22px;background:#fffdfa;box-shadow:0 28px 80px rgba(64,38,18,.2)}.modal.wide{width:min(980px,100%)}.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:18px}.modal-head h3{margin:0;font-size:24px;letter-spacing:-.04em}.modal-close{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--brand-deep);font-weight:950}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:grid;gap:6px}.field.wide{grid-column:1 / -1}.field label{font-size:12px;font-weight:950;color:#76685d}.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.8);padding:11px 12px;color:var(--text);font-weight:750}.field textarea{min-height:88px;resize:vertical}.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{display:inline-flex;align-items:center;border-radius:999px;background:#f7f0ea;color:#7a6252;padding:5px 9px;font-size:12px;font-weight:850}.form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}.detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}.detail-stat{padding:13px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.64)}.detail-stat span{display:block;color:var(--muted);font-size:12px;font-weight:850}.detail-stat b{display:block;margin-top:5px;font-size:18px}.detail-list{display:grid;gap:10px;max-height:360px;overflow:auto;padding-right:4px}
-.activity{display:grid;gap:10px}.activity-row{display:grid;grid-template-columns:60px 10px 78px minmax(0,1fr);align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}.activity-time{color:var(--muted);font-weight:750}.activity-agent{font-weight:950;color:var(--brand-deep)}.activity-text{font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:18px}.mini-panel{min-height:230px}.list{display:grid;gap:10px;max-height:250px;overflow:auto;padding-right:3px}.item{display:grid;gap:7px;padding:12px 13px;border:1px solid rgba(80,52,30,.1);background:rgba(255,255,255,.7);border-radius:13px}.item-title{font-weight:900;line-height:1.4;overflow-wrap:anywhere}.item-meta{color:var(--muted);font-size:12px;line-height:1.45;font-weight:700}.item-row{display:flex;justify-content:space-between;gap:10px;align-items:center}.mini-actions{display:flex;gap:8px;flex-wrap:wrap}.tag{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;background:var(--brand-soft);color:var(--brand-deep);font-size:12px;font-weight:950}.error{margin:0;color:var(--red);font-size:12px;line-height:1.45;font-weight:850;white-space:pre-wrap;overflow-wrap:anywhere;font-family:inherit}.empty{padding:15px;text-align:center;border:1px dashed rgba(80,52,30,.18);border-radius:13px;color:var(--muted);font-weight:750;background:rgba(255,255,255,.45)}
+.modal-backdrop{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(31,24,18,.32);backdrop-filter:blur(10px)}.modal-backdrop.show{display:flex}.modal{width:min(760px,100%);max-height:min(760px,calc(100vh - 48px));overflow:auto;padding:24px;border:1px solid var(--line);border-radius:22px;background:#fffdfa;box-shadow:0 28px 80px rgba(64,38,18,.2)}.modal.wide{width:min(1180px,100%);max-height:calc(100vh - 64px)}.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:18px}.modal-head h3{margin:0;font-size:24px;letter-spacing:-.04em}.modal-close{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--brand-deep);font-weight:950}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:grid;gap:6px}.field.wide{grid-column:1 / -1}.field label{font-size:12px;font-weight:950;color:#76685d}.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.8);padding:11px 12px;color:var(--text);font-weight:750}.field textarea{min-height:88px;resize:vertical}.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{display:inline-flex;align-items:center;border-radius:999px;background:#f7f0ea;color:#7a6252;padding:5px 9px;font-size:12px;font-weight:850}.form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}.detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}.detail-stat{padding:13px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.64)}.detail-stat span{display:block;color:var(--muted);font-size:12px;font-weight:850}.detail-stat b{display:block;margin-top:5px;font-size:18px}.detail-list{display:grid;gap:10px;padding-right:4px}.agent3-detail-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,.72fr);gap:16px;align-items:start}.agent3-section{display:grid;gap:10px}.agent3-section h3{margin:0;font-size:20px;letter-spacing:-.03em}.agent3-queue{position:sticky;top:0}
+.activity{display:grid;gap:10px}.activity-row{display:grid;grid-template-columns:60px 10px 78px minmax(0,1fr);align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}.activity-row.clickable{cursor:pointer}.activity-row.clickable:hover .activity-text{color:var(--brand-deep)}.activity-time{color:var(--muted);font-weight:750}.activity-agent{font-weight:950;color:var(--brand-deep)}.activity-text{font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.activity-detail{display:grid;gap:12px}.activity-detail-row{display:grid;grid-template-columns:86px 13px 118px minmax(0,1fr) auto;gap:12px;align-items:start;padding:14px;border:1px solid rgba(80,52,30,.1);border-radius:14px;background:rgba(255,255,255,.68)}.activity-detail-row.clickable{cursor:pointer}.activity-detail-row.clickable:hover{background:#fffdfa;border-color:rgba(211,90,18,.25)}.activity-detail-main{display:grid;gap:5px}.activity-detail-text{font-size:14px;line-height:1.55;font-weight:850;color:#4f463f}.activity-detail-meta{font-size:12px;color:var(--muted);font-weight:750}.activity-detail-status{white-space:nowrap}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:18px}.mini-panel{min-height:230px}.list{display:grid;gap:10px;max-height:250px;overflow:auto;padding-right:3px}.agent3-ai-box{display:grid;gap:8px;margin-bottom:12px}.agent3-ai-box textarea{width:100%;min-height:76px;resize:vertical;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.82);padding:11px 12px;color:var(--text);font-weight:750;line-height:1.45}.agent3-ai-actions{display:flex;justify-content:space-between;align-items:center;gap:10px}.agent3-ai-actions small{color:var(--muted);font-size:12px;font-weight:800}.item{display:grid;gap:10px;padding:15px 16px;border:1px solid rgba(80,52,30,.1);background:rgba(255,255,255,.7);border-radius:13px}.item.clickable{cursor:pointer;transition:border-color .16s ease,background .16s ease,transform .16s ease}.item.clickable:hover{border-color:rgba(211,90,18,.28);background:#fffdfa;transform:translateY(-1px)}.item-title{font-weight:950;font-size:15px;line-height:1.4;overflow-wrap:anywhere}.item-meta{color:var(--muted);font-size:13px;line-height:1.45;font-weight:800}.item-row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.mini-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.tag{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;background:var(--brand-soft);color:var(--brand-deep);font-size:12px;font-weight:950}.muted{color:var(--muted);font-size:14px;line-height:1.65;font-weight:750;overflow-wrap:anywhere}.proposal-body{display:grid;gap:10px;margin-top:2px}.proposal-section{padding:10px 12px;border:1px solid rgba(80,52,30,.09);border-radius:12px;background:rgba(255,253,249,.64)}.proposal-section b{display:block;margin-bottom:5px;color:#5d4b3f;font-size:13px}.proposal-section div{color:#75695f;font-size:14px;line-height:1.65;font-weight:750}.proposal-files{max-height:58px;overflow:auto}.proposal-detail-shell{display:grid;gap:18px}.proposal-detail-top{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding:2px 2px 4px}.proposal-titleline{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.proposal-badge{display:inline-flex;align-items:center;padding:9px 14px;border-radius:10px;background:#eaf4ff;color:#147bd1;border:1px solid #c9e4ff;font-weight:950}.proposal-detail-title{margin:0;font-size:30px;letter-spacing:-.04em;line-height:1.15}.proposal-detail-meta{margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;color:#7d7067;font-size:14px;font-weight:850}.proposal-detail-meta strong{color:#ef4740}.proposal-detail-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}.proposal-detail-actions .small-btn{border-radius:10px;padding:12px 18px;font-size:14px}.proposal-detail-actions [data-approve-proposal]{background:#2389ff;border-color:#2389ff;color:#fff;box-shadow:0 10px 22px rgba(35,137,255,.22)}.proposal-hero{display:grid;grid-template-columns:96px minmax(0,1fr);gap:18px;align-items:center;padding:24px;border:1px solid rgba(37,132,221,.16);border-radius:18px;background:linear-gradient(135deg,#f6fbff,#fffdf9);box-shadow:0 14px 36px rgba(37,132,221,.07)}.proposal-hero-icon{width:74px;height:74px;border-radius:22px;display:grid;place-items:center;background:#e9f4ff;color:#1b86ee;font-size:34px;font-weight:900}.proposal-hero h4,.proposal-panel h4,.proposal-files-panel h4{margin:0 0 10px;color:#1679d4;font-size:20px;letter-spacing:-.03em}.proposal-hero p{margin:0;color:#5f554e;font-size:16px;line-height:1.7;font-weight:800}.proposal-detail-columns{display:grid;grid-template-columns:1fr 1fr;gap:18px}.proposal-panel,.proposal-files-panel{padding:24px;border:1px solid rgba(80,52,30,.1);border-radius:18px;background:rgba(255,255,255,.68)}.proposal-checks{display:grid;gap:16px;margin:0;padding:0;list-style:none}.proposal-checks li{position:relative;padding-left:34px;color:#645951;font-size:15px;line-height:1.7;font-weight:780}.proposal-checks li::before{content:"✓";position:absolute;left:0;top:2px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#e8f8ed;color:#16a766;font-weight:950}.proposal-steps{display:grid;gap:14px}.proposal-step{display:grid;grid-template-columns:38px minmax(0,1fr);gap:12px;align-items:start}.proposal-step-num{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#eaf4ff;border:1px solid #acd7ff;color:#1679d4;font-weight:950}.proposal-step-text{padding-top:5px;color:#645951;font-size:15px;line-height:1.65;font-weight:780}.proposal-files-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.proposal-file-count{display:inline-flex;align-items:center;padding:7px 12px;border-radius:999px;background:#eaf4ff;color:#1679d4;font-size:13px;font-weight:950}.proposal-file-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.proposal-file{padding:12px 13px;border:1px solid rgba(80,52,30,.11);border-radius:11px;background:#fffdfa;color:#5d544d;font-size:13px;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.proposal-footer{display:flex;gap:18px;flex-wrap:wrap;color:#8b7d72;font-size:13px;font-weight:800;padding:0 2px}.code-preview{max-height:520px;overflow:auto;margin:0;padding:14px;border:1px solid var(--line);border-radius:14px;background:#1f1a16;color:#fff8ef;font:12px/1.55 Consolas,"Courier New",monospace;white-space:pre;tab-size:2}.error{margin:0;color:var(--red);font-size:12px;line-height:1.45;font-weight:850;white-space:pre-wrap;overflow-wrap:anywhere;font-family:inherit}.empty{padding:15px;text-align:center;border:1px dashed rgba(80,52,30,.18);border-radius:13px;color:var(--muted);font-weight:750;background:rgba(255,255,255,.45)}
 .daily{display:grid;grid-template-columns:220px repeat(5,1fr);gap:18px;align-items:center}.daily h3{font-size:20px}.daily-card{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--line);border-radius:15px;background:rgba(255,255,255,.68)}.daily-card b{font-size:22px}.daily-card small{display:block;color:var(--muted);font-weight:750}.toast{position:fixed;right:24px;bottom:24px;max-width:420px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#fffdfa;box-shadow:var(--shadow);font-weight:850;display:none}.toast.show{display:block}
 @media(max-width:1420px){.cards,.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.layout{grid-template-columns:1fr}.daily{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:880px){.app{grid-template-columns:1fr}.sidebar{display:none}.main{padding:22px}.topbar,.title-wrap,.manager-grid{display:grid}.cards,.grid,.form-grid,.daily{grid-template-columns:1fr}.agent-card{grid-template-columns:1fr}.agent-stats,.details-link{grid-column:auto}.updated{text-align:left}}
+@media(max-width:880px){.app{grid-template-columns:1fr}.sidebar{display:none}.main{padding:22px}.topbar,.title-wrap,.manager-grid{display:grid}.cards,.grid,.form-grid,.daily,.detail-grid,.agent3-detail-layout{grid-template-columns:1fr}.agent-card{grid-template-columns:1fr}.agent-stats,.details-link{grid-column:auto}.updated{text-align:left}.agent3-queue{position:static}.proposal-detail-top,.proposal-detail-columns{display:grid}.proposal-hero{grid-template-columns:1fr}.proposal-file-grid{grid-template-columns:1fr}.proposal-detail-title{font-size:24px}}
+.modal{overflow-x:hidden}.proposal-detail-shell,.proposal-detail-columns,.proposal-panel,.proposal-hero>*{min-width:0}.proposal-hero p{overflow-wrap:anywhere}.codex-task-columns{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);gap:18px}.codex-text-list{display:grid;gap:10px;margin:0;padding:0;list-style:none}.codex-text-list li{padding:12px 14px;border:1px solid rgba(80,52,30,.09);border-radius:12px;background:#fffdfa;color:#62584f;font-size:15px;line-height:1.65;font-weight:780;overflow-wrap:anywhere}.codex-file-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.codex-file-chip{padding:10px 12px;border:1px solid rgba(80,52,30,.1);border-radius:10px;background:#fffdfa;color:#655a51;font-size:13px;font-weight:850;line-height:1.35;overflow-wrap:anywhere}.codex-prompt-preview{white-space:pre-wrap;overflow-x:hidden;font-size:13px;line-height:1.7}
+@media(max-width:980px){.codex-task-columns{grid-template-columns:1fr}.codex-file-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -40,6 +42,20 @@ button,input,textarea,select{font:inherit}button{border:0;cursor:pointer}a{color
 
   <main class="main">
     <gyuos-header title="Agent Report Center" subtitle="AI agents are working quietly for you"></gyuos-header>
+
+    <section class="panel">
+      <div class="daily">
+        <div>
+          <h3>오늘의 요약 <small>(Daily Brief)</small></h3>
+          <div class="notice" id="dailyDate">-</div>
+        </div>
+        <div class="daily-card"><span class="agent-icon green">▣</span><div><small>최신 IT 뉴스</small><b id="dailyNewsCount">0건</b></div></div>
+        <div class="daily-card"><span class="agent-icon orange">✎</span><div><small>생성된 초안</small><b id="dailyDraftCount">0건</b></div></div>
+        <div class="daily-card"><span class="agent-icon blue">&lt;/&gt;</span><div><small>승인 대기</small><b id="dailyCodexCount">0건</b></div></div>
+        <div class="daily-card"><span class="agent-icon purple">✦</span><div><small>아이디어 발굴</small><b id="dailyIdeaCount">0건</b></div></div>
+        <div class="daily-card"><div><b>GyuOS가 오늘도</b><small>당신의 시간을 아껴드렸어요.</small></div></div>
+      </div>
+    </section>
 
     <section class="cards" id="agentCards"></section>
 
@@ -94,7 +110,17 @@ button,input,textarea,select{font:inherit}button{border:0;cursor:pointer}a{color
       <article class="panel mini-panel">
         <div class="panel-head">
           <div><h3>Codex 승인 대기 <small>(Agent 03)</small></h3></div>
-          <span class="tag">1건</span>
+          <div class="mini-actions">
+            <button class="small-btn" type="button" id="generateDevProposalButton">구조 점검</button>
+            <span class="tag" id="codexCount">0건</span>
+          </div>
+        </div>
+        <div class="agent3-ai-box">
+          <textarea id="agent3AiRequest" placeholder="예: 제안 상세 화면의 영향 파일 영역을 더 보기 좋게 개선해줘"></textarea>
+          <div class="agent3-ai-actions">
+            <small>관련 파일 최대 3개만 읽고, 결과는 미리보기로만 저장합니다.</small>
+            <button class="small-btn" type="button" id="generateAiDevProposalButton">AI 제안 생성</button>
+          </div>
         </div>
         <div class="list" id="codexTaskList"></div>
       </article>
@@ -108,19 +134,6 @@ button,input,textarea,select{font:inherit}button{border:0;cursor:pointer}a{color
       </article>
     </section>
 
-    <section class="panel">
-      <div class="daily">
-        <div>
-          <h3>오늘의 요약 <small>(Daily Brief)</small></h3>
-          <div class="notice" id="dailyDate">-</div>
-        </div>
-        <div class="daily-card"><span class="agent-icon green">▣</span><div><small>최신 IT 뉴스</small><b id="dailyNewsCount">0건</b></div></div>
-        <div class="daily-card"><span class="agent-icon orange">✎</span><div><small>생성된 초안</small><b id="dailyDraftCount">0건</b></div></div>
-        <div class="daily-card"><span class="agent-icon blue">&lt;/&gt;</span><div><small>승인 대기</small><b id="dailyCodexCount">0건</b></div></div>
-        <div class="daily-card"><span class="agent-icon purple">✦</span><div><small>아이디어 발굴</small><b id="dailyIdeaCount">0건</b></div></div>
-        <div class="daily-card"><div><b>GyuOS가 오늘도</b><small>당신의 시간을 아껴드렸어요.</small></div></div>
-      </div>
-    </section>
   </main>
 </div>
 <div class="modal-backdrop" id="agentModal" aria-hidden="true">
@@ -194,7 +207,7 @@ button,input,textarea,select{font:inherit}button{border:0;cursor:pointer}a{color
 <div class="toast" id="toast"></div>
 <script>
 const $ = (id) => document.getElementById(id);
-const state = { loading:false, agents:[], report:null, initialDetailOpened:false };
+const state = { loading:false, agents:[], report:null, initialDetailOpened:false, previewReturnProposalId:null };
 
 function escapeHtml(value){
   return String(value ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
@@ -245,6 +258,341 @@ function showToast(message){
 
 function empty(message){ return `<div class="empty">${escapeHtml(message)}</div>`; }
 
+function proposalFiles(proposal){
+  const files = proposal?.affected_files?.length ? proposal.affected_files : proposal?.target_files || [];
+  return Array.isArray(files) ? files : [];
+}
+
+function proposalTextSections(proposal){
+  const reason = String(proposal?.reason || "").trim();
+  const marker = "진행 방식:";
+  let proposalText = reason;
+  let flowText = "";
+  if(reason.includes(marker)){
+    const parts = reason.split(marker);
+    proposalText = parts.shift().trim();
+    flowText = parts.join(marker).trim();
+  }
+  proposalText = proposalText.replace(/^제안 내용:\s*/i, "").trim();
+  return {
+    summary: String(proposal?.summary || "").trim(),
+    proposalText: proposalText || "상세 제안 내용이 없습니다.",
+    flowText,
+  };
+}
+
+function renderProposalBody(proposal){
+  const files = proposalFiles(proposal);
+  const sections = proposalTextSections(proposal);
+  return `<div class="proposal-body">
+    <div class="proposal-section"><b>요약</b><div>${escapeHtml(sections.summary || "요약이 없습니다.")}</div></div>
+    <div class="proposal-section"><b>제안 내용</b><div>${escapeHtml(sections.proposalText).replaceAll("\n","<br>")}</div></div>
+    ${sections.flowText ? `<div class="proposal-section"><b>진행 방식</b><div>${escapeHtml(sections.flowText).replaceAll("\n","<br>")}</div></div>` : ""}
+    <div class="proposal-section"><b>영향 파일</b><div class="proposal-files">${escapeHtml(files.join(", ") || "검토 후 결정")}</div></div>
+  </div>`;
+}
+
+function renderProposalCompactCard(proposal){
+  const files = proposalFiles(proposal);
+  const sections = proposalTextSections(proposal);
+  const fileLabel = files.length
+    ? `${files.slice(0, 4).join(", ")}${files.length > 4 ? ` 외 ${files.length - 4}개` : ""}`
+    : "검토 후 결정";
+  return `<article class="item clickable" data-open-proposal-detail="${proposal.id}">
+    <div class="item-row">
+      <div>
+        <div class="item-title">#${proposal.id} ${escapeHtml(proposal.title || "제안 제목 없음")}</div>
+        <div class="item-meta">${escapeHtml(proposal.project_name || "Project")} · ${escapeHtml(proposal.change_type || "modify")} · ${escapeHtml(proposal.status || "pending")} · 위험도 ${escapeHtml(proposal.risk_level || "low")}</div>
+      </div>
+      <div class="mini-actions">${proposalActions(proposal)}</div>
+    </div>
+    <div class="muted">${escapeHtml(sections.summary || "요약이 없습니다.")}</div>
+    <div class="item-meta">영향 파일 ${files.length || 0}개 · ${escapeHtml(fileLabel)}</div>
+  </article>`;
+}
+
+function parseCodexTask(task){
+  const raw = String(task?.request || task?.command_text || "");
+  const firstLine = raw.split("\n")[0] || "Codex 작업";
+  const title = firstLine.replace(/^Agent 03 approved dev proposal\s*/i, "").trim();
+  const fields = {};
+  for(const key of ["Project","Change type","Risk level","Summary","Reason","Target files"]){
+    const pattern = new RegExp(`${key}:\\s*([\\s\\S]*?)(?=\\n(?:Project|Change type|Risk level|Summary|Reason|Target files):|\\n\\n|$)`);
+    const match = raw.match(pattern);
+    fields[key] = match ? match[1].trim() : "";
+  }
+  return {
+    title,
+    project:fields.Project,
+    changeType:fields["Change type"],
+    riskLevel:fields["Risk level"],
+    summary:fields.Summary,
+    reason:fields.Reason,
+    targetFiles:fields["Target files"],
+  };
+}
+
+function renderCodexTaskCard(task){
+  const parsed = parseCodexTask(task);
+  return `<article class="item">
+    <div class="item-row">
+      <div>
+        <div class="item-title">#${task.id} ${escapeHtml(parsed.title || "Codex 작업")}</div>
+        <div class="item-meta">${escapeHtml(task.status || "-")} · ${escapeHtml(fmt(task.updated_at || task.created_at))}${parsed.riskLevel ? ` · 위험도 ${escapeHtml(parsed.riskLevel)}` : ""}</div>
+      </div>
+      <div class="mini-actions">
+        <button class="small-btn" type="button" data-view-codex-task="${task.id}">상세 보기</button>
+        <button class="small-btn" type="button" data-copy-codex-prompt="${task.id}">프롬프트 복사</button>
+        ${task.status === "completed" ? "" : `<button class="small-btn" type="button" data-complete-codex-task="${task.id}">완료 처리</button><button class="small-btn" type="button" data-hold-codex-task="${task.id}">보류</button>`}
+      </div>
+    </div>
+    ${parsed.summary ? `<div class="proposal-section"><b>요약</b><div>${escapeHtml(parsed.summary)}</div></div>` : ""}
+    ${parsed.reason ? `<div class="proposal-section"><b>작업 내용</b><div>${escapeHtml(parsed.reason).replaceAll("\\n","<br>")}</div></div>` : ""}
+    ${parsed.targetFiles ? `<div class="proposal-section"><b>대상 파일</b><div class="proposal-files">${escapeHtml(parsed.targetFiles)}</div></div>` : ""}
+    ${task.error_message ? `<pre class="error">${escapeHtml(task.error_message)}</pre>` : ""}
+  </article>`;
+}
+
+function renderCodexTaskCompactCard(task){
+  const parsed = parseCodexTask(task);
+  const files = parsed.targetFiles ? parsed.targetFiles.split(",").map((file) => file.trim()).filter(Boolean) : [];
+  const fileLabel = files.length
+    ? `${files.slice(0, 3).join(", ")}${files.length > 3 ? ` 외 ${files.length - 3}개` : ""}`
+    : "대상 파일 확인 필요";
+  return `<article class="item">
+    <div class="item-row">
+      <div>
+        <div class="item-title">#${task.id} ${escapeHtml(parsed.title || "Codex 작업")}</div>
+        <div class="item-meta">${escapeHtml(task.status || "-")} · ${escapeHtml(fmt(task.updated_at || task.created_at))}${parsed.riskLevel ? ` · 위험도 ${escapeHtml(parsed.riskLevel)}` : ""}</div>
+      </div>
+      <span class="tag">${escapeHtml(parsed.changeType || task.task_type || "coding")}</span>
+    </div>
+    ${parsed.summary ? `<div class="muted">${escapeHtml(parsed.summary)}</div>` : ""}
+    <div class="item-meta">${escapeHtml(fileLabel)}</div>
+    <div class="mini-actions" style="justify-content:flex-start">
+      <button class="small-btn" type="button" data-view-codex-task="${task.id}">상세 보기</button>
+      <button class="small-btn" type="button" data-copy-codex-prompt="${task.id}">프롬프트 복사</button>
+      ${task.status === "completed" ? "" : `<button class="small-btn" type="button" data-complete-codex-task="${task.id}">완료 처리</button><button class="small-btn" type="button" data-hold-codex-task="${task.id}">보류</button>`}
+    </div>
+    ${task.error_message ? `<pre class="error">${escapeHtml(task.error_message)}</pre>` : ""}
+  </article>`;
+}
+
+function findCodexTask(taskId){
+  const tasks = state.report?.agent3?.codex_pending_tasks || [];
+  return tasks.find((task) => String(task.id) === String(taskId));
+}
+
+function buildCodexPrompt(task){
+  const parsed = parseCodexTask(task);
+  const title = parsed.title || "Codex 작업";
+  const project = parsed.project || "GyuOS";
+  const summary = parsed.summary || task.summary || "작업 큐 내용을 확인하고 필요한 수정안을 반영합니다.";
+  const reason = parsed.reason || task.request || "작업 큐 원문을 기준으로 진행합니다.";
+  const files = parsed.targetFiles || "작업 전 관련 파일을 확인해서 최소 범위로 수정";
+  return `GyuOS 프로젝트에서 작업 큐 #${task.id}을 처리해주세요.
+
+프로젝트:
+${project}
+
+목표:
+${title}
+
+요약:
+${summary}
+
+작업 내용:
+${reason}
+
+대상 파일:
+${files}
+
+중요 규칙:
+- 기존 기능 삭제 금지
+- 전체 구조 갈아엎지 않기
+- apps/personal_life 내부를 우선 범위로 작업
+- 금융/개인 데이터 외부 전송 금지
+- 발행/결제/삭제 같은 위험 액션 자동 실행 금지
+- 필요한 파일만 최소 수정
+- 작업 후 변경 내용과 검증 결과를 한국어로 요약
+
+참고:
+작업 큐 상태는 사용자가 Report Center에서 직접 완료 처리합니다.`;
+}
+
+function codexTaskReasonLines(task){
+  const parsed = parseCodexTask(task);
+  const source = parsed.reason || task.request || "";
+  const lines = textLines(source.replace(/^제안 내용:\s*/i, ""));
+  return lines.length ? lines : ["작업 큐 원문을 기준으로 필요한 변경을 검토합니다."];
+}
+
+function codexTaskFiles(task){
+  const parsed = parseCodexTask(task);
+  return String(parsed.targetFiles || "")
+    .split(",")
+    .map((file) => file.trim())
+    .filter(Boolean);
+}
+
+async function copyText(text){
+  if(navigator.clipboard?.writeText){
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "readonly");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  textarea.remove();
+}
+
+function openCodexTaskDetail(taskId){
+  const task = findCodexTask(taskId);
+  if(!task) return;
+  const parsed = parseCodexTask(task);
+  const reasonLines = codexTaskReasonLines(task);
+  const files = codexTaskFiles(task);
+  $("detailModalTitle").textContent = `Codex 작업 큐 #${task.id}`;
+  $("detailModalSubtitle").textContent = "Codex에게 넘길 작업 내용을 확인하고 복사합니다.";
+  $("detailModalBody").innerHTML = `<div class="proposal-detail-shell">
+    <div class="detail-grid">
+      <div class="detail-stat"><span>상태</span><b>${escapeHtml(task.status || "-")}</b></div>
+      <div class="detail-stat"><span>작업 타입</span><b>${escapeHtml(parsed.changeType || task.task_type || "coding")}</b></div>
+      <div class="detail-stat"><span>위험도</span><b>${escapeHtml(parsed.riskLevel || "-")}</b></div>
+    </div>
+    <section class="proposal-hero">
+      <div class="proposal-hero-icon">&lt;/&gt;</div>
+      <div>
+        <h4>${escapeHtml(parsed.title || "Codex 작업")}</h4>
+        <p>${escapeHtml(parsed.summary || task.summary || "요약이 없습니다.")}</p>
+      </div>
+    </section>
+    <div class="codex-task-columns">
+      <section class="proposal-panel">
+        <h4>작업 내용</h4>
+        <ul class="codex-text-list">${reasonLines.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
+      </section>
+      <section class="proposal-panel">
+        <h4>대상 파일</h4>
+        <div class="codex-file-grid">${(files.length ? files : ["작업 전 관련 파일 확인"]).map((file) => `<div class="codex-file-chip">${escapeHtml(file)}</div>`).join("")}</div>
+      </section>
+    </div>
+    <section>
+      <div class="item-row" style="margin-bottom:10px">
+        <h3 style="margin:0">Codex용 프롬프트</h3>
+        <div class="mini-actions">
+          <button class="small-btn" type="button" data-copy-codex-prompt="${task.id}">프롬프트 복사</button>
+          ${task.status === "completed" ? "" : `<button class="small-btn" type="button" data-complete-codex-task="${task.id}">완료 처리</button><button class="small-btn" type="button" data-hold-codex-task="${task.id}">보류</button>`}
+        </div>
+      </div>
+      <pre class="code-preview codex-prompt-preview">${escapeHtml(buildCodexPrompt(task))}</pre>
+    </section>
+  </div>`;
+  $("detailModal").classList.add("show");
+  $("detailModal").setAttribute("aria-hidden", "false");
+}
+
+function textLines(value){
+  return String(value || "").split("\n").map((line) => line.trim().replace(/^[-•]\s*/, "")).filter(Boolean);
+}
+
+function flowLines(value){
+  return String(value || "").split("\n").map((line) => line.trim().replace(/^\d+\.\s*/, "")).filter(Boolean);
+}
+
+function renderProposalDetailLayout(proposal){
+  const files = proposalFiles(proposal);
+  const sections = proposalTextSections(proposal);
+  const proposalLines = textLines(sections.proposalText);
+  const steps = flowLines(sections.flowText);
+  return `<div class="proposal-detail-shell">
+    <div class="proposal-detail-top">
+      <div>
+        <div class="proposal-titleline">
+          <span class="proposal-badge">제안 #${proposal.id}</span>
+          <h2 class="proposal-detail-title">${escapeHtml(proposal.title || "제안 상세")}</h2>
+        </div>
+        <div class="proposal-detail-meta">
+          <span>${escapeHtml(proposal.project_name || "GyuOS")}</span>
+          <span>·</span>
+          <span>${escapeHtml(proposal.change_type || "modify")}</span>
+          <span>·</span>
+          <span>${escapeHtml(proposal.status || "pending")}</span>
+          <span>·</span>
+          <span>위험도 <strong>${escapeHtml(proposal.risk_level || "low")}</strong></span>
+        </div>
+      </div>
+      <div class="proposal-detail-actions">${proposalActions(proposal)}</div>
+    </div>
+    <section class="proposal-hero">
+      <div class="proposal-hero-icon">▧</div>
+      <div>
+        <h4>요약</h4>
+        <p>${escapeHtml(sections.summary || "요약이 없습니다.")}</p>
+      </div>
+    </section>
+    <div class="proposal-detail-columns">
+      <section class="proposal-panel">
+        <h4>제안 내용</h4>
+        <ul class="proposal-checks">${proposalLines.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
+      </section>
+      <section class="proposal-panel">
+        <h4>진행 방식</h4>
+        <div class="proposal-steps">${(steps.length ? steps : ["코드 보기와 diff 보기로 내용을 확인합니다.", "승인 시 작업 큐에만 등록하고 자동 적용은 하지 않습니다."]).map((line, index) => `<div class="proposal-step"><span class="proposal-step-num">${index + 1}</span><div class="proposal-step-text">${escapeHtml(line)}</div></div>`).join("")}</div>
+      </section>
+    </div>
+    <section class="proposal-files-panel">
+      <div class="proposal-files-head">
+        <h4>영향 파일</h4>
+        <span class="proposal-file-count">${files.length}개 파일</span>
+      </div>
+      <div class="proposal-file-grid">${(files.length ? files : ["검토 후 결정"]).map((file) => `<div class="proposal-file">${escapeHtml(file)}</div>`).join("")}</div>
+    </section>
+    <div class="proposal-footer">
+      <span>생성일 ${escapeHtml(fmt(proposal.created_at))}</span>
+      <span>제안자 Agent 03</span>
+      <span>영향 범위 apps/personal_life</span>
+    </div>
+  </div>`;
+}
+
+function proposalActions(proposal){
+  const previewButtons = `<button class="small-btn" type="button" data-view-proposal-code="${proposal.id}">코드 보기</button><button class="small-btn" type="button" data-view-proposal-diff="${proposal.id}">diff 보기</button>`;
+  const approvalButtons = proposal.status === "pending" ? `<button class="small-btn" type="button" data-approve-proposal="${proposal.id}">승인</button><button class="small-btn" type="button" data-hold-proposal="${proposal.id}">보류</button>` : "";
+  return `${previewButtons}${approvalButtons}`;
+}
+
+function openProposalPreview(proposalId, kind){
+  const proposals = state.report?.agent3?.dev_proposals || [];
+  const proposal = proposals.find((item) => String(item.id) === String(proposalId));
+  if(!proposal) return;
+  const isCode = kind === "code";
+  const content = isCode ? proposal.code_preview : proposal.diff_preview;
+  state.previewReturnProposalId = proposal.id;
+  $("detailModalTitle").textContent = `제안 #${proposal.id} · ${isCode ? "코드 보기" : "diff 보기"}`;
+  $("detailModalSubtitle").textContent = `${proposal.title || "제안"} · 위험도 ${proposal.risk_level || "low"} · ${proposal.change_type || "modify"}`;
+  $("detailModalBody").innerHTML = `<pre class="code-preview">${escapeHtml(content || "저장된 미리보기가 없습니다.")}</pre>`;
+  $("detailModal").classList.add("show");
+  $("detailModal").setAttribute("aria-hidden", "false");
+}
+
+function openProposalDetail(proposalId){
+  const proposals = state.report?.agent3?.dev_proposals || [];
+  const proposal = proposals.find((item) => String(item.id) === String(proposalId));
+  if(!proposal) return;
+  state.previewReturnProposalId = null;
+  $("detailModalTitle").textContent = "제안 상세";
+  $("detailModalSubtitle").textContent = "승인 전에 목적, 영향 파일, 진행 방식을 확인합니다.";
+  $("detailModalBody").innerHTML = renderProposalDetailLayout(proposal);
+  $("detailModal").classList.add("show");
+  $("detailModal").setAttribute("aria-hidden", "false");
+}
+
 function renderCards(cards){
   $("agentCards").innerHTML = (cards || []).map((agent, index) => {
     const cls = toneClass(agent.tone, agent.status);
@@ -292,7 +640,24 @@ function openDetailModal(agentId){
     body.push(`<div class="detail-list">${drafts.map((draft) => `<article class="item"><div class="item-row"><div><div class="item-title">${escapeHtml(draft.title)}</div><div class="item-meta">#${draft.id} · ${escapeHtml(draft.status || "draft")} · ${escapeHtml(fmt(draft.updated_at || draft.created_at))}</div></div><button class="small-btn" type="button" data-fill-draft="${draft.id}">네이버에 입력</button></div></article>`).join("") || empty("최근 초안이 없습니다.")}</div>`);
   } else if(Number(agentId) === 3){
     const tasks = data.agent3?.codex_pending_tasks || [];
-    body.push(`<div class="detail-list">${tasks.map((task) => `<article class="item"><div class="item-title">#${task.id} ${escapeHtml(task.request || "요청 내용 없음")}</div><div class="item-meta">${escapeHtml(task.status || "-")} · ${escapeHtml(fmt(task.updated_at || task.created_at))}</div>${task.error_message ? `<pre class="error">${escapeHtml(task.error_message)}</pre>` : ""}</article>`).join("") || empty("Codex 승인 대기 작업이 없습니다.")}</div>`);
+    const proposals = data.agent3?.dev_proposals || [];
+    const pendingProposals = proposals.filter((proposal) => proposal.status === "pending");
+    const approvedProposals = proposals.filter((proposal) => proposal.status === "approved");
+    body.push(`<div class="detail-grid">
+      <div class="detail-stat"><span>개발 제안</span><b>${proposals.length}건</b></div>
+      <div class="detail-stat"><span>승인 대기</span><b>${pendingProposals.length}건</b></div>
+      <div class="detail-stat"><span>작업 큐</span><b>${tasks.length}건</b></div>
+    </div>`);
+    body.push(`<div class="agent3-detail-layout">
+      <section class="agent3-section">
+        <div class="item-row"><h3>개발 제안</h3><span class="tag">승인됨 ${approvedProposals.length}건</span></div>
+        <div class="detail-list">${proposals.map(renderProposalCompactCard).join("") || empty("Agent 03 개발 제안이 없습니다.")}</div>
+      </section>
+      <section class="agent3-section agent3-queue">
+        <div class="item-row"><h3>Codex 작업 큐</h3><span class="tag">${tasks.length}건</span></div>
+        <div class="detail-list">${tasks.map(renderCodexTaskCompactCard).join("") || empty("Codex 승인 대기 작업이 없습니다.")}</div>
+      </section>
+    </div>`);
   } else {
     const ideas = data.agent4?.ideas || [];
     body.push(`<div class="detail-list">${ideas.map((idea, index) => `<article class="item"><div class="item-title">#${index + 1} ${escapeHtml(idea.title)}</div><div class="item-meta">task #${idea.task_id} · ${escapeHtml(idea.status || "idea")} · ${escapeHtml(fmt(idea.updated_at))}</div></article>`).join("") || empty("유튜브 아이디어 후보가 아직 없습니다.")}</div>`);
@@ -315,6 +680,12 @@ function openInitialDetailFromUrl(){
 }
 
 function closeDetailModal(){
+  if(state.previewReturnProposalId){
+    const proposalId = state.previewReturnProposalId;
+    state.previewReturnProposalId = null;
+    openProposalDetail(proposalId);
+    return;
+  }
   $("detailModal").classList.remove("show");
   $("detailModal").setAttribute("aria-hidden", "true");
 }
@@ -350,21 +721,63 @@ function closeAgentModal(){
   $("agentModal").setAttribute("aria-hidden", "true");
 }
 
-function renderActivity(cards){
-  const items = (cards || []).flatMap((agent) => {
+function buildActivityItems(cards){
+  return (cards || []).flatMap((agent) => {
     const rows = [];
-    rows.push({ time:agent.updated_at, agent:`Agent ${String(agent.agent_id).padStart(2, "0")}`, text:agent.latest_result_summary || agent.status, tone:agent.tone });
+    rows.push({
+      time:agent.updated_at,
+      agent_id:agent.agent_id,
+      agent:`Agent ${String(agent.agent_id).padStart(2, "0")}`,
+      title:agent.title,
+      text:agent.latest_result_summary || agent.status,
+      status:agent.status,
+      tone:agent.tone,
+      error:agent.error_message
+    });
     for(const item of (agent.highlights || []).slice(0, 1)){
-      rows.push({ time:agent.updated_at, agent:`Agent ${String(agent.agent_id).padStart(2, "0")}`, text:item, tone:agent.tone });
+      rows.push({
+        time:agent.updated_at,
+        agent_id:agent.agent_id,
+        agent:`Agent ${String(agent.agent_id).padStart(2, "0")}`,
+        title:agent.title,
+        text:item,
+        status:agent.status,
+        tone:agent.tone,
+        error:agent.error_message
+      });
     }
     return rows;
-  }).slice(0, 5);
-  $("activityList").innerHTML = items.length ? items.map((item) => `<div class="activity-row">
+  });
+}
+
+function renderActivity(cards){
+  const items = buildActivityItems(cards).slice(0, 5);
+  $("activityList").innerHTML = items.length ? items.map((item) => `<div class="activity-row clickable" data-open-agent-detail="${item.agent_id}">
     <span class="activity-time">${escapeHtml(fmt(item.time, "time"))}</span>
     <span class="dot ${toneClass(item.tone, "")}"></span>
     <span class="activity-agent">${escapeHtml(item.agent)}</span>
     <span class="activity-text">${escapeHtml(item.text)}</span>
   </div>`).join("") : empty("최근 활동이 없습니다.");
+}
+
+function openActivityDetail(){
+  const items = buildActivityItems(state.report?.cards || []);
+  $("detailModalTitle").textContent = "Live Activity";
+  $("detailModalSubtitle").textContent = "에이전트별 최근 활동과 상태를 확인합니다.";
+  $("detailModalBody").innerHTML = `<div class="activity-detail">${items.map((item) => `
+    <article class="activity-detail-row clickable" data-open-agent-detail="${item.agent_id}">
+      <span class="activity-time">${escapeHtml(fmt(item.time, "time"))}</span>
+      <span class="dot ${toneClass(item.tone, item.status)}"></span>
+      <span class="activity-agent">${escapeHtml(item.agent)}</span>
+      <div class="activity-detail-main">
+        <div class="activity-detail-text">${escapeHtml(item.text || "-")}</div>
+        <div class="activity-detail-meta">${escapeHtml(item.title || "")}${item.error ? ` · ${escapeHtml(item.error)}` : ""}</div>
+      </div>
+      <span class="status ${toneClass(item.tone, item.status)} activity-detail-status">${escapeHtml(item.status || "-")}</span>
+    </article>
+  `).join("") || empty("최근 활동이 없습니다.")}</div>`;
+  $("detailModal").classList.add("show");
+  $("detailModal").setAttribute("aria-hidden", "false");
 }
 
 function renderAgent1(agent1){
@@ -405,14 +818,75 @@ function renderDrafts(agent2){
 
 function renderCodexTasks(agent3){
   const tasks = agent3?.codex_pending_tasks || [];
-  $("dailyCodexCount").textContent = `${tasks.length}건`;
-  $("codexTaskList").innerHTML = tasks.length ? tasks.slice(0, 5).map((task) => `
-    <article class="item">
-      <div class="item-title">#${task.id} ${escapeHtml(task.request || "요청 내용 없음")}</div>
-      <div class="item-meta">${escapeHtml(task.status)} · ${escapeHtml(fmt(task.updated_at || task.created_at, "time"))}</div>
-      ${task.error_message ? `<pre class="error">${escapeHtml(task.error_message)}</pre>` : ""}
-    </article>
-  `).join("") : empty("Codex 승인 대기 작업이 없습니다.");
+  const proposals = agent3?.dev_proposals || [];
+  const pendingProposals = proposals.filter((proposal) => proposal.status === "pending");
+  $("dailyCodexCount").textContent = `${pendingProposals.length + tasks.length}건`;
+  $("codexCount").textContent = `${pendingProposals.length + tasks.length}건`;
+  const proposalHtml = pendingProposals.slice(0, 4).map((proposal) => {
+    return `
+      <article class="item clickable" data-open-proposal-detail="${proposal.id}">
+        <div class="item-row">
+          <div>
+            <div class="item-title">제안 #${proposal.id} ${escapeHtml(proposal.title || "제안 제목 없음")}</div>
+            <div class="item-meta">${escapeHtml(proposal.project_name || "Project")} · ${escapeHtml(proposal.change_type || "modify")} · 위험도 ${escapeHtml(proposal.risk_level || "low")} · 승인 대기</div>
+          </div>
+          <div class="mini-actions">${proposalActions(proposal)}</div>
+        </div>
+        ${renderProposalBody(proposal)}
+      </article>
+    `;
+  }).join("");
+  const taskHtml = tasks.slice(0, 5).map(renderCodexTaskCard).join("");
+  $("codexTaskList").innerHTML = proposalHtml || taskHtml ? proposalHtml + taskHtml : empty("Agent 03 개발 제안이나 Codex 작업이 없습니다.");
+}
+
+async function generateDevProposal(){
+  const button = $("generateDevProposalButton");
+  button.setAttribute("disabled", "disabled");
+  button.textContent = "분석 중";
+  try{
+    const projects = await request("/agent/dev-projects");
+    const project = projects[0];
+    if(!project?.id){
+      throw new Error("Agent 03 프로젝트가 없습니다.");
+    }
+    const result = await request(`/agent/dev-projects/${project.id}/scan`, { method:"POST" });
+    const proposal = result.proposal || {};
+    showToast(`개발 제안 #${proposal.id || "-"} 생성 완료.`);
+    await loadReportCenter();
+    openDetailModal(3);
+  }catch(error){
+    showToast(error.message);
+  }finally{
+    button.removeAttribute("disabled");
+    button.textContent = "구조 점검";
+  }
+}
+
+async function generateAiDevProposal(){
+  const button = $("generateAiDevProposalButton");
+  const requestText = $("agent3AiRequest").value.trim();
+  if(!requestText){
+    showToast("Agent 03에게 요청할 내용을 입력해주세요.");
+    return;
+  }
+  button.setAttribute("disabled", "disabled");
+  button.textContent = "생성 중";
+  try{
+    const proposal = await request("/agent/dev-proposals/ai-generate", {
+      method:"POST",
+      body:JSON.stringify({ request:requestText })
+    });
+    showToast(`AI 개발 제안 #${proposal.id} 생성 완료.`);
+    $("agent3AiRequest").value = "";
+    await loadReportCenter();
+    openProposalDetail(proposal.id);
+  }catch(error){
+    showToast(error.message);
+  }finally{
+    button.removeAttribute("disabled");
+    button.textContent = "AI 제안 생성";
+  }
 }
 
 function renderIdeas(agent4){
@@ -513,6 +987,106 @@ document.addEventListener("click", async (event) => {
     }
   }
 
+  const codeProposalId = target.getAttribute("data-view-proposal-code");
+  if(codeProposalId){
+    openProposalPreview(codeProposalId, "code");
+  }
+
+  const diffProposalId = target.getAttribute("data-view-proposal-diff");
+  if(diffProposalId){
+    openProposalPreview(diffProposalId, "diff");
+  }
+
+  const approveProposalId = target.getAttribute("data-approve-proposal");
+  if(approveProposalId){
+    target.setAttribute("disabled", "disabled");
+    try{
+      const result = await request(`/agent/dev-proposals/${approveProposalId}/approve`, { method:"POST" });
+      showToast(`제안 #${result.id} 승인 완료. Codex 작업 큐에 등록했습니다.`);
+      await loadReportCenter();
+    }catch(error){
+      showToast(error.message);
+    }finally{
+      target.removeAttribute("disabled");
+    }
+  }
+
+  const holdProposalId = target.getAttribute("data-hold-proposal");
+  if(holdProposalId){
+    target.setAttribute("disabled", "disabled");
+    try{
+      await request(`/agent/dev-proposals/${holdProposalId}/status`, { method:"POST", body:JSON.stringify({status:"held"}) });
+      showToast(`제안 #${holdProposalId}을 보류했습니다.`);
+      await loadReportCenter();
+    }catch(error){
+      showToast(error.message);
+    }finally{
+      target.removeAttribute("disabled");
+    }
+  }
+
+  const proposalDetailId = target.closest("[data-open-proposal-detail]")?.getAttribute("data-open-proposal-detail");
+  if(proposalDetailId && !target.closest("button,a")){
+    openProposalDetail(proposalDetailId);
+  }
+
+  const viewCodexTaskId = target.getAttribute("data-view-codex-task");
+  if(viewCodexTaskId){
+    openCodexTaskDetail(viewCodexTaskId);
+  }
+
+  const copyCodexTaskId = target.getAttribute("data-copy-codex-prompt");
+  if(copyCodexTaskId){
+    const task = findCodexTask(copyCodexTaskId);
+    if(task){
+      try{
+        await copyText(buildCodexPrompt(task));
+        showToast(`작업 큐 #${copyCodexTaskId} Codex 프롬프트를 복사했습니다.`);
+      }catch(error){
+        showToast(`복사에 실패했습니다. ${error.message}`);
+      }
+    }
+  }
+
+  const completeCodexTaskId = target.getAttribute("data-complete-codex-task");
+  if(completeCodexTaskId){
+    target.setAttribute("disabled", "disabled");
+    try{
+      await request(`/agent/tasks/${completeCodexTaskId}/complete`, {
+        method:"POST",
+        body:JSON.stringify({
+          summary:"사용자가 Codex 작업 완료로 처리했습니다.",
+          payload:{ completed_by:"report-center" }
+        })
+      });
+      showToast(`작업 큐 #${completeCodexTaskId} 완료 처리했습니다.`);
+      await loadReportCenter();
+      openDetailModal(3);
+    }catch(error){
+      showToast(error.message);
+    }finally{
+      target.removeAttribute("disabled");
+    }
+  }
+
+  const holdCodexTaskId = target.getAttribute("data-hold-codex-task");
+  if(holdCodexTaskId){
+    target.setAttribute("disabled", "disabled");
+    try{
+      await request(`/agent/tasks/${holdCodexTaskId}/fail`, {
+        method:"POST",
+        body:JSON.stringify({ error_message:"사용자가 Report Center에서 보류 처리했습니다." })
+      });
+      showToast(`작업 큐 #${holdCodexTaskId} 보류 처리했습니다.`);
+      await loadReportCenter();
+      openDetailModal(3);
+    }catch(error){
+      showToast(error.message);
+    }finally{
+      target.removeAttribute("disabled");
+    }
+  }
+
   const editAgentId = target.getAttribute("data-edit-agent");
   if(editAgentId){
     const agent = state.agents.find((item) => String(item.id) === String(editAgentId));
@@ -552,7 +1126,9 @@ document.addEventListener("click", async (event) => {
   }
 });
 
-$("refreshButton").addEventListener("click", loadReportCenter);
+$("refreshButton").addEventListener("click", openActivityDetail);
+$("generateDevProposalButton").addEventListener("click", generateDevProposal);
+$("generateAiDevProposalButton").addEventListener("click", generateAiDevProposal);
 $("newAgentButton").addEventListener("click", () => {
   resetAgentForm();
   openAgentModal("create");

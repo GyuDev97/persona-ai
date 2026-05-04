@@ -189,6 +189,36 @@ CREATE TABLE IF NOT EXISTS agent_log (
     created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
+CREATE TABLE IF NOT EXISTS agent_dev_projects (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    root_path TEXT NOT NULL UNIQUE,
+    description TEXT NOT NULL DEFAULT '',
+    stack TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'active',
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
+CREATE TABLE IF NOT EXISTS agent_dev_proposals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    summary TEXT NOT NULL DEFAULT '',
+    reason TEXT NOT NULL DEFAULT '',
+    change_type TEXT NOT NULL DEFAULT 'modify',
+    affected_files TEXT NOT NULL DEFAULT '[]',
+    target_files TEXT NOT NULL DEFAULT '[]',
+    risk_level TEXT NOT NULL DEFAULT 'low',
+    code_preview TEXT NOT NULL DEFAULT '',
+    diff_preview TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    approved_at TEXT,
+    completed_at TEXT,
+    codex_task_id INTEGER
+);
+
 CREATE TABLE IF NOT EXISTS agent_blog_drafts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     agent_id INTEGER NOT NULL DEFAULT 2,
@@ -460,6 +490,38 @@ MARIADB_SCHEMA = [
     )
     """,
     """
+    CREATE TABLE IF NOT EXISTS agent_dev_projects (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        root_path VARCHAR(1000) NOT NULL UNIQUE,
+        description TEXT NOT NULL,
+        stack VARCHAR(500) NOT NULL DEFAULT '',
+        status VARCHAR(30) NOT NULL DEFAULT 'active',
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS agent_dev_proposals (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        project_id BIGINT NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        summary TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        change_type VARCHAR(20) NOT NULL DEFAULT 'modify',
+        affected_files LONGTEXT NULL,
+        target_files LONGTEXT NOT NULL,
+        risk_level VARCHAR(20) NOT NULL DEFAULT 'low',
+        code_preview LONGTEXT NULL,
+        diff_preview LONGTEXT NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'pending',
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        approved_at DATETIME NULL,
+        completed_at DATETIME NULL,
+        codex_task_id BIGINT NULL
+    )
+    """,
+    """
     CREATE TABLE IF NOT EXISTS agent_blog_drafts (
         id BIGINT PRIMARY KEY AUTO_INCREMENT,
         agent_id INT NOT NULL DEFAULT 2,
@@ -552,6 +614,7 @@ def initialize_sqlite() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(SQLITE_DB_PATH) as connection:
         connection.executescript(SQLITE_SCHEMA)
+        _ensure_sqlite_dev_proposal_columns(connection)
         connection.commit()
 
 
@@ -576,6 +639,7 @@ def initialize_mariadb() -> None:
         with connection.cursor() as cursor:
             for statement in MARIADB_SCHEMA:
                 cursor.execute(statement)
+            _ensure_mariadb_dev_proposal_columns(cursor)
         connection.commit()
 
 
@@ -643,3 +707,30 @@ def fetch_all(query: str, parameters: tuple[Any, ...] = ()) -> list[dict[str, An
         cursor.execute(adapted, parameters)
         rows = cursor.fetchall()
         return [dict(row) if not isinstance(row, dict) else row for row in rows]
+
+
+def _ensure_sqlite_dev_proposal_columns(connection: sqlite3.Connection) -> None:
+    columns = {row[1] for row in connection.execute("PRAGMA table_info(agent_dev_proposals)").fetchall()}
+    required = {
+        "change_type": "TEXT NOT NULL DEFAULT 'modify'",
+        "affected_files": "TEXT NOT NULL DEFAULT '[]'",
+        "code_preview": "TEXT NOT NULL DEFAULT ''",
+        "diff_preview": "TEXT NOT NULL DEFAULT ''",
+    }
+    for column, definition in required.items():
+        if column not in columns:
+            connection.execute(f"ALTER TABLE agent_dev_proposals ADD COLUMN {column} {definition}")
+
+
+def _ensure_mariadb_dev_proposal_columns(cursor: Any) -> None:
+    cursor.execute("SHOW COLUMNS FROM agent_dev_proposals")
+    columns = {row["Field"] if isinstance(row, dict) else row[0] for row in cursor.fetchall()}
+    required = {
+        "change_type": "VARCHAR(20) NOT NULL DEFAULT 'modify'",
+        "affected_files": "LONGTEXT NULL",
+        "code_preview": "LONGTEXT NULL",
+        "diff_preview": "LONGTEXT NULL",
+    }
+    for column, definition in required.items():
+        if column not in columns:
+            cursor.execute(f"ALTER TABLE agent_dev_proposals ADD COLUMN {column} {definition}")

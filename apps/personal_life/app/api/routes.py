@@ -53,12 +53,24 @@ from ..services.agent_definition_service import (
 )
 from ..services.agent_report_center_service import build_agent_report_center, create_naver_blog_fill_task
 from ..services.agent_standby_service import focus_agent, get_agent_standby_status, open_agent_detail, recover_agent
+from ..services.agent3_dev_planner_ai_service import generate_ai_dev_proposal
 from ..config import get_settings
 from ..services.asset_service import build_asset_summary, create_asset, list_assets, update_asset
 from ..services.blog_draft_service import get_blog_draft
 from ..services.briefing_service import build_evening_briefing, build_morning_briefing, build_today_briefing
 from ..services.capture_service import create_quick_capture, list_quick_captures
 from ..services.conversation_service import list_conversations
+from ..services.dev_planner_service import (
+    approve_dev_proposal,
+    create_dev_project,
+    create_dev_proposal,
+    get_dev_proposal,
+    list_dev_projects,
+    list_dev_proposals,
+    scan_dev_project,
+    update_dev_proposal_code_preview,
+    update_dev_proposal_status,
+)
 from ..services.finance_service import build_finance_briefing
 from ..services.memory_service import import_profile_yaml, list_profile_memories
 from ..services.mobile_assistant_service import process_mobile_assistant_command
@@ -81,6 +93,7 @@ from ..services.money_core_service import (
     update_expense,
     update_installment,
 )
+from ..services.money_ai_chat_service import ask_money_core_ai
 from ..services.natural_language_service import process_natural_command
 from ..services.reminder_service import list_reminders
 from ..services.routine_service import create_routine, create_routine_checkin, list_routines
@@ -112,6 +125,48 @@ class AgentDefinitionPayload(BaseModel):
     tone: str = "idle"
     sort_order: int = 100
     is_enabled: bool = True
+
+
+class DevProjectPayload(BaseModel):
+    name: str
+    root_path: str
+    description: str = ""
+    stack: str = ""
+    status: str = "active"
+
+
+class DevProposalPayload(BaseModel):
+    project_id: int | None = None
+    title: str
+    summary: str = ""
+    reason: str = ""
+    change_type: str = "modify"
+    affected_files: list[str] | str = []
+    target_files: list[str] | str = []
+    risk_level: str = "low"
+    code_preview: str = ""
+    diff_preview: str = ""
+
+
+class DevProposalCodePreviewPayload(BaseModel):
+    affected_file: str
+    generated_code: str
+
+
+class DevProposalAiGeneratePayload(BaseModel):
+    request: str
+    project_id: int | None = None
+    candidate_files: list[str] | str = []
+
+
+class DevProposalStatusPayload(BaseModel):
+    status: str
+
+
+class MoneyAiChatPayload(BaseModel):
+    question: str
+    month: str | None = None
+
 
 @router.get("/", include_in_schema=False)
 def frontend() -> FileResponse:
@@ -199,6 +254,14 @@ def get_money_core_summary(month: str | None = None) -> dict:
 def post_money_core_summary(payload: dict) -> dict:
     try:
         return save_income_summary(payload)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.post("/finance/ai-chat")
+def post_money_core_ai_chat(payload: MoneyAiChatPayload) -> dict:
+    try:
+        return ask_money_core_ai(payload.question, payload.month)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
 
@@ -401,6 +464,84 @@ def get_agent_standby_status_route() -> dict:
 @router.get("/agent/report-center/data")
 def get_agent_report_center_data() -> dict:
     return build_agent_report_center()
+
+
+@router.get("/agent/dev-projects")
+def get_agent_dev_projects() -> list[dict]:
+    return list_dev_projects()
+
+
+@router.post("/agent/dev-projects")
+def post_agent_dev_project(payload: DevProjectPayload) -> dict:
+    try:
+        return create_dev_project(payload.dict())
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.post("/agent/dev-projects/{project_id}/scan")
+def post_agent_dev_project_scan(project_id: int) -> dict:
+    try:
+        return scan_dev_project(project_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.get("/agent/dev-proposals")
+def get_agent_dev_proposals(status: str | None = None, limit: int = 20) -> list[dict]:
+    return list_dev_proposals(status=status, limit=limit)
+
+
+@router.get("/agent/dev-proposals/{proposal_id}")
+def get_agent_dev_proposal_detail(proposal_id: int) -> dict:
+    try:
+        return get_dev_proposal(proposal_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.post("/agent/dev-proposals")
+def post_agent_dev_proposal(payload: DevProposalPayload) -> dict:
+    try:
+        return create_dev_proposal(payload.dict())
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.post("/agent/dev-proposals/{proposal_id}/approve")
+def post_agent_dev_proposal_approve(proposal_id: int) -> dict:
+    try:
+        return approve_dev_proposal(proposal_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.post("/agent/dev-proposals/{proposal_id}/code-preview")
+def post_agent_dev_proposal_code_preview(proposal_id: int, payload: DevProposalCodePreviewPayload) -> dict:
+    try:
+        return update_dev_proposal_code_preview(
+            proposal_id,
+            affected_file=payload.affected_file,
+            generated_code=payload.generated_code,
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.post("/agent/dev-proposals/ai-generate")
+def post_agent_dev_proposal_ai_generate(payload: DevProposalAiGeneratePayload) -> dict:
+    try:
+        return generate_ai_dev_proposal(payload.dict())
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.post("/agent/dev-proposals/{proposal_id}/status")
+def post_agent_dev_proposal_status(proposal_id: int, payload: DevProposalStatusPayload) -> dict:
+    try:
+        return update_dev_proposal_status(proposal_id, payload.status)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
 
 @router.get("/agent/blog-drafts/{draft_id}")

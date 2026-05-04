@@ -1,0 +1,173 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1200" viewBox="0 0 1800 1200">
+  <defs>
+    <style>
+      .bg { fill: #f6f7fb; }
+      .frame { fill: #ffffff; stroke: #d8dfec; stroke-width: 2; }
+      .title { font: 800 42px "Segoe UI", "Malgun Gothic", sans-serif; fill: #172033; }
+      .subtitle { font: 500 18px "Segoe UI", "Malgun Gothic", sans-serif; fill: #647087; }
+      .section { font: 800 22px "Segoe UI", "Malgun Gothic", sans-serif; fill: #1d2a44; }
+      .label { font: 800 19px "Segoe UI", "Malgun Gothic", sans-serif; fill: #1d2a44; }
+      .small { font: 500 14px "Segoe UI", "Malgun Gothic", sans-serif; fill: #526078; }
+      .tiny { font: 500 12px "Segoe UI", "Malgun Gothic", sans-serif; fill: #68758c; }
+      .card { fill: #ffffff; stroke: #d8dfec; stroke-width: 1.5; rx: 14; }
+      .blue { fill: #eef4ff; stroke: #c7d9ff; }
+      .green { fill: #ecf9f1; stroke: #b9e5c9; }
+      .yellow { fill: #fff8e7; stroke: #efd38a; }
+      .red { fill: #fff0f0; stroke: #edb6b6; }
+      .purple { fill: #f4f0ff; stroke: #d7c8ff; }
+      .mint { fill: #ecfbf8; stroke: #b7e8df; }
+      .gray { fill: #f2f4f8; stroke: #d8dfec; }
+      .line { stroke: #7c89a0; stroke-width: 2.2; fill: none; marker-end: url(#arrow); }
+      .line-blue { stroke: #3f6fd8; stroke-width: 3; fill: none; marker-end: url(#arrow-blue); }
+      .dash { stroke: #9aa6ba; stroke-width: 2; fill: none; stroke-dasharray: 7 7; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7c89a0"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#3f6fd8"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1800" height="1200"/>
+  <text x="70" y="72" class="title">GyuOS 전체 구성도</text>
+  <text x="72" y="106" class="subtitle">D:/github/persona-ai 전체 프로젝트 관점에서 보는 개인 AI OS, PC HUD, 업무 보조 앱, 데이터 저장소, 에이전트 실행 흐름</text>
+
+  <rect x="55" y="140" width="1690" height="1005" rx="24" class="frame"/>
+
+  <text x="90" y="190" class="section">사용자 접점</text>
+  <rect x="80" y="220" width="250" height="100" class="card blue"/>
+  <text x="108" y="257" class="label">웹 대시보드</text>
+  <text x="108" y="284" class="small">personal_life/app/frontend</text>
+  <text x="108" y="306" class="tiny">홈, 브리핑, 머니, 리포트 센터</text>
+
+  <rect x="80" y="350" width="250" height="100" class="card blue"/>
+  <text x="108" y="387" class="label">모바일 앱</text>
+  <text x="108" y="414" class="small">Flutter app/mobile</text>
+  <text x="108" y="436" class="tiny">음성/텍스트 명령 전송</text>
+
+  <rect x="80" y="480" width="250" height="110" class="card blue"/>
+  <text x="108" y="517" class="label">PC 음성 호출</text>
+  <text x="108" y="544" class="small">pc_wake_listener.py</text>
+  <text x="108" y="566" class="tiny">호출어, STT, TTS, 자막</text>
+
+  <rect x="80" y="620" width="250" height="110" class="card blue"/>
+  <text x="108" y="657" class="label">GYUVIS HUD</text>
+  <text x="108" y="684" class="small">apps/javis-app</text>
+  <text x="108" y="706" class="tiny">Electron 대기 화면, standby UI</text>
+
+  <text x="425" y="190" class="section">중심 시스템</text>
+  <rect x="390" y="220" width="430" height="430" rx="20" class="card green"/>
+  <text x="430" y="266" class="label">apps/personal_life</text>
+  <text x="430" y="296" class="small">GyuOS 개인 생활 AI OS 본체</text>
+
+  <rect x="430" y="330" width="340" height="72" class="card"/>
+  <text x="455" y="360" class="label">FastAPI 서버</text>
+  <text x="455" y="384" class="small">main.py, app/__init__.py, routes.py</text>
+
+  <rect x="430" y="425" width="340" height="72" class="card"/>
+  <text x="455" y="455" class="label">서비스 레이어</text>
+  <text x="455" y="479" class="small">briefing, money, agent, memory, routine</text>
+
+  <rect x="430" y="520" width="340" height="82" class="card"/>
+  <text x="455" y="550" class="label">데이터 저장소</text>
+  <text x="455" y="574" class="small">SQLite personal_life.db 또는 MariaDB</text>
+  <text x="455" y="594" class="tiny">생활, 머니, 에이전트, 개발 제안 테이블</text>
+
+  <text x="915" y="190" class="section">에이전트 운영</text>
+  <rect x="880" y="220" width="310" height="100" class="card yellow"/>
+  <text x="910" y="257" class="label">작업 큐</text>
+  <text x="910" y="284" class="small">agent_tasks</text>
+  <text x="910" y="306" class="tiny">pending -> claimed -> completed/failed</text>
+
+  <rect x="880" y="350" width="310" height="105" class="card yellow"/>
+  <text x="910" y="387" class="label">PC Agent Runner</text>
+  <text x="910" y="414" class="small">pc_agent_runner.py</text>
+  <text x="910" y="436" class="tiny">큐 폴링, 예약 수집, task_type 분기</text>
+
+  <rect x="880" y="485" width="310" height="165" class="card yellow"/>
+  <text x="910" y="522" class="label">Agent 01~04</text>
+  <text x="910" y="552" class="small">01 IT 뉴스 수집</text>
+  <text x="910" y="576" class="small">02 블로그 초안 / 네이버 입력</text>
+  <text x="910" y="600" class="small">03 Codex 개발 요청</text>
+  <text x="910" y="624" class="small">04 유튜브 아이디어 조사</text>
+
+  <text x="1285" y="190" class="section">외부/주변 앱</text>
+  <rect x="1260" y="220" width="385" height="108" class="card purple"/>
+  <text x="1290" y="257" class="label">gw_assistant / mail_assi</text>
+  <text x="1290" y="284" class="small">그룹웨어 메일 보조 실험</text>
+  <text x="1290" y="306" class="tiny">inbox router, mail logic, frontend</text>
+
+  <rect x="1260" y="360" width="385" height="108" class="card purple"/>
+  <text x="1290" y="397" class="label">gw_assistant / eapproval_autofill</text>
+  <text x="1290" y="424" class="small">전자결재 자동 입력 실험</text>
+  <text x="1290" y="446" class="tiny">FastAPI route, frontend, Excel sample</text>
+
+  <rect x="1260" y="500" width="385" height="115" class="card mint"/>
+  <text x="1290" y="537" class="label">Naver Blog Writer</text>
+  <text x="1290" y="564" class="small">naver_blog_writer.py</text>
+  <text x="1290" y="586" class="tiny">Agent 02 초안을 네이버 글쓰기 화면에 입력</text>
+
+  <rect x="1260" y="645" width="385" height="115" class="card mint"/>
+  <text x="1290" y="682" class="label">브라우저 / 데스크톱 자동화</text>
+  <text x="1290" y="709" class="small">pc_desktop_actions.py</text>
+  <text x="1290" y="731" class="tiny">화면 열기, 검색, 로컬 페이지 이동</text>
+
+  <text x="90" y="805" class="section">주요 데이터 도메인</text>
+  <rect x="80" y="835" width="320" height="190" class="card gray"/>
+  <text x="110" y="872" class="label">생활 데이터</text>
+  <text x="110" y="902" class="small">tasks, schedules</text>
+  <text x="110" y="926" class="small">routines, routine_checkins</text>
+  <text x="110" y="950" class="small">quick_captures, reminders</text>
+  <text x="110" y="974" class="small">profile_memories, conversations</text>
+
+  <rect x="435" y="835" width="320" height="190" class="card gray"/>
+  <text x="465" y="872" class="label">Money Core 데이터</text>
+  <text x="465" y="902" class="small">income_summary, expenses</text>
+  <text x="465" y="926" class="small">card_usage, installments</text>
+  <text x="465" y="950" class="small">assets, asset_snapshots</text>
+  <text x="465" y="974" class="small">assets_history, auto_transfer</text>
+
+  <rect x="790" y="835" width="320" height="190" class="card gray"/>
+  <text x="820" y="872" class="label">에이전트 데이터</text>
+  <text x="820" y="902" class="small">agent_definitions, agent_status</text>
+  <text x="820" y="926" class="small">agent_tasks, agent_log</text>
+  <text x="820" y="950" class="small">agent_news_items, agent_reports</text>
+  <text x="820" y="974" class="small">agent_blog_drafts</text>
+
+  <rect x="1145" y="835" width="320" height="190" class="card gray"/>
+  <text x="1175" y="872" class="label">개발 플래너 데이터</text>
+  <text x="1175" y="902" class="small">agent_dev_projects</text>
+  <text x="1175" y="926" class="small">agent_dev_proposals</text>
+  <text x="1175" y="950" class="small">codex_task_id</text>
+  <text x="1175" y="974" class="small">target_files, risk_level, status</text>
+
+  <rect x="1500" y="835" width="160" height="190" class="card red"/>
+  <text x="1522" y="872" class="label">외부 API</text>
+  <text x="1522" y="902" class="small">OpenAI</text>
+  <text x="1522" y="926" class="small">Google News RSS</text>
+  <text x="1522" y="950" class="small">wttr.in Weather</text>
+  <text x="1522" y="974" class="small">edge-tts</text>
+
+  <text x="90" y="1080" class="section">한 줄 해석</text>
+  <text x="90" y="1115" class="small">GyuOS는 personal_life FastAPI 서버를 중심으로 웹/모바일/음성 명령을 받고, 서비스 레이어가 생활/재정/기억/브리핑을 처리하며, agent_tasks 큐와 PC Runner가 Agent 01~04 작업을 비동기 실행하는 구조입니다.</text>
+
+  <path class="line-blue" d="M330 270 C355 270 365 380 390 380"/>
+  <path class="line-blue" d="M330 400 C355 400 365 380 390 380"/>
+  <path class="line-blue" d="M330 535 C355 535 365 380 390 380"/>
+  <path class="line" d="M330 675 C560 690 750 630 880 560"/>
+
+  <path class="line-blue" d="M820 382 C850 382 850 270 880 270"/>
+  <path class="line" d="M1190 270 C1220 270 1230 555 1260 555"/>
+  <path class="line-blue" d="M1190 402 C1210 402 1210 560 1190 560"/>
+  <path class="line-blue" d="M1190 565 C1220 565 1230 555 1260 555"/>
+
+  <path class="line" d="M605 650 C605 725 240 760 240 835"/>
+  <path class="line" d="M605 650 C605 725 595 760 595 835"/>
+  <path class="line" d="M1035 650 C1035 730 950 760 950 835"/>
+  <path class="line" d="M1035 650 C1130 725 1305 760 1305 835"/>
+  <path class="dash" d="M1190 560 C1310 600 1430 770 1500 930"/>
+  <path class="dash" d="M820 460 C950 760 1400 780 1500 930"/>
+
+  <text x="95" y="1142" class="tiny">생성 위치: D:/github/persona-ai/apps/personal_life/structure/gyuos_overall_composition.svg</text>
+</svg>

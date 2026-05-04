@@ -12,13 +12,14 @@ def create_agent_task(
     task_type: str,
     search_query: str | None = None,
     source: str = "mobile",
+    payload: dict | None = None,
 ) -> AgentTaskResponse:
     task_id = execute(
         """
-        INSERT INTO agent_tasks (source, command_text, task_type, search_query, status)
-        VALUES (?, ?, ?, ?, 'pending')
+        INSERT INTO agent_tasks (source, command_text, task_type, search_query, status, result_payload)
+        VALUES (?, ?, ?, ?, 'pending', ?)
         """,
-        (source, command_text, task_type, search_query),
+        (source, command_text, task_type, search_query, json.dumps(payload or {}, ensure_ascii=False)),
     )
     return get_agent_task(task_id)
 

@@ -9,6 +9,7 @@ from .agent_news_service import AGENT1_ID, get_agent_news_stats, list_agent_news
 from .agent_standby_service import get_agent_standby_status
 from .agent_task_service import create_agent_task
 from .blog_draft_service import get_blog_draft, list_blog_drafts
+from .dev_planner_service import list_dev_projects, list_dev_proposals
 
 def build_agent_report_center() -> dict[str, Any]:
     standby = get_agent_standby_status()
@@ -206,6 +207,15 @@ def _build_agent2_panel() -> dict[str, Any]:
 
 def _build_agent3_panel() -> dict[str, Any]:
     tasks = _list_tasks_by_types(("coding_app_update",), limit=8)
+    try:
+        proposals = list_dev_proposals(limit=8)
+        projects = list_dev_projects()
+    except Exception as error:
+        proposals = []
+        projects = []
+        proposal_error = str(error)
+    else:
+        proposal_error = None
     return {
         "codex_pending_tasks": [
             {
@@ -220,7 +230,10 @@ def _build_agent3_panel() -> dict[str, Any]:
             }
             for task in tasks
             if task.get("status") in {"pending", "claimed", "completed", "failed"}
-        ]
+        ],
+        "dev_projects": projects,
+        "dev_proposals": proposals,
+        "proposal_error_message": proposal_error,
     }
 
 
