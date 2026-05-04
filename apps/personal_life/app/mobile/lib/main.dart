@@ -6,6 +6,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import 'config/app_config.dart';
 import 'models/chat_bubble_data.dart';
+import 'screens/gyuos_web_screen.dart';
 import 'services/gyuvis_api_client.dart';
 import 'services/speech_text_formatter.dart';
 import 'widgets/core_action_button.dart';
@@ -36,7 +37,51 @@ class GyuvisApp extends StatelessWidget {
       title: '규비스',
       debugShowCheckedModeBanner: false,
       theme: theme,
-      home: const AssistantHomePage(),
+      home: const GyuvisMobileShell(),
+    );
+  }
+}
+
+class GyuvisMobileShell extends StatefulWidget {
+  const GyuvisMobileShell({super.key});
+
+  @override
+  State<GyuvisMobileShell> createState() => _GyuvisMobileShellState();
+}
+
+class _GyuvisMobileShellState extends State<GyuvisMobileShell> {
+  int _selectedIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: const [
+          AssistantHomePage(),
+          GyuosWebScreen(),
+        ],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        backgroundColor: const Color(0xFF061D1C),
+        indicatorColor: const Color(0xFF7CEADD),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.mic_none_rounded),
+            selectedIcon: Icon(Icons.mic_rounded),
+            label: 'Assistant',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.account_balance_wallet_outlined),
+            selectedIcon: Icon(Icons.account_balance_wallet_rounded),
+            label: 'Money Core',
+          ),
+        ],
+        onDestinationSelected: (index) {
+          setState(() => _selectedIndex = index);
+        },
+      ),
     );
   }
 }

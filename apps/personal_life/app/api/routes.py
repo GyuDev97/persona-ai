@@ -105,6 +105,7 @@ from ..services.task_service import create_task, list_tasks, mark_task_done
 router = APIRouter()
 FRONTEND_PATH = Path(__file__).resolve().parents[1] / "frontend" / "index.html"
 FRONTEND_DIR = Path(__file__).resolve().parents[1] / "frontend"
+MOBILE_FRONTEND_DIR = FRONTEND_DIR / "mobile"
 GYUVIS_HUD_DIR = Path(__file__).resolve().parents[3] / "javis-app"
 GYUVIS_STANDBY_V2_PATH = GYUVIS_HUD_DIR / "standby-v2.html"
 AGENT_REPORT_CENTER_PATH = FRONTEND_DIR / "agent_report_center.html"
@@ -180,6 +181,16 @@ def frontend_pages(page_name: str):
         return FileResponse(file_path)
 
     raise HTTPException(status_code=404, detail="Page not found")
+
+
+@router.get("/mobile/{page_name}.html", include_in_schema=False)
+def mobile_frontend_pages(page_name: str):
+    file_path = MOBILE_FRONTEND_DIR / f"{page_name}.html"
+
+    if file_path.exists():
+        return FileResponse(file_path)
+
+    raise HTTPException(status_code=404, detail="Mobile page not found")
 
 
 @router.get("/gyuvis/standby-v2", include_in_schema=False)

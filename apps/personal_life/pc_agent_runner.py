@@ -33,6 +33,7 @@ from app.services.agent_status_service import (
     mark_agent_running,
     mark_agent_success,
 )
+from app.services.naver_news_email_service import is_news_email_enabled, send_agent1_morning_news_email
 from app.storage.database import initialize_database
 
 
@@ -43,6 +44,7 @@ DEVICE_LABEL = "pc-agent"
 AGENT1_COLLECT_INTERVAL_SECONDS = int(os.getenv("GYUVIS_AGENT1_COLLECT_INTERVAL_SECONDS", "600"))
 AGENT1_START_TIME = os.getenv("GYUVIS_AGENT1_START_TIME", "06:00")
 AGENT1_END_TIME = os.getenv("GYUVIS_AGENT1_END_TIME", "23:00")
+AGENT1_NEWS_EMAIL_TIME = os.getenv("GYUVIS_AGENT1_NEWS_EMAIL_TIME", "08:00")
 AGENT1_NEWS_RECENT_DAYS = max(1, int(os.getenv("GYUVIS_AGENT1_NEWS_RECENT_DAYS", "1")))
 AGENT1_NEWS_QUERIES = [
     query.strip()
@@ -55,6 +57,7 @@ AGENT1_NEWS_QUERIES = [
 
 _last_agent1_collect_at = 0.0
 _last_agent1_report_date: str | None = None
+_last_agent1_email_date: str | None = None
 
 AGENT_HANDLERS: dict[str, BaseAgent] = {
     "agent1_it_news_window": Agent1News(),
@@ -92,6 +95,7 @@ def main() -> None:
 
 def run_scheduled_collectors() -> None:
     run_agent1_it_news_collector()
+    run_agent1_news_email_sender()
 
 
 def run_agent1_it_news_collector(force: bool = False) -> None:
@@ -131,6 +135,32 @@ def run_agent1_it_news_collector(force: bool = False) -> None:
         except Exception as error:
             mark_agent_error(AGENT1_ID, f"Scheduled Agent 1 daily report failed: {error}")
             print(f"[{datetime.now().isoformat(timespec='seconds')}] agent1 report failed: {error}")
+
+
+def run_agent1_news_email_sender() -> None:
+    global _last_agent1_email_date
+
+    if not is_news_email_enabled():
+        return
+
+    now = datetime.now()
+    today = date.today().isoformat()
+    send_time = parse_clock_time(AGENT1_NEWS_EMAIL_TIME, dt_time(8, 0))
+    if now.time() < send_time or _last_agent1_email_date == today:
+        return
+
+    try:
+        mark_agent_running(AGENT1_ID, f"Scheduled Agent 1 news email started: {today}")
+        result = send_agent1_morning_news_email(today)
+        _last_agent1_email_date = today
+        mark_agent_success(AGENT1_ID, f"Scheduled Agent 1 news email sent: {result.get('sent_count')} items")
+        print(
+            f"[{datetime.now().isoformat(timespec='seconds')}] agent1 news email sent: "
+            f"{result.get('sent_count')} items"
+        )
+    except Exception as error:
+        mark_agent_error(AGENT1_ID, f"Scheduled Agent 1 news email failed: {error}")
+        print(f"[{datetime.now().isoformat(timespec='seconds')}] agent1 news email failed: {error}")
 
 
 def collect_agent1_it_news() -> int:
