@@ -91,10 +91,10 @@ def build_blog_title_from_grouped_news(grouped: dict[str, list[str]]) -> str:
     titles = [title for grouped_titles in grouped.values() for title in grouped_titles][:5]
     if not titles:
         return "오늘 사용자가 체감할 모바일·IT 소식 정리"
-    topics = list(grouped)[:2]
-    if not topics:
-        return "오늘 사용자가 체감할 모바일·IT 소식 정리"
-    return f"{'·'.join(topics)} 소식, 사용자 입장에서 달라질 점 정리"
+    lead_title = _blog_title_subject(titles[0])
+    topics = [topic for topic in grouped if topic != "기타 IT 이슈"][:2]
+    topic_suffix = f"{_join_korean_list(topics)} 흐름" if topics else "오늘 IT 흐름"
+    return f"{lead_title}, {topic_suffix} 사용자 입장에서 보기"
 
 
 def detect_topic(title: str) -> str:
@@ -236,6 +236,21 @@ def _topic_priority(topic: str) -> int:
 
 def _quoted_subject(text: str) -> str:
     return f"'{text}'{_topic_particle(text)}"
+
+
+def _blog_title_subject(title: str) -> str:
+    text = clean_news_title(title)
+    text = re.sub(r"\s+", " ", text).strip()
+    text = re.sub(r"^(단독|속보|종합|영상)\s*[:：-]?\s*", "", text).strip()
+    text = re.sub(r"[\"'“”‘’]", "", text)
+    text = re.split(r"\s*[.…]|[?？!！]", text, maxsplit=1)[0].strip()
+    if len(text) > 30:
+        cut = text[:30].rstrip()
+        last_space = cut.rfind(" ")
+        if last_space >= 14:
+            cut = cut[:last_space]
+        text = f"{cut}…"
+    return text or "오늘 IT 주요 소식"
 
 
 def _topic_particle(text: str) -> str:

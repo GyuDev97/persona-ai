@@ -6,6 +6,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import 'config/app_config.dart';
 import 'models/chat_bubble_data.dart';
+import 'screens/agent_report_screen.dart';
 import 'screens/gyuos_web_screen.dart';
 import 'services/gyuvis_api_client.dart';
 import 'services/speech_text_formatter.dart';
@@ -60,6 +61,7 @@ class _GyuvisMobileShellState extends State<GyuvisMobileShell> {
         children: const [
           AssistantHomePage(),
           GyuosWebScreen(),
+          AgentReportScreen(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -76,6 +78,11 @@ class _GyuvisMobileShellState extends State<GyuvisMobileShell> {
             icon: Icon(Icons.account_balance_wallet_outlined),
             selectedIcon: Icon(Icons.account_balance_wallet_rounded),
             label: 'Money Core',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.hub_outlined),
+            selectedIcon: Icon(Icons.hub_rounded),
+            label: 'Agents',
           ),
         ],
         onDestinationSelected: (index) {

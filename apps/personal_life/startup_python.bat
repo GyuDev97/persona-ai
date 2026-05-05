@@ -1,6 +1,8 @@
 @echo off
 chcp 65001 > nul
 setlocal EnableExtensions
+set "PYTHONUTF8=1"
+set "PYTHONIOENCODING=utf-8"
 
 set "ROOT_DIR=D:\github\persona-ai"
 set "APP_DIR=%ROOT_DIR%\apps\personal_life"

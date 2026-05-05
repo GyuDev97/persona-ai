@@ -23,10 +23,10 @@ def build_money_core_summary(month: str | None = None) -> dict[str, Any]:
     saving = int(income.get("saving") or 0)
     fixed_expense = sum(int(item.get("amount") or 0) for item in auto_transfers)
     check_card = sum(int(item.get("amount") or 0) for item in expenses)
-    credit_card = sum(int(item.get("payment_amount") or item.get("total_amount") or 0) for item in list_card_usage())
+    credit_card = sum(int(item.get("payment_amount") or item.get("total_amount") or 0) for item in cards)
     installment_total = sum(int(item.get("monthly_amount") or 0) for item in installments)
     calculated_remaining = salary - (saving + fixed_expense + check_card + credit_card)
-    card_usage_total = sum(int(item.get("total_amount") or item.get("payment_amount") or 0) for item in list_card_usage())
+    card_usage_total = sum(int(item.get("total_amount") or item.get("payment_amount") or 0) for item in cards)
     card_usage_rate = round(credit_card / salary, 4) if salary else 0.0
 
     previous_month = _previous_month(target_month)
@@ -102,6 +102,7 @@ def list_expenses(month: str | None = None) -> list[dict[str, Any]]:
         {
             "category": row["category"],
             "id": int(row.get("id") or 0),
+            "month": target_month,
             "amount": int(row.get("amount") or 0),
             "previous_amount": previous.get(row["category"], 0),
             "change_rate": _change_rate(int(row.get("amount") or 0), previous.get(row["category"], 0)),

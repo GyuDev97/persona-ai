@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from ..storage.database import execute, fetch_all, fetch_one
+from .agent_message_service import create_agent_message
 from .agent_task_service import create_agent_task
 from .diff_preview_service import build_diff_preview, summarize_diff
 
@@ -15,6 +17,10 @@ DEFAULT_PROJECT_NAME = "GyuOS"
 ALLOWED_ROOT = APP_ROOT.resolve()
 ALLOWED_CHANGE_TYPES = {"add", "modify", "refactor"}
 ALLOWED_RISK_LEVELS = {"low", "medium", "high"}
+AGENT3_QUEUE_STANDBY_MESSAGE = os.getenv(
+    "GYUVIS_AGENT3_QUEUE_STANDBY_MESSAGE",
+    "Codex 작업 큐 #{task_id} 등록 완료했습니다. 사용자 수동 검토 전까지 대기하겠습니다.",
+)
 
 
 def ensure_default_dev_project() -> dict[str, Any]:
@@ -190,6 +196,23 @@ def approve_dev_proposal(proposal_id: int) -> dict[str, Any]:
         """,
         (_now(), task.id, proposal_id),
     )
+    try:
+        create_agent_message(
+            3,
+            AGENT3_QUEUE_STANDBY_MESSAGE.format(
+                task_id=task.id,
+                proposal_id=proposal_id,
+                title=proposal.get("title") or "",
+            ),
+            topic="codex_queue",
+            payload={
+                "task_id": task.id,
+                "proposal_id": proposal_id,
+                "safety": "preview_only_no_file_write",
+            },
+        )
+    except Exception:
+        pass
     return get_dev_proposal(proposal_id)
 
 
@@ -292,12 +315,12 @@ def _proposal_from_findings(project: dict[str, Any], findings: dict[str, Any]) -
         )
 
     summary = (
-        f"{findings['summary']} 우선 Agent 03 안전 승인 흐름, Report Center 표시, "
+        f"{findings['summary']} Agent 03 안전 승인 흐름, Report Center 표시, "
         "작업 큐 연결부를 중심으로 개선 후보를 정리합니다."
     )
     reason = (
         "제안 내용:\n"
-        "- Agent 03 제안 카드에서 승인 전에 목적, 영향 파일, 위험도를 더 명확히 보여줍니다.\n"
+        "- Agent 03 제안 카드에서 승인 전에 목적, 영향 파일, 위험도를 명확히 보여줍니다.\n"
         "- 코드가 필요한 경우 파일에 바로 쓰지 않고 code_preview와 diff_preview만 생성합니다.\n"
         "- 승인 후에도 실제 파일 수정이 아니라 coding_app_update 작업 큐에 검토 요청만 등록합니다.\n"
         "- 영향 파일은 apps/personal_life 내부로 제한하고, runner/API/DB 관련 변경은 high risk로 표시합니다.\n\n"
@@ -305,7 +328,7 @@ def _proposal_from_findings(project: dict[str, Any], findings: dict[str, Any]) -
         "1. 대상 파일을 읽고 현재 구조를 분석합니다.\n"
         "2. 변경 후보를 텍스트와 diff 미리보기로 만듭니다.\n"
         "3. 사용자가 코드 보기와 diff 보기를 확인합니다.\n"
-        "4. 승인 시 다음 작업 큐에 넘기며, 자동 적용은 하지 않습니다."
+        "4. 승인 후 작업 큐에 넘기며 자동 적용은 하지 않습니다."
     )
     return create_dev_proposal(
         {
@@ -321,7 +344,7 @@ def _proposal_from_findings(project: dict[str, Any], findings: dict[str, Any]) -
 
 
 def _build_codex_command(proposal: dict[str, Any]) -> str:
-    files = ", ".join(proposal.get("affected_files") or proposal.get("target_files") or []) or "검토 후 결정"
+    files = ", ".join(proposal.get("affected_files") or proposal.get("target_files") or []) or "검토 중 결정"
     return (
         f"Agent 03 approved dev proposal #{proposal['id']}: {proposal['title']}\n\n"
         f"Project: {proposal.get('project_name')} ({proposal.get('root_path')})\n"

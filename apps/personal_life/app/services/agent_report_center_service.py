@@ -6,6 +6,7 @@ from typing import Any
 
 from ..storage.database import fetch_all
 from .agent_news_service import AGENT1_ID, get_agent_news_stats, list_agent_news_display_items
+from .agent_message_service import list_agent_messages
 from .agent_standby_service import get_agent_standby_status
 from .agent_task_service import create_agent_task
 from .blog_draft_service import get_blog_draft, list_blog_drafts
@@ -28,13 +29,14 @@ def build_agent_report_center() -> dict[str, Any]:
         "agent2": _build_agent2_panel(),
         "agent3": _build_agent3_panel(),
         "agent4": _build_agent4_panel(),
+        "collaboration": _build_collaboration_panel(),
     }
 
 
 def create_naver_blog_fill_task(draft_id: int) -> dict[str, Any]:
     draft = get_blog_draft(draft_id)
     task = create_agent_task(
-        command_text=f"?ㅼ씠踰?釉붾줈洹?湲?곌린 ?붾㈃??珥덉븞 #{draft_id} ?낅젰",
+        command_text=f"네이버 블로그 글쓰기 화면에 초안 #{draft_id} 입력",
         task_type="naver_blog_fill_draft",
         search_query=f"draft_id={draft_id}",
         source="report-center",
@@ -44,7 +46,7 @@ def create_naver_blog_fill_task(draft_id: int) -> dict[str, Any]:
         "draft_id": draft_id,
         "draft_title": draft.get("title"),
         "status": task.status,
-        "message": "?ㅼ씠踰?釉붾줈洹??낅젰 ?묒뾽???먯뿉 ?깅줉?덉뒿?덈떎. 諛쒗뻾? ?섏? ?딆뒿?덈떎.",
+        "message": "네이버 블로그 입력 작업을 큐에 등록했습니다. 발행은 하지 않습니다.",
     }
 
 
@@ -252,6 +254,14 @@ def _build_agent4_panel() -> dict[str, Any]:
                 }
             )
     return {"ideas": ideas[:12], "tasks": [_task_payload(task) for task in tasks]}
+
+
+def _build_collaboration_panel() -> dict[str, Any]:
+    try:
+        messages = list_agent_messages(limit=12)
+    except Exception as error:
+        return {"messages": [], "error_message": str(error)}
+    return {"messages": messages}
 
 
 def _latest_task_for_agent(agent: dict[str, Any]) -> dict[str, Any] | None:

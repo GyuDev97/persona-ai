@@ -62,6 +62,36 @@ class GyuvisApiClient {
       errorMessage: data['error_message'] as String?,
     );
   }
+
+  Future<Map<String, dynamic>> fetchAgentReportCenter() async {
+    final response = await http.get(_uri('/agent/report-center/data'));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw GyuvisApiException.fromResponse(response);
+    }
+
+    final data = jsonDecode(response.body);
+    if (data is! Map<String, dynamic>) {
+      throw const GyuvisApiException('에이전트 리포트 응답 형식이 올바르지 않습니다.');
+    }
+    return data;
+  }
+
+  Future<AgentBlogDraftDetail> fetchBlogDraft(int draftId) async {
+    final response = await http.get(_uri('/agent/blog-drafts/$draftId'));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw GyuvisApiException.fromResponse(response);
+    }
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    return AgentBlogDraftDetail(
+      id: data['id'] as int? ?? draftId,
+      title: data['title'] as String? ?? '제목 없음',
+      body: data['body'] as String? ?? '본문이 없습니다.',
+      status: data['status'] as String? ?? '-',
+      platform: data['platform'] as String? ?? '-',
+      updatedAt: data['updated_at'] as String?,
+    );
+  }
 }
 
 class ServerStatus {
@@ -93,6 +123,24 @@ class AgentTaskStatus {
   final String status;
   final String? resultSummary;
   final String? errorMessage;
+}
+
+class AgentBlogDraftDetail {
+  const AgentBlogDraftDetail({
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.status,
+    required this.platform,
+    required this.updatedAt,
+  });
+
+  final int id;
+  final String title;
+  final String body;
+  final String status;
+  final String platform;
+  final String? updatedAt;
 }
 
 class GyuvisApiException implements Exception {

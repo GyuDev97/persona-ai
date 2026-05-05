@@ -189,6 +189,17 @@ CREATE TABLE IF NOT EXISTS agent_log (
     created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
+CREATE TABLE IF NOT EXISTS agent_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    from_agent_id INTEGER NOT NULL,
+    to_agent_id INTEGER,
+    topic TEXT NOT NULL DEFAULT 'general',
+    message TEXT NOT NULL,
+    payload_json TEXT NOT NULL DEFAULT '{}',
+    status TEXT NOT NULL DEFAULT 'posted',
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
 CREATE TABLE IF NOT EXISTS agent_dev_projects (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -486,6 +497,18 @@ MARIADB_SCHEMA = [
         agent_id INT NOT NULL,
         message TEXT NOT NULL,
         level VARCHAR(20) NOT NULL DEFAULT 'info',
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS agent_messages (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        from_agent_id INT NOT NULL,
+        to_agent_id INT NULL,
+        topic VARCHAR(100) NOT NULL DEFAULT 'general',
+        message TEXT NOT NULL,
+        payload_json LONGTEXT NOT NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'posted',
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
     """,
