@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>G.Y.U.V.I.S. Standby V3</title>
+  <style>
+    :root {
+      --cyan: #37dcff;
+      --cyan-soft: rgba(55, 220, 255, .36);
+      --green: #27e0b0;
+      --amber: #ffb34c;
+      --red: #ff5c6a;
+      --text: #eafbff;
+      --muted: rgba(226, 248, 255, .68);
+      --panel: rgba(5, 18, 31, .66);
+      --line: rgba(113, 224, 255, .22);
+      --mode-accent: var(--cyan);
+      --mode-accent-soft: var(--cyan-soft);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body {
+      color: var(--text);
+      font-family: "Segoe UI", "Malgun Gothic", "맑은 고딕", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 50% 46%, rgba(55, 220, 255, .14), transparent 31%),
+        radial-gradient(circle at 82% 20%, rgba(39, 224, 176, .1), transparent 26%),
+        linear-gradient(90deg, transparent 0 96%, rgba(94, 218, 255, .06) 96.2%, transparent 96.4%),
+        linear-gradient(0deg, transparent 0 94%, rgba(94, 218, 255, .045) 94.2%, transparent 94.4%),
+        #020713;
+      background-size: auto, auto, 88px 88px, 88px 88px, auto;
+      user-select: none;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.026) 0 1px, transparent 1px 5px),
+        radial-gradient(circle at 50% 48%, transparent 0 35%, rgba(0,0,0,.56) 78%);
+      mix-blend-mode: screen;
+      opacity: .56;
+      z-index: 5;
+    }
+
+    button { font: inherit; border: 0; cursor: pointer; }
+    canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+    #gestureVideo {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #gestureCanvas {
+      position: fixed;
+      inset: 0;
+      z-index: 39;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+    }
+
+    .app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      isolation: isolate;
+    }
+
+    .app.standby-active {
+      --mode-accent: var(--cyan);
+      --mode-accent-soft: rgba(55, 220, 255, .38);
+    }
+
+    .app.briefing-active {
+      --mode-accent: var(--green);
+      --mode-accent-soft: rgba(39, 224, 176, .36);
+    }
+
+    .deck {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: 100vw 100vw;
+      transition: transform 720ms cubic-bezier(.2,.86,.18,1);
+      z-index: 10;
+    }
+
+    .deck.show-briefing { transform: translateX(-100vw); }
+    .screen {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      padding: clamp(28px, 4vw, 56px);
+    }
+
+    .hud-title {
+      position: absolute;
+      left: clamp(28px, 4vw, 56px);
+      top: clamp(28px, 4vw, 54px);
+      display: grid;
+      gap: 8px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      text-shadow: 0 0 18px rgba(55,220,255,.5);
+      z-index: 12;
+    }
+
+    .hud-title strong {
+      font-size: clamp(24px, 3vw, 44px);
+      font-weight: 500;
+      transition: color 220ms ease, text-shadow 220ms ease;
+    }
+    .hud-title span { color: var(--muted); font-size: 12px; font-weight: 700; }
+
+    .orb-wrap {
+      position: absolute;
+      left: 50%;
+      top: 48%;
+      width: min(52vmin, 430px);
+      aspect-ratio: 1;
+      transform: translate(-50%, -50%);
+      display: grid;
+      place-items: center;
+      filter: drop-shadow(0 0 40px rgba(55,220,255,.3));
+    }
+
+    .orb {
+      position: relative;
+      width: 62%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 48% 42%, #efffff 0 4%, #8ffff2 8%, #2ee1ff 24%, rgba(8, 83, 112, .54) 58%, rgba(0, 8, 16, .3) 72%),
+        radial-gradient(circle, rgba(55, 220, 255, .9), transparent 66%);
+      box-shadow:
+        0 0 36px rgba(127, 255, 241, .76),
+        0 0 92px rgba(55, 220, 255, .38),
+        inset 0 0 58px rgba(255,255,255,.16);
+      transform: scale(calc(.96 + var(--voice, .22) * .16));
+      transition: transform 80ms linear;
+    }
+
+    .orb::before, .orb::after {
+      content: "";
+      position: absolute;
+      inset: -26%;
+      border-radius: 50%;
+      border: 1px solid rgba(143, 238, 255, .25);
+      animation: spin 17s linear infinite;
+    }
+
+    .orb::after {
+      inset: -48%;
+      border-style: dashed;
+      animation-duration: 26s;
+      animation-direction: reverse;
+      opacity: .72;
+    }
+
+    .particle-canvas {
+      z-index: 0;
+      opacity: .95;
+    }
+
+    .caption {
+      position: absolute;
+      left: 50%;
+      bottom: clamp(44px, 8vh, 92px);
+      transform: translateX(-50%);
+      min-width: min(760px, 82vw);
+      display: grid;
+      justify-items: center;
+      gap: 12px;
+      text-align: center;
+      z-index: 12;
+    }
+
+    .caption strong {
+      font-size: clamp(18px, 2.4vw, 30px);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      font-weight: 600;
+      transition: color 220ms ease, text-shadow 220ms ease;
+    }
+
+    .app.briefing-active .hud-title strong,
+    .app.briefing-active .caption strong {
+      color: var(--mode-accent);
+      text-shadow: 0 0 20px var(--mode-accent-soft);
+    }
+
+    .caption span {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+      font-weight: 700;
+    }
+
+    .controls {
+      position: absolute;
+      right: clamp(28px, 4vw, 56px);
+      top: clamp(28px, 4vw, 54px);
+      display: flex;
+      gap: 10px;
+      z-index: 20;
+    }
+
+    .hud-btn {
+      min-height: 40px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(7, 26, 42, .66);
+      color: var(--text);
+      font-weight: 850;
+      box-shadow: inset 0 0 20px rgba(55,220,255,.08), 0 0 22px rgba(55,220,255,.08);
+      transition: transform 160ms ease, border-color 160ms ease, color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+    }
+
+    .hud-btn.primary {
+      border-color: rgba(55, 220, 255, .42);
+      background: linear-gradient(135deg, rgba(22, 133, 211, .76), rgba(22, 196, 202, .52));
+    }
+
+    .hud-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--mode-accent);
+      color: #ffffff;
+      background: rgba(9, 40, 60, .86);
+      box-shadow: inset 0 0 24px var(--mode-accent-soft), 0 0 26px var(--mode-accent-soft);
+    }
+
+    .hud-btn.primary:hover {
+      background: linear-gradient(135deg, rgba(55, 220, 255, .9), rgba(39, 224, 176, .64));
+    }
+
+    .hud-btn:active {
+      transform: translateY(0) scale(.98);
+    }
+
+    .hud-btn.gesture-on {
+      border-color: var(--green);
+      color: #07111a;
+      background: var(--green);
+      box-shadow: 0 0 24px rgba(39,224,176,.32);
+    }
+
+    .gesture-target {
+      outline: 2px solid rgba(39,224,176,.92);
+      outline-offset: 5px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.12),
+        0 0 28px rgba(39,224,176,.34),
+        inset 0 0 18px rgba(39,224,176,.14) !important;
+    }
+
+    .side-card {
+      position: absolute;
+      width: min(280px, 22vw);
+      min-width: 210px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      background: rgba(4, 16, 28, .56);
+      border-radius: 18px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 20px 60px rgba(0,0,0,.18), inset 0 0 24px rgba(55,220,255,.05);
+      z-index: 11;
+    }
+
+    .side-card h3 { margin: 0 0 8px; font-size: 15px; letter-spacing: .08em; text-transform: uppercase; }
+    .side-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; font-weight: 700; }
+    .side-card.left { left: clamp(28px, 5vw, 78px); top: 34%; }
+    .side-card.right { right: clamp(28px, 5vw, 78px); top: 34%; }
+
+    .briefing {
+      background:
+        radial-gradient(circle at 70% 18%, rgba(55, 220, 255, .12), transparent 30%),
+        radial-gradient(circle at 22% 75%, rgba(39, 224, 176, .12), transparent 26%),
+        rgba(0, 5, 13, .26);
+    }
+
+    .briefing-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+
+    .briefing-head h1 {
+      margin: 0;
+      font-size: clamp(34px, 5vw, 78px);
+      line-height: 1;
+      font-weight: 620;
+      letter-spacing: -.03em;
+      text-shadow: 0 0 28px rgba(55,220,255,.35);
+    }
+
+    .briefing-head p { margin: 12px 0 0; color: var(--muted); font-size: 16px; font-weight: 750; }
+
+    .briefing-grid {
+      display: grid;
+      grid-template-columns: 1.18fr .82fr;
+      gap: 18px;
+      height: calc(100vh - 174px);
+      min-height: 520px;
+    }
+
+    .briefing-main, .agent-stack {
+      min-height: 0;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: rgba(4, 16, 28, .62);
+      backdrop-filter: blur(16px);
+      box-shadow: inset 0 0 34px rgba(55,220,255,.055);
+    }
+
+    .briefing-main {
+      display: grid;
+      grid-template-rows: auto minmax(0,1fr);
+      padding: 22px;
+      overflow: hidden;
+    }
+
+    .slide-tabs { display: flex; gap: 9px; flex-wrap: wrap; margin-bottom: 18px; }
+    .slide-tab {
+      padding: 9px 13px;
+      border: 1px solid rgba(113,224,255,.18);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255,255,255,.04);
+      font-size: 12px;
+      font-weight: 850;
+      transition: transform 160ms ease, border-color 160ms ease, color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+    }
+    .slide-tab:hover {
+      transform: translateY(-1px);
+      color: #ffffff;
+      border-color: var(--green);
+      background: rgba(39,224,176,.14);
+      box-shadow: 0 0 18px rgba(39,224,176,.18);
+    }
+    .slide-tab.active {
+      color: #07111a;
+      background: var(--mode-accent);
+      border-color: var(--mode-accent);
+      box-shadow: 0 0 22px var(--mode-accent-soft);
+    }
+
+    .slide-window { position: relative; min-height: 0; overflow: hidden; }
+    .slides {
+      height: 100%;
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 100%;
+      transition: transform 560ms cubic-bezier(.22,.86,.22,1);
+    }
+
+    .brief-slide {
+      display: grid;
+      grid-template-rows: auto minmax(0,1fr);
+      gap: 18px;
+      padding: 8px;
+      min-width: 0;
+    }
+
+    .brief-slide h2 {
+      margin: 0;
+      font-size: clamp(26px, 3vw, 44px);
+      font-weight: 600;
+      letter-spacing: -.03em;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      align-content: start;
+    }
+
+    .info-card {
+      min-height: 130px;
+      padding: 18px;
+      border: 1px solid rgba(113,224,255,.18);
+      border-radius: 18px;
+      background: rgba(255,255,255,.045);
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+    }
+
+    .info-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--mode-accent);
+      background: rgba(55,220,255,.075);
+      box-shadow: inset 0 0 22px var(--mode-accent-soft), 0 12px 34px rgba(0,0,0,.16);
+    }
+
+    .info-card span { color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+    .info-card b { display: block; margin-top: 11px; font-size: clamp(22px, 2.6vw, 34px); font-weight: 650; }
+    .info-card p { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; font-weight: 720; }
+
+    .agent-stack {
+      padding: 20px;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto minmax(0,1fr);
+      gap: 14px;
+    }
+
+    .agent-stack h2 { margin: 0; font-size: 24px; font-weight: 600; }
+    .agent-list { display: grid; gap: 12px; overflow: auto; padding-right: 4px; }
+
+    .agent-row {
+      display: grid;
+      grid-template-columns: 48px minmax(0,1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid rgba(113,224,255,.14);
+      border-radius: 16px;
+      background: rgba(255,255,255,.045);
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+    }
+
+    .agent-row:hover {
+      transform: translateX(3px);
+      border-color: var(--mode-accent);
+      background: rgba(39,224,176,.07);
+      box-shadow: inset 0 0 18px var(--mode-accent-soft);
+    }
+
+    .agent-row[role="button"] {
+      cursor: pointer;
+    }
+
+    .agent-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      color: #07111a;
+      background: var(--cyan);
+      font-weight: 950;
+    }
+
+    .agent-row strong { display: block; font-size: 15px; margin-bottom: 4px; }
+    .agent-row small { color: var(--muted); line-height: 1.4; font-weight: 720; }
+    .state { padding: 6px 9px; border-radius: 999px; font-size: 12px; font-weight: 900; background: rgba(255,255,255,.08); color: var(--muted); }
+    .state.ok { color: #07111a; background: var(--green); }
+    .state.warn { color: #2b1208; background: var(--amber); }
+    .state.err { color: #fff; background: var(--red); }
+
+    .agent-detail-backdrop {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: clamp(18px, 4vw, 52px);
+      background: rgba(0, 8, 18, .58);
+      backdrop-filter: blur(12px);
+      z-index: 40;
+    }
+
+    .agent-detail-backdrop[hidden] {
+      display: none;
+    }
+
+    .agent-detail {
+      width: min(860px, 92vw);
+      max-height: min(760px, 86vh);
+      overflow: auto;
+      border: 1px solid rgba(113,224,255,.3);
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at 86% 12%, rgba(55,220,255,.16), transparent 34%),
+        rgba(5, 18, 31, .92);
+      box-shadow: 0 28px 90px rgba(0,0,0,.38), inset 0 0 34px rgba(55,220,255,.08);
+      padding: 26px;
+    }
+
+    .agent-detail-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .agent-detail-kicker {
+      color: var(--mode-accent);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .agent-detail h3 {
+      margin: 8px 0 0;
+      font-size: clamp(26px, 3vw, 42px);
+      line-height: 1.12;
+      font-weight: 650;
+    }
+
+    .agent-detail-close {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1px solid rgba(113,224,255,.28);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      font-size: 22px;
+      transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+    }
+
+    .agent-detail-close:hover {
+      transform: rotate(90deg);
+      border-color: var(--mode-accent);
+      background: rgba(55,220,255,.12);
+    }
+
+    .agent-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .agent-detail-box {
+      min-height: 92px;
+      padding: 14px;
+      border: 1px solid rgba(113,224,255,.18);
+      border-radius: 16px;
+      background: rgba(255,255,255,.045);
+    }
+
+    .agent-detail-box span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      margin-bottom: 8px;
+    }
+
+    .agent-detail-box b {
+      font-size: 20px;
+      line-height: 1.25;
+    }
+
+    .agent-detail-section {
+      padding: 18px;
+      border: 1px solid rgba(113,224,255,.18);
+      border-radius: 18px;
+      background: rgba(255,255,255,.045);
+    }
+
+    .agent-detail-section h4 {
+      margin: 0 0 10px;
+      color: var(--mode-accent);
+      font-size: 17px;
+    }
+
+    .agent-detail-section p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+      font-weight: 720;
+      white-space: pre-wrap;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 980px) {
+      .side-card { display: none; }
+      .briefing-grid { grid-template-columns: 1fr; height: auto; }
+      .briefing { overflow: auto; }
+      .agent-stack { min-height: 360px; }
+      .info-grid { grid-template-columns: 1fr; }
+      .agent-detail-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <video id="gestureVideo" autoplay playsinline muted></video>
+  <canvas id="gestureCanvas"></canvas>
+  <div class="app standby-active" style="--voice:.22">
+    <canvas id="particleCanvas" class="particle-canvas"></canvas>
+    <div class="deck" id="deck">
+      <section class="screen standby">
+        <div class="hud-title"><strong>G.Y.U.V.I.S.</strong><span>Standby HUD V3 · voice reactive prototype</span></div>
+        <div class="controls">
+          <button class="hud-btn" id="micButton" type="button">마이크 반응</button>
+          <button class="hud-btn" id="gestureButton" type="button">손가락 클릭</button>
+          <button class="hud-btn primary" id="briefingButton" type="button">브리핑 보기</button>
+        </div>
+        <article class="side-card left"><h3>Voice Field</h3><p>목소리 입력 레벨에 따라 중앙 오브와 주변 파티클이 확장됩니다. 마이크 권한이 없으면 데모 파형으로 움직입니다.</p></article>
+        <article class="side-card right"><h3>System Watch</h3><p>브리핑 요청 시 화면이 자연스럽게 옆으로 전환되고 Money Core, 자동차, 에이전트 상태를 요약합니다.</p></article>
+        <div class="orb-wrap"><div class="orb"></div></div>
+        <div class="caption"><strong id="standbyState">Listening...</strong><span id="voiceCaption">일어나, 규비스. 브리핑이 필요하면 “브리핑 진행해줘”라고 말해주세요.</span></div>
+      </section>
+
+      <section class="screen briefing">
+        <div class="briefing-head">
+          <div><h1>브리핑</h1><p id="briefingSubtitle">오늘의 개인 OS 상태를 요약합니다.</p></div>
+          <div class="controls" style="position:static">
+            <button class="hud-btn" id="briefingGestureButton" type="button">손가락 클릭</button>
+            <button class="hud-btn" id="backButton" type="button">대기화면</button>
+          </div>
+        </div>
+        <div class="briefing-grid">
+          <main class="briefing-main">
+            <div class="slide-tabs" id="slideTabs"></div>
+            <div class="slide-window">
+              <div class="slides" id="slides"></div>
+            </div>
+          </main>
+          <aside class="agent-stack">
+            <h2>Agent 상태</h2>
+            <div class="agent-list" id="agentList"></div>
+          </aside>
+        </div>
+      </section>
+    </div>
+    <div class="agent-detail-backdrop" id="agentDetailBackdrop" hidden>
+      <article class="agent-detail" role="dialog" aria-modal="true" aria-labelledby="agentDetailTitle">
+        <div class="agent-detail-head">
+          <div>
+            <div class="agent-detail-kicker" id="agentDetailKicker">Agent 01</div>
+            <h3 id="agentDetailTitle">에이전트 상세</h3>
+          </div>
+          <button class="agent-detail-close" id="agentDetailClose" type="button" aria-label="닫기">×</button>
+        </div>
+        <div class="agent-detail-grid">
+          <div class="agent-detail-box"><span>상태</span><b id="agentDetailStatus">-</b></div>
+          <div class="agent-detail-box"><span>최근 업데이트</span><b id="agentDetailUpdated">-</b></div>
+          <div class="agent-detail-box"><span>작업 유형</span><b id="agentDetailType">-</b></div>
+        </div>
+        <section class="agent-detail-section">
+          <h4>요약</h4>
+          <p id="agentDetailSummary">상세 정보를 불러오는 중입니다.</p>
+        </section>
+      </article>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const app = document.querySelector(".app");
+    const canvas = $("particleCanvas");
+    const ctx = canvas.getContext("2d");
+    const gestureVideo = $("gestureVideo");
+    const gestureCanvas = $("gestureCanvas");
+    const gestureCtx = gestureCanvas.getContext("2d");
+    const particles = [];
+    const handConnections = [
+      [0, 1], [1, 2], [2, 3], [3, 4],
+      [0, 5], [5, 6], [6, 7], [7, 8],
+      [5, 9], [9, 10], [10, 11], [11, 12],
+      [9, 13], [13, 14], [14, 15], [15, 16],
+      [13, 17], [17, 18], [18, 19], [19, 20],
+      [0, 17]
+    ];
+    const fingertipIndexes = new Set([4, 8, 12, 16, 20]);
+    let voiceLevel = .22;
+    let targetLevel = .22;
+    let micStream = null;
+    let analyser = null;
+    let audioData = null;
+    let activeSlide = 0;
+    let reportData = null;
+    let moneyData = null;
+    let commandRecognition = null;
+    let commandListening = false;
+    let gestureCamera = null;
+    let gestureEnabled = false;
+    let gestureCanvasW = window.innerWidth;
+    let gestureCanvasH = window.innerHeight;
+    let lastPinchClickAt = 0;
+    let wasPinching = false;
+    let currentGestureTarget = null;
+    let swipeStartPoint = null;
+    let swipeLockUntil = 0;
+    let gestureClickLockUntil = 0;
+    let waitForPinchRelease = false;
+    let pinchReady = true;
+    let handWasVisible = false;
+    let gestureWarmupUntil = 0;
+
+    function resizeCanvas(){
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(window.innerWidth * ratio);
+      canvas.height = Math.floor(window.innerHeight * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      seedParticles();
+      resizeGestureCanvas();
+    }
+
+    function resizeGestureCanvas(){
+      gestureCanvasW = window.innerWidth;
+      gestureCanvasH = window.innerHeight;
+      const ratio = window.devicePixelRatio || 1;
+      gestureCanvas.width = Math.floor(gestureCanvasW * ratio);
+      gestureCanvas.height = Math.floor(gestureCanvasH * ratio);
+      gestureCanvas.style.width = `${gestureCanvasW}px`;
+      gestureCanvas.style.height = `${gestureCanvasH}px`;
+      gestureCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function seedParticles(){
+      particles.length = 0;
+      const count = Math.min(260, Math.max(150, Math.floor(window.innerWidth / 6)));
+      const field = Math.min(window.innerWidth, window.innerHeight);
+      for(let i=0;i<count;i++){
+        const nearCore = Math.random() < .42;
+        particles.push({
+          angle: Math.random() * Math.PI * 2,
+          radius: nearCore ? 70 + Math.random() * field * .24 : 150 + Math.random() * field * .48,
+          size: .8 + Math.random() * 3.9,
+          speed: .0008 + Math.random() * .0046,
+          alpha: .18 + Math.random() * .58
+        });
+      }
+    }
+
+    function updateVoiceLevel(){
+      if(analyser && audioData){
+        analyser.getByteTimeDomainData(audioData);
+        let sum = 0;
+        for(const value of audioData){
+          const normalized = (value - 128) / 128;
+          sum += normalized * normalized;
+        }
+        targetLevel = Math.min(1, Math.sqrt(sum / audioData.length) * 5.4);
+      }else{
+        const t = performance.now() / 1000;
+        targetLevel = .18 + Math.pow((Math.sin(t * 2.2) + Math.sin(t * 4.7) * .42 + 1.35) / 2.7, 2) * .54;
+      }
+      voiceLevel += (targetLevel - voiceLevel) * .14;
+      app.style.setProperty("--voice", voiceLevel.toFixed(3));
+    }
+
+    function drawParticles(){
+      updateVoiceLevel();
+      ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight * .48;
+      const expand = 1 + voiceLevel * .36;
+      for(const p of particles){
+        p.angle += p.speed * (1 + voiceLevel * 4);
+        const pulse = Math.sin(performance.now() * .002 + p.radius * .02) * 12 * voiceLevel;
+        const x = cx + Math.cos(p.angle) * (p.radius * expand + pulse);
+        const y = cy + Math.sin(p.angle) * (p.radius * expand + pulse);
+        const size = p.size * (1 + voiceLevel * 3.1);
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(93, 231, 255, ${Math.min(.88, p.alpha + voiceLevel * .32)})`;
+        ctx.shadowColor = "rgba(55, 220, 255, .62)";
+        ctx.shadowBlur = 12 + voiceLevel * 24;
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      requestAnimationFrame(drawParticles);
+    }
+
+    async function enableMic(){
+      if(micStream){
+        micStream.getTracks().forEach((track) => track.stop());
+        micStream = null;
+        analyser = null;
+        audioData = null;
+        stopCommandRecognition();
+        $("micButton").textContent = "마이크 반응";
+        $("voiceCaption").textContent = "마이크 입력을 중지했습니다. 데모 파형으로 계속 움직입니다.";
+        return;
+      }
+      try{
+        micStream = await navigator.mediaDevices.getUserMedia({ audio:true });
+        const audioContext = new AudioContext();
+        const source = audioContext.createMediaStreamSource(micStream);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 1024;
+        audioData = new Uint8Array(analyser.fftSize);
+        source.connect(analyser);
+        $("micButton").textContent = "마이크 중지";
+        $("voiceCaption").textContent = "목소리 높낮이에 맞춰 파티클 필드가 반응합니다. “에이전트 1번 열어봐”라고 말해보세요.";
+        startCommandRecognition();
+      }catch(error){
+        $("voiceCaption").textContent = "마이크 권한을 받지 못해 데모 파형으로 표시합니다.";
+      }
+    }
+
+    function startCommandRecognition(){
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if(!SpeechRecognition || commandListening) return;
+      commandRecognition = new SpeechRecognition();
+      commandRecognition.lang = "ko-KR";
+      commandRecognition.continuous = true;
+      commandRecognition.interimResults = false;
+      commandRecognition.onresult = (event) => {
+        const latest = event.results[event.results.length - 1];
+        const text = latest?.[0]?.transcript || "";
+        handleVoiceCommand(text);
+      };
+      commandRecognition.onend = () => {
+        commandListening = false;
+        if(micStream){
+          try{
+            commandRecognition.start();
+            commandListening = true;
+          }catch(error){}
+        }
+      };
+      try{
+        commandRecognition.start();
+        commandListening = true;
+      }catch(error){
+        commandListening = false;
+      }
+    }
+
+    function stopCommandRecognition(){
+      if(!commandRecognition) return;
+      try{ commandRecognition.stop(); }catch(error){}
+      commandRecognition = null;
+      commandListening = false;
+    }
+
+    function handleVoiceCommand(rawText){
+      const text = String(rawText || "").replace(/\s+/g, "");
+      if(!text) return;
+      if(text.includes("브리핑") && (text.includes("열") || text.includes("보") || text.includes("진행"))){
+        showBriefing();
+        return;
+      }
+      if(text.includes("대기화면") || text.includes("대기모드")){
+        showStandby();
+        return;
+      }
+      const agentMatch = text.match(/에이전트([1-4])번?/) || text.match(/agent([1-4])/i);
+      if(agentMatch && (text.includes("열") || text.includes("보") || text.includes("상세") || text.includes("확인"))){
+        showBriefing();
+        openAgentDetail(Number(agentMatch[1]) - 1);
+      }
+    }
+
+    function setGestureButtons(active){
+      [$("gestureButton"), $("briefingGestureButton")].forEach((button) => {
+        if(!button) return;
+        button.classList.toggle("gesture-on", active);
+        button.textContent = active ? "손가락 클릭 ON" : "손가락 클릭";
+      });
+    }
+
+    function pointToScreen(point){
+      return {
+        x: (1 - point.x) * window.innerWidth,
+        y: point.y * window.innerHeight
+      };
+    }
+
+    function pinchDistance(hand){
+      const thumb = hand[4];
+      const index = hand[8];
+      return Math.hypot(thumb.x - index.x, thumb.y - index.y);
+    }
+
+    function isPinching(hand){
+      return pinchDistance(hand) < 0.045;
+    }
+
+    function isClickPinch(hand){
+      return pinchDistance(hand) < 0.028;
+    }
+
+    function isPinchReleased(hand){
+      return pinchDistance(hand) > 0.06;
+    }
+
+    function getGestureTarget(point){
+      const element = document.elementFromPoint(point.x, point.y);
+      if(!element) return null;
+      return element.closest("button, [role='button'], .slide-tab, .info-card, .agent-row");
+    }
+
+    function updateGestureTarget(target){
+      if(currentGestureTarget === target) return;
+      currentGestureTarget?.classList.remove("gesture-target");
+      currentGestureTarget = target;
+      currentGestureTarget?.classList.add("gesture-target");
+    }
+
+    function drawGestureTarget(target){
+      if(!target) return;
+      const rect = target.getBoundingClientRect();
+      const corner = Math.min(26, rect.width * .2, rect.height * .2);
+      const pad = 8;
+      const x = rect.left - pad;
+      const y = rect.top - pad;
+      const w = rect.width + pad * 2;
+      const h = rect.height + pad * 2;
+      gestureCtx.save();
+      gestureCtx.shadowColor = "rgba(39,224,176,.72)";
+      gestureCtx.shadowBlur = 16;
+      gestureCtx.strokeStyle = "rgba(39,224,176,.9)";
+      gestureCtx.lineWidth = 2;
+      [[x, y, 1, 1], [x + w, y, -1, 1], [x, y + h, 1, -1], [x + w, y + h, -1, -1]].forEach(([cx, cy, sx, sy]) => {
+        gestureCtx.beginPath();
+        gestureCtx.moveTo(cx, cy + sy * corner);
+        gestureCtx.lineTo(cx, cy);
+        gestureCtx.lineTo(cx + sx * corner, cy);
+        gestureCtx.stroke();
+      });
+      gestureCtx.font = '12px "Segoe UI", "Malgun Gothic", sans-serif';
+      gestureCtx.fillStyle = "rgba(232,255,255,.94)";
+      gestureCtx.fillText("TARGET LOCK", x, Math.max(18, y - 10));
+      gestureCtx.restore();
+    }
+
+    function drawGestureCursor(point, pinching, clickPinch, hasTarget){
+      gestureCtx.save();
+      const radius = clickPinch ? 28 : pinching ? 22 : 18;
+      gestureCtx.translate(point.x, point.y);
+      gestureCtx.shadowColor = clickPinch ? "rgba(255,255,255,.9)" : hasTarget ? "rgba(39,224,176,.72)" : "rgba(55,220,255,.56)";
+      gestureCtx.shadowBlur = clickPinch ? 24 : 16;
+      gestureCtx.strokeStyle = clickPinch ? "rgba(255,255,255,.96)" : hasTarget ? "rgba(39,224,176,.9)" : "rgba(55,220,255,.74)";
+      gestureCtx.lineWidth = clickPinch ? 3 : 2;
+      gestureCtx.beginPath();
+      gestureCtx.arc(0, 0, radius, 0, Math.PI * 2);
+      gestureCtx.stroke();
+      gestureCtx.beginPath();
+      gestureCtx.moveTo(-radius - 9, 0);
+      gestureCtx.lineTo(-radius + 6, 0);
+      gestureCtx.moveTo(radius - 6, 0);
+      gestureCtx.lineTo(radius + 9, 0);
+      gestureCtx.moveTo(0, -radius - 9);
+      gestureCtx.lineTo(0, -radius + 6);
+      gestureCtx.moveTo(0, radius - 6);
+      gestureCtx.lineTo(0, radius + 9);
+      gestureCtx.stroke();
+      gestureCtx.fillStyle = clickPinch ? "rgba(255,255,255,.96)" : "rgba(232,255,255,.84)";
+      gestureCtx.beginPath();
+      gestureCtx.arc(0, 0, 3.8, 0, Math.PI * 2);
+      gestureCtx.fill();
+      gestureCtx.font = '11px "Segoe UI", "Malgun Gothic", sans-serif';
+      gestureCtx.fillStyle = "rgba(232,255,255,.9)";
+      gestureCtx.fillText(clickPinch ? "CLICK" : hasTarget ? "READY" : "AIM", radius + 12, 4);
+      gestureCtx.restore();
+    }
+
+    function drawGestureHands(hands, target=null, clickPinch=false){
+      gestureCtx.clearRect(0, 0, gestureCanvasW, gestureCanvasH);
+      if(!hands.length) return;
+      drawGestureTarget(target);
+      hands.slice(0, 1).forEach((hand) => {
+        const points = hand.map(pointToScreen);
+        const pinching = isPinching(hand);
+        const localClickPinch = clickPinch || isClickPinch(hand);
+        gestureCtx.save();
+        gestureCtx.lineCap = "round";
+        gestureCtx.lineJoin = "round";
+        gestureCtx.shadowColor = pinching ? "rgba(116, 255, 225, .95)" : "rgba(55, 220, 255, .7)";
+        gestureCtx.shadowBlur = pinching ? 16 : 9;
+
+        handConnections.forEach(([start, end]) => {
+          const a = points[start];
+          const b = points[end];
+          gestureCtx.beginPath();
+          gestureCtx.moveTo(a.x, a.y);
+          gestureCtx.lineTo(b.x, b.y);
+          gestureCtx.strokeStyle = pinching ? "rgba(132,255,228,.86)" : "rgba(85,210,255,.58)";
+          gestureCtx.lineWidth = fingertipIndexes.has(end) ? 3 : 2;
+          gestureCtx.stroke();
+        });
+
+        points.forEach((point, index) => {
+          const isTip = fingertipIndexes.has(index);
+          gestureCtx.beginPath();
+          gestureCtx.arc(point.x, point.y, isTip ? 6 : 3.2, 0, Math.PI * 2);
+          gestureCtx.fillStyle = isTip ? "rgba(232,255,255,.94)" : "rgba(58,219,255,.68)";
+          gestureCtx.fill();
+        });
+
+        const thumb = points[4];
+        const index = points[8];
+        const cx = (thumb.x + index.x) / 2;
+        const cy = (thumb.y + index.y) / 2;
+        const midpoint = { x: cx, y: cy };
+        gestureCtx.beginPath();
+        gestureCtx.moveTo(thumb.x, thumb.y);
+        gestureCtx.lineTo(index.x, index.y);
+        gestureCtx.strokeStyle = localClickPinch ? "rgba(255,255,255,.96)" : pinching ? "rgba(132,255,228,.88)" : "rgba(115,221,255,.3)";
+        gestureCtx.lineWidth = localClickPinch ? 4.5 : pinching ? 3 : 1.5;
+        gestureCtx.stroke();
+
+        drawGestureCursor(midpoint, pinching, localClickPinch, Boolean(target));
+
+        if(swipeStartPoint && !pinching){
+          const tip = points[8];
+          gestureCtx.beginPath();
+          gestureCtx.moveTo(swipeStartPoint.x, swipeStartPoint.y);
+          gestureCtx.lineTo(tip.x, tip.y);
+          gestureCtx.strokeStyle = "rgba(39,224,176,.56)";
+          gestureCtx.lineWidth = 3;
+          gestureCtx.stroke();
+        }
+        gestureCtx.restore();
+      });
+    }
+
+    function handleGestureResults(results){
+      const hands = results.multiHandLandmarks || [];
+      if(!hands.length){
+        gestureCtx.clearRect(0, 0, gestureCanvasW, gestureCanvasH);
+        wasPinching = false;
+        pinchReady = true;
+        handWasVisible = false;
+        swipeStartPoint = null;
+        updateGestureTarget(null);
+        return;
+      }
+      const hand = hands[0];
+      const thumb = pointToScreen(hand[4]);
+      const index = pointToScreen(hand[8]);
+      const midpoint = {
+        x: (thumb.x + index.x) / 2,
+        y: (thumb.y + index.y) / 2
+      };
+      const pinching = isPinching(hand);
+      const clickPinch = isClickPinch(hand);
+      const released = isPinchReleased(hand);
+      const target = getGestureTarget(midpoint);
+      updateGestureTarget(target);
+      const now = performance.now();
+      drawGestureHands(hands, target, clickPinch);
+      if(!handWasVisible){
+        handWasVisible = true;
+        gestureWarmupUntil = now + 600;
+        swipeStartPoint = { x: index.x, y: index.y, t: now };
+      }
+      handleSwipeGesture(index, pinching, now);
+      if(released){
+        pinchReady = true;
+      }
+      if(released && waitForPinchRelease){
+        waitForPinchRelease = false;
+      }
+      if((pinching || clickPinch) && waitForPinchRelease){
+        wasPinching = true;
+        return;
+      }
+      if(clickPinch && pinchReady && target && now > gestureClickLockUntil && now - lastPinchClickAt > 650){
+        pinchReady = false;
+        lastPinchClickAt = now;
+        target.click();
+        $("voiceCaption").textContent = "손가락 클릭을 실행했습니다.";
+      }
+      wasPinching = pinching;
+    }
+
+    function handleSwipeGesture(indexPoint, pinching, now){
+      if(pinching || now < swipeLockUntil || now < gestureWarmupUntil){
+        swipeStartPoint = null;
+        return;
+      }
+      if(!swipeStartPoint){
+        swipeStartPoint = { x: indexPoint.x, y: indexPoint.y, t: now };
+        return;
+      }
+
+      const elapsed = now - swipeStartPoint.t;
+      const dx = indexPoint.x - swipeStartPoint.x;
+      const dy = indexPoint.y - swipeStartPoint.y;
+      if(elapsed < 140) return;
+      if(elapsed > 900 || Math.abs(dy) > 180){
+        swipeStartPoint = { x: indexPoint.x, y: indexPoint.y, t: now };
+        return;
+      }
+
+      const horizontalSwipe = Math.abs(dx) > 170 && Math.abs(dy) < 130;
+      if(horizontalSwipe){
+        swipeLockUntil = now + 1300;
+        swipeStartPoint = null;
+        if($("deck").classList.contains("show-briefing")){
+          showStandby();
+          $("voiceCaption").textContent = "스윽 제스처로 대기화면으로 돌아왔습니다.";
+        }else{
+          showBriefing();
+          $("voiceCaption").textContent = "스윽 제스처로 브리핑을 열었습니다.";
+        }
+      }
+    }
+
+    function toggleGestures(){
+      if(gestureEnabled){
+        gestureEnabled = false;
+        if(gestureCamera?.stop) gestureCamera.stop();
+        if(gestureVideo.srcObject){
+          gestureVideo.srcObject.getTracks().forEach((track) => track.stop());
+          gestureVideo.srcObject = null;
+        }
+        gestureCtx.clearRect(0, 0, gestureCanvasW, gestureCanvasH);
+        updateGestureTarget(null);
+        setGestureButtons(false);
+        $("voiceCaption").textContent = "손가락 클릭을 중지했습니다.";
+        return;
+      }
+      if(!window.Hands || !window.Camera){
+        $("voiceCaption").textContent = "손 인식 모듈을 불러오지 못했습니다. 네트워크 연결을 확인해주세요.";
+        return;
+      }
+      const hands = new Hands({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+      });
+      hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: .68,
+        minTrackingConfidence: .66
+      });
+      hands.onResults(handleGestureResults);
+      gestureCamera = new Camera(gestureVideo, {
+        onFrame: async () => {
+          if(gestureEnabled) await hands.send({ image: gestureVideo });
+        },
+        width: 960,
+        height: 540
+      });
+      gestureCamera.start()
+        .then(() => {
+          gestureEnabled = true;
+          setGestureButtons(true);
+          $("voiceCaption").textContent = "손가락 클릭 준비 완료. 검지를 왼쪽으로 스윽 하면 브리핑, 엄지와 검지를 오므리면 클릭합니다.";
+        })
+        .catch(() => {
+          gestureEnabled = false;
+          setGestureButtons(false);
+          $("voiceCaption").textContent = "카메라 권한이 필요합니다.";
+        });
+    }
+
+    function won(value){ return `${Number(value || 0).toLocaleString("ko-KR")}원`; }
+    function pct(value){ return `${Math.round(Number(value || 0) * 100)}%`; }
+    function safe(value, fallback="-"){ return value === null || value === undefined || value === "" ? fallback : String(value); }
+
+    async function fetchJson(url){
+      const response = await fetch(url);
+      if(!response.ok) throw new Error(await response.text());
+      return response.json();
+    }
+
+    async function loadBriefingData(){
+      try{
+        const [money, report] = await Promise.all([
+          fetchJson("/finance/summary"),
+          fetchJson("/agent/report-center/data")
+        ]);
+        moneyData = money;
+        reportData = report;
+      }catch(error){
+        console.warn(error);
+      }
+      renderBriefing();
+    }
+
+    function renderBriefing(){
+      const slides = [
+        {
+          key:"money",
+          label:"Money Core",
+          title:"Money Core",
+          cards:[
+            ["자유 현금", won(moneyData?.remaining_cash), "월급에서 저축, 고정비, 카드 결제 후 남은 금액"],
+            ["이번 달 배분", won(moneyData?.monthly_spend_total), `배분율 ${pct((moneyData?.monthly_spend_total || 0) / (moneyData?.salary || 1))}`],
+            ["카드 결제", won(moneyData?.credit_card), "카드 사용 흐름을 기준으로 확인"],
+            ["자산 변화", won(moneyData?.asset_change?.amount), `전월 대비 ${pct(moneyData?.asset_change?.rate || 0)}`],
+          ]
+        },
+        {
+          key:"drive",
+          label:"자동차",
+          title:"자동차 관리",
+          cards:[
+            ["차량 상태", "확인 대기", "보험, 엔진오일, 정비 브리핑 연동 예정"],
+            ["정비 체크", "대기", "최근 정비 기록 기반으로 확장 가능"],
+            ["주유 기록", "대기", "월별 주유 횟수와 비용 요약 예정"],
+            ["다음 액션", "점검", "Drive 화면 데이터와 연결하면 자동 요약 가능"],
+          ]
+        },
+        {
+          key:"content",
+          label:"콘텐츠",
+          title:"Creator Studio",
+          cards:[
+            ["IT 뉴스", `${Number(reportData?.agent1?.display_count || 0)}건`, "Agent 01 최신 뉴스 표시"],
+            ["블로그 초안", `${(reportData?.agent2?.drafts || []).length}건`, "네이버 블로그용 초안"],
+            ["유튜브 아이디어", `${(reportData?.agent4?.ideas || []).length}건`, "Agent 04 아이디어 후보"],
+            ["Codex 승인", `${(reportData?.agent3?.dev_proposals || []).filter((p)=>p.status==="pending").length}건`, "Agent 03 제안 승인 대기"],
+          ]
+        }
+      ];
+      $("slideTabs").innerHTML = slides.map((slide, index) => `<button class="slide-tab ${index===activeSlide?"active":""}" data-slide="${index}">${slide.label}</button>`).join("");
+      $("slides").style.transform = `translateX(-${activeSlide * 100}%)`;
+      $("slides").innerHTML = slides.map((slide) => `
+        <section class="brief-slide">
+          <h2>${slide.title}</h2>
+          <div class="info-grid">
+            ${slide.cards.map(([label, value, desc]) => `<article class="info-card"><span>${label}</span><b>${value}</b><p>${desc}</p></article>`).join("")}
+          </div>
+        </section>
+      `).join("");
+
+      const cards = reportData?.cards || [];
+      $("agentList").innerHTML = cards.length ? cards.map((agent, index) => {
+        const status = safe(agent.status, "대기");
+        const cls = status.includes("완료") || status.includes("활성") ? "ok" : status.includes("확인") || status.includes("대기") ? "warn" : "err";
+        return `<article class="agent-row" role="button" tabindex="0" data-agent-index="${index}"><div class="agent-icon">${String(index+1).padStart(2,"0")}</div><div><strong>${safe(agent.title)}</strong><small>${safe(agent.latest_result_summary || agent.description)}</small></div><span class="state ${cls}">${status}</span></article>`;
+      }).join("") : `<article class="agent-row"><div class="agent-icon">--</div><div><strong>Agent 데이터 대기</strong><small>서버 연결 시 상태가 표시됩니다.</small></div><span class="state warn">대기</span></article>`;
+    }
+
+    function formatDateTime(value){
+      if(!value) return "-";
+      const date = new Date(value);
+      if(Number.isNaN(date.getTime())) return safe(value);
+      return date.toLocaleString("ko-KR", {
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function getAgentDetailText(agent, index){
+      const parts = [
+        safe(agent.latest_result_summary || agent.description, "아직 표시할 상세 요약이 없습니다.")
+      ];
+      if(index === 0 && reportData?.agent1?.news?.length){
+        parts.push("최신 뉴스:\n" + reportData.agent1.news.slice(0, 5).map((item, itemIndex) => `${itemIndex + 1}. ${safe(item.title)}`).join("\n"));
+      }
+      if(index === 1 && reportData?.agent2?.drafts?.length){
+        parts.push("블로그 초안:\n" + reportData.agent2.drafts.slice(0, 5).map((item, itemIndex) => `${itemIndex + 1}. ${safe(item.title || item.summary)}`).join("\n"));
+      }
+      if(index === 2 && reportData?.agent3?.dev_proposals?.length){
+        parts.push("개발 제안:\n" + reportData.agent3.dev_proposals.slice(0, 5).map((item, itemIndex) => `${itemIndex + 1}. ${safe(item.title)} · ${safe(item.status)}`).join("\n"));
+      }
+      if(index === 3 && reportData?.agent4?.ideas?.length){
+        parts.push("유튜브 아이디어:\n" + reportData.agent4.ideas.slice(0, 5).map((item, itemIndex) => `${itemIndex + 1}. ${safe(item.title || item.summary)}`).join("\n"));
+      }
+      return parts.join("\n\n");
+    }
+
+    function openAgentDetail(index){
+      const cards = reportData?.cards || [];
+      const agent = cards[index];
+      if(!agent){
+        $("voiceCaption").textContent = `Agent ${index + 1} 정보를 아직 불러오지 못했습니다.`;
+        return;
+      }
+      $("agentDetailKicker").textContent = `Agent ${String(index + 1).padStart(2, "0")}`;
+      $("agentDetailTitle").textContent = safe(agent.title, `Agent ${index + 1}`);
+      $("agentDetailStatus").textContent = safe(agent.status, "대기");
+      $("agentDetailUpdated").textContent = formatDateTime(agent.updated_at || agent.last_run_at);
+      $("agentDetailType").textContent = safe(agent.task_type || agent.type || agent.role, "상태 확인");
+      $("agentDetailSummary").textContent = getAgentDetailText(agent, index);
+      $("agentDetailBackdrop").hidden = false;
+      $("voiceCaption").textContent = `Agent ${index + 1} 상세 화면을 열었습니다.`;
+    }
+
+    function closeAgentDetail(){
+      $("agentDetailBackdrop").hidden = true;
+      gestureClickLockUntil = performance.now() + 900;
+      waitForPinchRelease = true;
+      pinchReady = false;
+      wasPinching = true;
+      updateGestureTarget(null);
+    }
+
+    function showBriefing(){
+      app.classList.remove("standby-active");
+      app.classList.add("briefing-active");
+      $("deck").classList.add("show-briefing");
+      $("standbyState").textContent = "Briefing Mode";
+      loadBriefingData();
+    }
+
+    function showStandby(){
+      app.classList.remove("briefing-active");
+      app.classList.add("standby-active");
+      $("deck").classList.remove("show-briefing");
+      $("standbyState").textContent = "Listening...";
+    }
+
+    $("micButton").addEventListener("click", enableMic);
+    $("gestureButton").addEventListener("click", toggleGestures);
+    $("briefingGestureButton").addEventListener("click", toggleGestures);
+    $("briefingButton").addEventListener("click", showBriefing);
+    $("backButton").addEventListener("click", showStandby);
+    $("slideTabs").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-slide]");
+      if(!button) return;
+      activeSlide = Number(button.dataset.slide || 0);
+      renderBriefing();
+    });
+    $("agentList").addEventListener("click", (event) => {
+      const row = event.target.closest("[data-agent-index]");
+      if(!row) return;
+      openAgentDetail(Number(row.dataset.agentIndex || 0));
+    });
+    $("agentList").addEventListener("keydown", (event) => {
+      if(event.key !== "Enter" && event.key !== " ") return;
+      const row = event.target.closest("[data-agent-index]");
+      if(!row) return;
+      event.preventDefault();
+      openAgentDetail(Number(row.dataset.agentIndex || 0));
+    });
+    $("agentDetailClose").addEventListener("click", closeAgentDetail);
+    $("agentDetailBackdrop").addEventListener("click", (event) => {
+      if(event.target.id === "agentDetailBackdrop") closeAgentDetail();
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if(event.key === "b" || event.key === "B") showBriefing();
+      if(event.key === "Escape"){
+        if(!$("agentDetailBackdrop").hidden){
+          closeAgentDetail();
+        }else{
+          showStandby();
+        }
+      }
+    });
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+    renderBriefing();
+    drawParticles();
+  </script>
+</body>
+</html>
