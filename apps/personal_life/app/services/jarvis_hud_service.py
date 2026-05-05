@@ -5,7 +5,7 @@ from pathlib import Path
 from ..config import APP_ROOT
 
 
-DEFAULT_HUD_URL = "http://127.0.0.1:8000/gyuvis/standby-v2"
+DEFAULT_HUD_URL = "http://127.0.0.1:8000/gyuvis/standby-v3"
 
 
 def get_jarvis_hud_path() -> Path:
@@ -13,7 +13,7 @@ def get_jarvis_hud_path() -> Path:
     if configured:
         return Path(configured).expanduser()
 
-    return APP_ROOT.parent / "javis-app" / "standby-v2.html"
+    return APP_ROOT.parent / "javis-app" / "standby-v3.html"
 
 
 def get_jarvis_hud_url() -> str:

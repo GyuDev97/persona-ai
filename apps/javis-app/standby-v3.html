@@ -606,7 +606,7 @@
         <article class="side-card left"><h3>Voice Field</h3><p>목소리 입력 레벨에 따라 중앙 오브와 주변 파티클이 확장됩니다. 마이크 권한이 없으면 데모 파형으로 움직입니다.</p></article>
         <article class="side-card right"><h3>System Watch</h3><p>브리핑 요청 시 화면이 자연스럽게 옆으로 전환되고 Money Core, 자동차, 에이전트 상태를 요약합니다.</p></article>
         <div class="orb-wrap"><div class="orb"></div></div>
-        <div class="caption"><strong id="standbyState">Listening...</strong><span id="voiceCaption">일어나, 규비스. 브리핑이 필요하면 “브리핑 진행해줘”라고 말해주세요.</span></div>
+        <div class="caption"><strong id="standbyState">Listening...</strong><span id="voiceCaption">일어나, 규비스. “브리핑 열어”, “홈으로 가”, “에이전트 1번 열어봐”라고 말해보세요.</span></div>
       </section>
 
       <section class="screen briefing">
@@ -683,6 +683,7 @@
     let moneyData = null;
     let commandRecognition = null;
     let commandListening = false;
+    let commandModeEnabled = false;
     let gestureCamera = null;
     let gestureEnabled = false;
     let gestureCanvasW = window.innerWidth;
@@ -773,9 +774,19 @@
       requestAnimationFrame(drawParticles);
     }
 
+    function describeMicError(error){
+      const name = error?.name || "UnknownError";
+      if(name === "NotAllowedError" || name === "PermissionDeniedError") return "마이크 권한이 차단되었습니다. 주소창 왼쪽 권한에서 마이크를 허용해주세요.";
+      if(name === "NotFoundError" || name === "DevicesNotFoundError") return "사용 가능한 마이크 장치를 찾지 못했습니다.";
+      if(name === "NotReadableError" || name === "TrackStartError") return "다른 앱이 마이크를 사용 중일 수 있습니다.";
+      if(name === "SecurityError") return "브라우저 보안 정책으로 마이크를 열 수 없습니다. localhost/127.0.0.1에서 실행 중인지 확인해주세요.";
+      if(!navigator.mediaDevices?.getUserMedia) return "이 브라우저 환경에서는 마이크 API를 사용할 수 없습니다.";
+      return `마이크 시작 실패: ${name}`;
+    }
+
     async function enableMic(){
-      if(micStream){
-        micStream.getTracks().forEach((track) => track.stop());
+      if(micStream || commandListening){
+        if(micStream) micStream.getTracks().forEach((track) => track.stop());
         micStream = null;
         analyser = null;
         audioData = null;
@@ -784,9 +795,12 @@
         $("voiceCaption").textContent = "마이크 입력을 중지했습니다. 데모 파형으로 계속 움직입니다.";
         return;
       }
+      const commandStarted = startCommandRecognition();
       try{
+        if(!navigator.mediaDevices?.getUserMedia) throw new Error("MediaDevicesUnavailable");
         micStream = await navigator.mediaDevices.getUserMedia({ audio:true });
-        const audioContext = new AudioContext();
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        const audioContext = new AudioContextClass();
         const source = audioContext.createMediaStreamSource(micStream);
         analyser = audioContext.createAnalyser();
         analyser.fftSize = 1024;
@@ -794,15 +808,19 @@
         source.connect(analyser);
         $("micButton").textContent = "마이크 중지";
         $("voiceCaption").textContent = "목소리 높낮이에 맞춰 파티클 필드가 반응합니다. “에이전트 1번 열어봐”라고 말해보세요.";
-        startCommandRecognition();
       }catch(error){
-        $("voiceCaption").textContent = "마이크 권한을 받지 못해 데모 파형으로 표시합니다.";
+        console.warn("GYUVIS mic failed", error);
+        $("micButton").textContent = commandStarted ? "음성 명령 중지" : "마이크 반응";
+        $("voiceCaption").textContent = commandStarted
+          ? `${describeMicError(error)} 파형은 데모로 움직이고, 음성 명령은 별도로 듣는 중입니다.`
+          : `${describeMicError(error)} 데모 파형으로 표시합니다.`;
       }
     }
 
     function startCommandRecognition(){
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if(!SpeechRecognition || commandListening) return;
+      if(!SpeechRecognition || commandListening) return false;
+      commandModeEnabled = true;
       commandRecognition = new SpeechRecognition();
       commandRecognition.lang = "ko-KR";
       commandRecognition.continuous = true;
@@ -810,11 +828,18 @@
       commandRecognition.onresult = (event) => {
         const latest = event.results[event.results.length - 1];
         const text = latest?.[0]?.transcript || "";
+        $("voiceCaption").textContent = `들은 명령: ${text}`;
         handleVoiceCommand(text);
+      };
+      commandRecognition.onerror = (event) => {
+        console.warn("GYUVIS speech recognition failed", event);
+        if(event.error === "not-allowed"){
+          $("voiceCaption").textContent = "음성 명령 마이크 권한이 차단되었습니다. 브라우저 주소창 왼쪽 권한에서 마이크를 허용해주세요.";
+        }
       };
       commandRecognition.onend = () => {
         commandListening = false;
-        if(micStream){
+        if(commandModeEnabled){
           try{
             commandRecognition.start();
             commandListening = true;
@@ -824,34 +849,77 @@
       try{
         commandRecognition.start();
         commandListening = true;
+        return true;
       }catch(error){
+        console.warn("GYUVIS speech recognition start failed", error);
         commandListening = false;
+        return false;
       }
     }
 
     function stopCommandRecognition(){
+      commandModeEnabled = false;
       if(!commandRecognition) return;
       try{ commandRecognition.stop(); }catch(error){}
       commandRecognition = null;
       commandListening = false;
     }
 
+    function normalizeCommandText(rawText){
+      return String(rawText || "")
+        .toLowerCase()
+        .replace(/\s+/g, "");
+    }
+
+    function commandHasAny(text, words){
+      return words.some((word) => text.includes(word));
+    }
+
+    function goToLocalPage(path, message){
+      $("voiceCaption").textContent = message;
+      window.setTimeout(() => {
+        window.location.href = path;
+      }, 180);
+    }
+
+    function parseAgentNumber(text){
+      const digitMatch = text.match(/(?:에이전트|agent)?([1-4])번?/) || text.match(/([1-4])번째/);
+      if(digitMatch) return Number(digitMatch[1]);
+      const wordMap = [
+        ["일", "원", "하나", "첫", "첫번째", "첫번"],
+        ["이", "둘", "두", "두번째", "둘째", "두번"],
+        ["삼", "셋", "세", "세번째", "셋째", "세번"],
+        ["사", "넷", "네", "네번째", "넷째", "네번"]
+      ];
+      const agentPart = text.includes("에이전트") ? text.slice(text.indexOf("에이전트") + 4) : text;
+      for(let index = 0; index < wordMap.length; index += 1){
+        if(wordMap[index].some((word) => agentPart.includes(word))) return index + 1;
+      }
+      return null;
+    }
+
     function handleVoiceCommand(rawText){
-      const text = String(rawText || "").replace(/\s+/g, "");
+      const text = normalizeCommandText(rawText);
       if(!text) return;
-      if(text.includes("브리핑") && (text.includes("열") || text.includes("보") || text.includes("진행"))){
-        showBriefing();
-        return;
-      }
-      if(text.includes("대기화면") || text.includes("대기모드")){
+      console.log("GYUVIS voice command", rawText, text);
+      if(commandHasAny(text, ["홈", "메인", "메인화면", "대기화면", "대기모드", "대기", "main", "home", "standby"])){
         showStandby();
+        $("voiceCaption").textContent = "음성 명령으로 HUD 메인화면으로 돌아왔습니다.";
         return;
       }
-      const agentMatch = text.match(/에이전트([1-4])번?/) || text.match(/agent([1-4])/i);
-      if(agentMatch && (text.includes("열") || text.includes("보") || text.includes("상세") || text.includes("확인"))){
+      if(commandHasAny(text, ["브리핑", "브리핑화면", "브리핑모드", "briefing"])){
         showBriefing();
-        openAgentDetail(Number(agentMatch[1]) - 1);
+        $("voiceCaption").textContent = "음성 명령으로 HUD 브리핑 화면을 열었습니다.";
+        return;
       }
+      const agentNumber = parseAgentNumber(text);
+      if(agentNumber && commandHasAny(text, ["열", "보", "상세", "확인", "켜", "띄워"])){
+        showBriefing();
+        openAgentDetail(agentNumber - 1);
+        $("voiceCaption").textContent = `음성 명령으로 Agent ${agentNumber} 상세를 열었습니다.`;
+        return;
+      }
+      $("voiceCaption").textContent = `들은 명령: ${rawText} · 아직 연결된 동작이 없습니다.`;
     }
 
     function setGestureButtons(active){
