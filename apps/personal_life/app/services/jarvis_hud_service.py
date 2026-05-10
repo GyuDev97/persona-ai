@@ -1,11 +1,13 @@
 import os
 import subprocess
+import time
 from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from ..config import APP_ROOT
 
 
-DEFAULT_HUD_URL = "http://127.0.0.1:8000/gyuvis/standby-v3"
+DEFAULT_HUD_URL = "http://127.0.0.1:8000/gyuvis/standby-v3?boot=veil&veil=1&autoGesture=1&autoPresence=1&voiceWelcome=0"
 
 
 def get_jarvis_hud_path() -> Path:
@@ -17,7 +19,21 @@ def get_jarvis_hud_path() -> Path:
 
 
 def get_jarvis_hud_url() -> str:
-    return os.getenv("GYUVIS_JARVIS_HUD_URL", DEFAULT_HUD_URL).strip() or DEFAULT_HUD_URL
+    configured = os.getenv("GYUVIS_JARVIS_HUD_URL", DEFAULT_HUD_URL).strip() or DEFAULT_HUD_URL
+    return _with_hud_boot_params(configured)
+
+
+def _with_hud_boot_params(url: str) -> str:
+    """Force the wake-launched HUD into the cinematic veil flow and bypass stale browser cache."""
+    parsed = urlsplit(url)
+    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    query["boot"] = "veil"
+    query["veil"] = "1"
+    query["autoGesture"] = "1"
+    query["autoPresence"] = "1"
+    query["voiceWelcome"] = "0"
+    query["cacheBust"] = str(int(time.time() * 1000))
+    return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, urlencode(query), parsed.fragment))
 
 
 def launch_jarvis_hud() -> str:
@@ -47,7 +63,7 @@ def _open_fullscreen(url: str) -> bool:
         "--app=" + url,
         "--user-data-dir=" + str(profile_dir),
     ]
-    if auto_allow_camera:
+    if auto_allow_camera and browser.name.lower() != "msedge.exe":
         browser_args.append("--use-fake-ui-for-media-stream")
 
     try:

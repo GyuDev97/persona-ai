@@ -207,7 +207,13 @@ def gyuvis_standby_v3() -> FileResponse:
     if not GYUVIS_STANDBY_V3_PATH.exists():
         raise HTTPException(status_code=404, detail="GYUVIS standby V3 UI not found")
 
-    return FileResponse(GYUVIS_STANDBY_V3_PATH)
+    return FileResponse(
+        GYUVIS_STANDBY_V3_PATH,
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+        },
+    )
 
 
 @router.get("/agent/report-center", include_in_schema=False)
