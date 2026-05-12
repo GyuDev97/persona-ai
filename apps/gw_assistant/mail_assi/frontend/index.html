@@ -6,14 +6,9 @@
     <title>Mail Assistant MVP</title>
     <style>
         :root {
-            --bg: #f3efe7;
-            --panel: #fffdf9;
             --line: #dccfbd;
             --text: #271f18;
             --muted: #756857;
-            --accent: #1d4ed8;
-            --accent-soft: #dbeafe;
-            --sidebar: #f6efe4;
             --reply: #166534;
             --ignore: #9a3412;
             --review: #9f1239;
@@ -119,7 +114,8 @@
             font-weight: 700;
         }
 
-        .nav-count {
+        .nav-count,
+        .mini-badge {
             min-width: 28px;
             padding: 4px 8px;
             border-radius: 999px;
@@ -153,11 +149,54 @@
             font-size: 14px;
         }
 
+        .message-list-wrap {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            flex-direction: column;
+        }
+
         .message-list {
             padding: 14px;
             display: grid;
             gap: 10px;
             overflow: auto;
+            flex: 1;
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 18px 18px;
+            border-top: 1px solid rgba(220, 207, 189, 0.8);
+            background: rgba(255, 252, 247, 0.72);
+        }
+
+        .pagination-info {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .pagination-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .page-button {
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid #d9cfbf;
+            background: white;
+            color: var(--text);
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .page-button:disabled {
+            cursor: default;
+            opacity: 0.45;
         }
 
         .message-row {
@@ -178,11 +217,17 @@
             box-shadow: 0 10px 20px rgba(29, 78, 216, 0.10);
         }
 
-        .row-top {
+        .row-top,
+        .detail-topline,
+        .meta-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 12px;
+        }
+
+        .row-top {
+            align-items: flex-start;
             margin-bottom: 8px;
         }
 
@@ -191,7 +236,8 @@
             font-weight: 700;
         }
 
-        .sender {
+        .sender,
+        .detail-meta {
             color: var(--muted);
             font-size: 14px;
         }
@@ -227,24 +273,11 @@
             gap: 18px;
         }
 
-        .detail-topline {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 16px;
-        }
-
         .detail-subject {
             margin: 0;
             font-size: 30px;
             line-height: 1.15;
             letter-spacing: -0.03em;
-        }
-
-        .detail-meta {
-            margin-top: 10px;
-            color: var(--muted);
-            font-size: 14px;
         }
 
         .detail-card {
@@ -262,9 +295,16 @@
             letter-spacing: 0.08em;
         }
 
-        .body-preview, .draft {
+        .body-preview,
+        .draft {
             white-space: pre-wrap;
-            line-height: 1.5;
+            line-height: 1.6;
+        }
+
+        .empty,
+        .empty-detail {
+            color: var(--muted);
+            text-align: center;
         }
 
         .empty {
@@ -272,16 +312,12 @@
             padding: 40px 20px;
             border: 1px dashed var(--line);
             border-radius: 18px;
-            text-align: center;
-            color: var(--muted);
         }
 
         .empty-detail {
             height: 100%;
             display: grid;
             place-items: center;
-            text-align: center;
-            color: var(--muted);
             padding: 40px;
         }
 
@@ -324,7 +360,7 @@
         }
 
         .modal {
-            width: min(720px, 100%);
+            width: min(760px, 100%);
             border-radius: 26px;
             border: 1px solid var(--line);
             background: #fffdf9;
@@ -359,7 +395,8 @@
             color: var(--muted);
         }
 
-        input, textarea {
+        input,
+        textarea {
             width: 100%;
             margin-top: 8px;
             padding: 12px 14px;
@@ -382,6 +419,42 @@
             margin-top: 18px;
         }
 
+        .preview-panel {
+            margin-top: 18px;
+            display: none;
+            gap: 12px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .preview-panel.open {
+            display: grid;
+        }
+
+        .preview-card {
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.72);
+        }
+
+        .preview-title {
+            margin: 0 0 8px;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .preview-meta {
+            margin-bottom: 10px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .preview-draft {
+            white-space: pre-wrap;
+            line-height: 1.55;
+            font-size: 14px;
+        }
+
         @media (max-width: 900px) {
             .app-shell {
                 grid-template-columns: 1fr;
@@ -401,11 +474,17 @@
                 order: 3;
                 min-height: 420px;
             }
-        }
 
-        @media (max-width: 1200px) and (min-width: 901px) {
-            .app-shell {
-                grid-template-columns: 220px minmax(280px, 360px) 1fr;
+            .detail-topline,
+            .meta-row,
+            .modal-actions,
+            .pagination {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .preview-panel.open {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -416,13 +495,13 @@
             <aside class="sidebar">
                 <div class="brand">
                     <h1>Mail<br />Assistant</h1>
-                    <p>실제 받은편지함처럼 보이도록 정리한 테스트용 메일 비서 화면입니다.</p>
+                    <p>받은 메일을 빠르게 정리하고, 필요한 경우에만 자연스러운 답장 초안을 준비하는 테스트용 메일 어시스턴트입니다.</p>
                 </div>
-                <button class="compose-button" id="open-compose" type="button">새 쪽지 작성</button>
+                <button class="compose-button" id="open-compose" type="button">새 메일 분석</button>
                 <div class="nav-box">
                     <div class="nav-title">Mailbox</div>
                     <div class="nav-item active">
-                        <span>받은 쪽지함</span>
+                        <span>받은 메일</span>
                         <span class="nav-count" id="inbox-count">0</span>
                     </div>
                 </div>
@@ -442,18 +521,27 @@
 
             <section class="list-panel">
                 <div class="panel-header">
-                    <h2 class="panel-title">받은 쪽지함</h2>
-                    <p class="panel-subtitle">도착한 메시지를 고르고, 오른쪽에서 AI 판단과 초안을 확인하세요.</p>
+                    <h2 class="panel-title">받은 메일</h2>
+                    <p class="panel-subtitle">메시지를 고르면 분류 이유와 답장 초안, 또는 사람 확인 여부를 볼 수 있습니다.</p>
                 </div>
-                <div id="message-list" class="message-list"></div>
+                <div class="message-list-wrap">
+                    <div id="message-list" class="message-list"></div>
+                    <div class="pagination">
+                        <div id="pagination-info" class="pagination-info">0개 메일</div>
+                        <div class="pagination-actions">
+                            <button id="prev-page" class="page-button" type="button">이전</button>
+                            <button id="next-page" class="page-button" type="button">다음</button>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <section class="detail-panel">
                 <div class="panel-header">
                     <h2 class="panel-title">메시지 보기</h2>
-                    <p class="panel-subtitle">선택한 쪽지의 원문, 분류 이유, 답장 초안을 보여줍니다.</p>
+                    <p class="panel-subtitle">선택한 메일의 요약, 분류 이유, 본문과 초안을 확인할 수 있습니다.</p>
                 </div>
-                <div id="detail-view" class="empty-detail">왼쪽 받은 쪽지함에서 메시지를 선택해 주세요.</div>
+                <div id="detail-view" class="empty-detail">왼쪽 받은 메일에서 메시지를 선택해 주세요.</div>
             </section>
         </div>
     </div>
@@ -461,8 +549,8 @@
     <div class="overlay" id="compose-overlay">
         <div class="modal">
             <div class="modal-header">
-                <h2>새 쪽지 작성</h2>
-                <p>메일이 도착한 것처럼 메시지를 넣고 AI 판단 흐름을 테스트할 수 있습니다.</p>
+                <h2>메일 분석 추가</h2>
+                <p>테스트할 메일을 넣으면 분류와 답장 초안 생성을 함께 확인할 수 있습니다.</p>
             </div>
             <div class="modal-body">
                 <form id="message-form">
@@ -472,37 +560,56 @@
                     </label>
                     <label>
                         제목
-                        <input id="subject" placeholder="예: 다음 주 미팅 일정 가능하실까요?" required />
+                        <input id="subject" placeholder="예: 다음 주 미팅 일정 가능 여부 문의" required />
                     </label>
                     <label>
                         본문
-                        <textarea id="body" placeholder="테스트할 메시지 내용을 넣어주세요." required></textarea>
+                        <textarea id="body" placeholder="테스트할 메시지 내용을 넣어 주세요." required></textarea>
                     </label>
                     <div class="modal-actions">
                         <div class="toolbar">
                             <button class="ghost" type="button" id="sample-btn">샘플 채우기</button>
+                            <button class="secondary" type="button" id="preview-btn">톤 미리보기</button>
                         </div>
                         <div class="toolbar">
                             <button class="secondary" type="button" id="close-compose">닫기</button>
                             <button class="ghost" type="submit">분석해서 저장</button>
                         </div>
                     </div>
+                    <div id="preview-panel" class="preview-panel"></div>
                 </form>
             </div>
         </div>
     </div>
 
     <script>
+        const PAGE_SIZE = 10;
+
         const form = document.getElementById("message-form");
         const messageList = document.getElementById("message-list");
         const detailView = document.getElementById("detail-view");
         const inboxCount = document.getElementById("inbox-count");
         const sampleBtn = document.getElementById("sample-btn");
+        const previewBtn = document.getElementById("preview-btn");
         const overlay = document.getElementById("compose-overlay");
         const openCompose = document.getElementById("open-compose");
         const closeCompose = document.getElementById("close-compose");
+        const previewPanel = document.getElementById("preview-panel");
+        const paginationInfo = document.getElementById("pagination-info");
+        const prevPageButton = document.getElementById("prev-page");
+        const nextPageButton = document.getElementById("next-page");
+
         let currentMessages = [];
         let selectedMessageId = null;
+        let currentPage = 1;
+        let pagination = {
+            page: 1,
+            page_size: PAGE_SIZE,
+            total: 0,
+            total_pages: 1,
+            has_prev: false,
+            has_next: false,
+        };
 
         const actionLabel = {
             reply: "답장 추천",
@@ -510,8 +617,29 @@
             review: "사람 확인",
         };
 
+        const toneLabel = {
+            warm: "부드럽게",
+            balanced: "자연스럽게",
+            formal: "격식 있게",
+        };
+
+        const sourceLabel = {
+            ai: "AI 생성",
+            rule: "규칙 기반",
+            none: "초안 없음",
+        };
+
+        function composePayload() {
+            return {
+                sender: document.getElementById("sender").value.trim(),
+                subject: document.getElementById("subject").value.trim(),
+                body: document.getElementById("body").value.trim(),
+                tone: "balanced",
+            };
+        }
+
         function escapeHtml(value) {
-            return value
+            return String(value)
                 .replaceAll("&", "&amp;")
                 .replaceAll("<", "&lt;")
                 .replaceAll(">", "&gt;");
@@ -523,14 +651,50 @@
 
         function closeComposeModal() {
             overlay.classList.remove("open");
+            previewPanel.classList.remove("open");
+            previewPanel.innerHTML = "";
+        }
+
+        function renderTonePreviews(previews) {
+            previewPanel.innerHTML = previews.map((preview) => {
+                const tone = toneLabel[preview.tone] ?? preview.tone;
+                const source = sourceLabel[preview.draft_source] ?? preview.draft_source;
+                const action = actionLabel[preview.action] ?? preview.action;
+                const draft = preview.draft_reply
+                    ? escapeHtml(preview.draft_reply)
+                    : "이 톤에서는 답장 초안을 만들지 않았습니다.";
+
+                return `
+                    <section class="preview-card">
+                        <div class="preview-title">${escapeHtml(tone)}</div>
+                        <div class="preview-meta">${escapeHtml(action)} · ${escapeHtml(source)}</div>
+                        <div class="preview-draft">${draft}</div>
+                    </section>
+                `;
+            }).join("");
+            previewPanel.classList.add("open");
         }
 
         function renderDetail(message) {
             if (!message) {
                 detailView.className = "empty-detail";
-                detailView.innerHTML = "왼쪽 받은 쪽지함에서 메시지를 선택해 주세요.";
+                detailView.innerHTML = "왼쪽 받은 메일에서 메시지를 선택해 주세요.";
                 return;
             }
+
+            const tone = toneLabel[message.analysis.tone] ?? "자연스럽게";
+            const source = sourceLabel[message.analysis.draft_source] ?? "규칙 기반";
+            const draftSection = message.analysis.draft_reply
+                ? `
+                    <section class="detail-card">
+                        <div class="meta-row">
+                            <div class="section-title">답장 초안</div>
+                            <span class="mini-badge">${escapeHtml(tone)} · ${escapeHtml(source)}</span>
+                        </div>
+                        <div class="draft">${escapeHtml(message.analysis.draft_reply)}</div>
+                    </section>
+                `
+                : "";
 
             detailView.className = "detail-content";
             detailView.innerHTML = `
@@ -546,17 +710,14 @@
                     <div>${escapeHtml(message.analysis.summary)}</div>
                 </section>
                 <section class="detail-card">
-                    <div class="section-title">판단 이유</div>
+                    <div class="section-title">분류 이유</div>
                     <div>${escapeHtml(message.analysis.reason)}</div>
                 </section>
                 <section class="detail-card">
                     <div class="section-title">원문</div>
                     <div class="body-preview">${escapeHtml(message.body)}</div>
                 </section>
-                <section class="detail-card">
-                    <div class="section-title">답장 초안</div>
-                    <div class="draft">${escapeHtml(message.analysis.draft_reply)}</div>
-                </section>
+                ${draftSection}
             `;
         }
 
@@ -567,10 +728,26 @@
             renderDetail(selected);
         }
 
+        function renderPagination() {
+            inboxCount.textContent = String(pagination.total);
+
+            if (pagination.total === 0) {
+                paginationInfo.textContent = "0개 메일";
+            } else {
+                const start = (pagination.page - 1) * pagination.page_size + 1;
+                const end = start + currentMessages.length - 1;
+                paginationInfo.textContent = `${start}-${end} / 전체 ${pagination.total} · ${pagination.page}/${pagination.total_pages}페이지`;
+            }
+
+            prevPageButton.disabled = !pagination.has_prev;
+            nextPageButton.disabled = !pagination.has_next;
+        }
+
         function renderMessages(messages) {
-            inboxCount.textContent = String(messages.length);
+            renderPagination();
+
             if (!messages.length) {
-                messageList.innerHTML = "<div class='empty'>아직 저장된 쪽지가 없습니다.</div>";
+                messageList.innerHTML = "<div class='empty'>아직 저장된 메일이 없습니다.</div>";
                 renderDetail(null);
                 return;
             }
@@ -595,10 +772,13 @@
             });
         }
 
-        async function loadMessages() {
-            const response = await fetch("/api/inbox/messages");
+        async function loadMessages(page = currentPage) {
+            currentPage = page;
+
+            const response = await fetch(`/api/inbox/messages?page=${currentPage}&page_size=${PAGE_SIZE}`);
             const data = await response.json();
-            currentMessages = data.messages;
+            currentMessages = data.messages ?? [];
+            pagination = data.pagination ?? pagination;
 
             if (!currentMessages.length) {
                 selectedMessageId = null;
@@ -614,11 +794,7 @@
         form.addEventListener("submit", async (event) => {
             event.preventDefault();
 
-            const payload = {
-                sender: document.getElementById("sender").value.trim(),
-                subject: document.getElementById("subject").value.trim(),
-                body: document.getElementById("body").value.trim(),
-            };
+            const payload = composePayload();
 
             await fetch("/api/inbox/messages", {
                 method: "POST",
@@ -628,13 +804,53 @@
 
             form.reset();
             closeComposeModal();
-            await loadMessages();
+            await loadMessages(1);
+        });
+
+        previewBtn.addEventListener("click", async () => {
+            const payload = composePayload();
+            if (!payload.sender || !payload.subject || !payload.body) {
+                previewPanel.innerHTML = "<section class='preview-card'><div class='preview-draft'>보낸 사람, 제목, 본문을 먼저 입력해 주세요.</div></section>";
+                previewPanel.classList.add("open");
+                return;
+            }
+
+            previewPanel.innerHTML = "<section class='preview-card'><div class='preview-draft'>톤별 초안을 불러오는 중입니다.</div></section>";
+            previewPanel.classList.add("open");
+
+            const response = await fetch("/api/inbox/messages/preview-tones", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    sender: payload.sender,
+                    subject: payload.subject,
+                    body: payload.body,
+                }),
+            });
+            const data = await response.json();
+            renderTonePreviews(data.previews ?? []);
         });
 
         sampleBtn.addEventListener("click", () => {
             document.getElementById("sender").value = "박소연";
             document.getElementById("subject").value = "다음 주 데모 일정 가능 여부 문의";
-            document.getElementById("body").value = "안녕하세요.\n다음 주 수요일 오후에 데모 미팅 가능하실지 확인 부탁드립니다.\n가능 시간 회신 주시면 일정 잡겠습니다.";
+            document.getElementById("body").value = "안녕하세요.\n다음 주 화요일 오후에 데모 미팅 가능하신지 확인 부탁드립니다.\n가능한 시간 회신 부탁드려요.";
+            previewPanel.classList.remove("open");
+            previewPanel.innerHTML = "";
+        });
+
+        prevPageButton.addEventListener("click", async () => {
+            if (!pagination.has_prev) {
+                return;
+            }
+            await loadMessages(pagination.page - 1);
+        });
+
+        nextPageButton.addEventListener("click", async () => {
+            if (!pagination.has_next) {
+                return;
+            }
+            await loadMessages(pagination.page + 1);
         });
 
         openCompose.addEventListener("click", openComposeModal);

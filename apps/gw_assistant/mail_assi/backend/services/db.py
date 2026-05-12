@@ -29,10 +29,18 @@ def connect(database: str | None = DB_NAME) -> Connection:
     return pymysql.connect(**kwargs)
 
 
+def ensure_column(cursor: DictCursor, table_name: str, column_name: str, definition: str) -> None:
+    cursor.execute(f"SHOW COLUMNS FROM `{table_name}` LIKE %s", (column_name,))
+    if cursor.fetchone() is None:
+        cursor.execute(f"ALTER TABLE `{table_name}` ADD COLUMN {definition}")
+
+
 def ensure_database() -> None:
     with connect(database=None) as conn:
         with conn.cursor() as cursor:
-            cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+            cursor.execute(
+                f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+            )
 
     with connect() as conn:
         with conn.cursor() as cursor:
@@ -51,3 +59,6 @@ def ensure_database() -> None:
                 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
                 """
             )
+
+            ensure_column(cursor, "messages", "tone", "tone VARCHAR(20) NOT NULL DEFAULT 'balanced'")
+            ensure_column(cursor, "messages", "draft_source", "draft_source VARCHAR(20) NOT NULL DEFAULT 'rule'")
