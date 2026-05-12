@@ -35,6 +35,7 @@ venv/
 .tmp_hud_browser_profile/
 .tmp_naver_blog_profile/
 .tmp_comtypes_gen/
+.tmp_stack_logs/
 
 # Browser caches inside temporary profiles
 Cache/
