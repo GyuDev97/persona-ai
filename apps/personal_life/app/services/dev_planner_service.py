@@ -19,7 +19,7 @@ ALLOWED_CHANGE_TYPES = {"add", "modify", "refactor"}
 ALLOWED_RISK_LEVELS = {"low", "medium", "high"}
 AGENT3_QUEUE_STANDBY_MESSAGE = os.getenv(
     "GYUVIS_AGENT3_QUEUE_STANDBY_MESSAGE",
-    "Codex 작업 큐 #{task_id} 등록 완료했습니다. 사용자 수동 검토 전까지 대기하겠습니다.",
+    "제안 #{proposal_id}는 작업 큐 #{task_id}로 넘겨뒀어. 바로 적용하진 않고, 보스가 보기 좋게 검토 흐름만 준비해둘게.",
 )
 
 

@@ -52,31 +52,31 @@ AGENT2_AUTO_DRAFT_FROM_AGENT1 = os.getenv("GYUVIS_AGENT2_AUTO_DRAFT_FROM_AGENT1"
 AGENT4_AUTO_IDEA_FROM_AGENT1 = os.getenv("GYUVIS_AGENT4_AUTO_IDEA_FROM_AGENT1", "1")
 AGENT1_OFF_DUTY_MESSAGE = os.getenv(
     "GYUVIS_AGENT1_OFF_DUTY_MESSAGE",
-    "오늘 수집 시간 종료했습니다. 최종 보고까지 정리했으니 Agent 01은 이만 퇴근하겠습니다.",
+    "오늘 뉴스 흐름 정리 끝. '{title}' 쪽이 제일 눈에 띄었고, 필요한 자료는 Agent 02랑 04가 이어받기 좋게 넘겨둘게.",
 )
 AGENT1_ON_DUTY_MESSAGE = os.getenv(
     "GYUVIS_AGENT1_ON_DUTY_MESSAGE",
-    "Agent 01 출근했습니다. 오늘도 IT 뉴스 수집 시작하겠습니다.",
+    "좋아, Agent 01 들어왔어. 오늘 IT 뉴스 흐름은 내가 먼저 훑어보고 괜찮은 기사만 추려둘게.",
 )
 AGENT2_AGENT1_OFF_DUTY_REPLY = os.getenv(
     "GYUVIS_AGENT2_AGENT1_OFF_DUTY_REPLY",
-    "Agent 01, 오늘 자료 수집하느라 고생했어. 넘겨준 자료는 내가 블로그 초안 쪽에서 이어서 볼게.",
+    "Agent 01 고생했어. 제목감 있는 기사 있으면 내가 블로그 문장으로 자연스럽게 풀어볼게.",
 )
 AGENT3_AGENT1_OFF_DUTY_REPLY = os.getenv(
     "GYUVIS_AGENT3_AGENT1_OFF_DUTY_REPLY",
-    "Agent 01 수고했습니다. 오늘 리포트 기준으로 필요한 개선 작업은 Codex 승인 큐에서 차분히 확인하겠습니다.",
+    "Agent 01, 리포트 고마워. 화면이나 작업 큐 쪽에서 손볼 만한 부분이 보이면 내가 조용히 후보로 정리해둘게.",
 )
 AGENT4_AGENT1_OFF_DUTY_REPLY = os.getenv(
     "GYUVIS_AGENT4_AGENT1_OFF_DUTY_REPLY",
-    "Agent 01 고생했어. 오늘 뉴스 흐름은 유튜브 아이디어 쪽에서도 참고해둘게.",
+    "Agent 01 고생했어. 오늘 뉴스 중에 영상으로 풀기 좋은 흐름 있으면 내가 아이디어 쪽으로 살펴볼게.",
 )
 AGENT3_STANDBY_MESSAGE = os.getenv(
     "GYUVIS_AGENT3_STANDBY_MESSAGE",
-    "Codex 작업 요청 확인 완료했습니다. 자동 수정은 하지 않고 다시 대기하겠습니다.",
+    "요청 확인했어. 바로 파일을 건드리진 않고, 검토용 제안으로 차분히 정리해둘게.",
 )
 AGENT4_STANDBY_MESSAGE = os.getenv(
     "GYUVIS_AGENT4_STANDBY_MESSAGE",
-    "유튜브 아이디어 후보 {idea_count}개 정리했습니다. 다음 자료가 들어올 때까지 대기하겠습니다.",
+    "아이디어 후보 {idea_count}개 뽑아봤어. 바로 쓰기보단 제목감 좋은 것부터 골라보면 좋겠어.",
 )
 AGENT1_NEWS_QUERIES = [
     query.strip()
@@ -299,6 +299,71 @@ def collect_agent1_it_news() -> int:
     return save_news_items(AGENT1_ID, AGENT1_TOPIC, items)
 
 
+def latest_agent1_titles(limit: int = 3) -> list[str]:
+    try:
+        return [
+            str(item.get("title") or "").strip()
+            for item in list_agent_news_display_items(agent_id=AGENT1_ID, limit=limit)
+            if str(item.get("title") or "").strip()
+        ]
+    except Exception:
+        return []
+
+
+def friendly_headline(titles: list[str] | None) -> str:
+    if not titles:
+        return "오늘 IT 흐름"
+    title = clean_text(titles[0])
+    if len(title) > 34:
+        return title[:34].rstrip() + "..."
+    return title
+
+
+def pick_friendly_message(options: list[str], key: str | int | None = None) -> str:
+    if not options:
+        return ""
+    seed = str(key if key is not None else datetime.now().minute)
+    index = sum(ord(char) for char in seed) % len(options)
+    return options[index]
+
+
+def build_agent1_to_agent2_message(inserted_count: int, task_id: int, titles: list[str] | None = None) -> str:
+    headline = friendly_headline(titles)
+    return pick_friendly_message(
+        [
+            f"Agent 02, 오늘은 '{headline}' 쪽 흐름이 괜찮아 보여. 새 자료 {inserted_count}건 묶어서 초안 큐 #{task_id}에 올려둘게.",
+            f"Agent 02, 방금 들어온 자료 중에 '{headline}' 이건 블로그로 풀기 좋아 보여. 큐 #{task_id}에 넘겨둘게.",
+            f"Agent 02, 새 뉴스 {inserted_count}건 확인했어. 특히 '{headline}' 쪽은 독자 입장에서 읽기 좋겠더라. 초안 큐 #{task_id} 부탁해.",
+        ],
+        f"agent2-{task_id}-{headline}",
+    )
+
+
+def build_agent1_to_agent4_message(inserted_count: int, task_id: int, titles: list[str] | None = None) -> str:
+    headline = friendly_headline(titles)
+    return pick_friendly_message(
+        [
+            f"Agent 04, '{headline}' 쪽은 영상 제목으로도 써볼 만해 보여. 같은 자료 {inserted_count}건으로 아이디어 큐 #{task_id} 열어둘게.",
+            f"Agent 04도 참고해줘. 오늘 뉴스 중엔 '{headline}' 흐름이 눈에 띄어서 유튜브 아이디어 큐 #{task_id}로 넘겨둘게.",
+            f"Agent 04, 이 자료는 짧은 영상 소재로도 괜찮겠다. '{headline}' 중심으로 큐 #{task_id}에 정리 부탁해.",
+        ],
+        f"agent4-{task_id}-{headline}",
+    )
+
+
+def build_agent1_news_to_blog_message(top_titles: list[str], inserted_count: int) -> str:
+    headline = friendly_headline(top_titles)
+    count = len(top_titles)
+    return pick_friendly_message(
+        [
+            f"Agent 02, 오늘 자료 정리해왔어. '{headline}' 쪽이 제일 먼저 눈에 들어오고, 블로그로 쓸 만한 뉴스 {count}개를 추려놨어.",
+            f"Agent 02, 새로 저장한 자료 {inserted_count}건 중에서 '{headline}' 흐름이 괜찮아 보여. 초안으로 풀어보면 좋겠어.",
+            f"Agent 02, 오늘 IT 뉴스 {count}개 골라놨어. 특히 '{headline}' 이야기는 사용자 입장에서 풀기 좋겠더라.",
+        ],
+        f"agent1-news-{inserted_count}-{headline}",
+    )
+
+
 def maybe_enqueue_agent2_blog_draft(inserted_count: int, *, force: bool = False) -> None:
     if not force and inserted_count <= 0:
         return
@@ -352,12 +417,13 @@ def maybe_enqueue_agent2_blog_draft(inserted_count: int, *, force: bool = False)
             "safety": "draft_only_no_publish",
         },
     )
+    titles = latest_agent1_titles(3)
     create_agent_message(
         1,
-        f"Agent 02, 방금 새 자료 {inserted_count}건이 들어왔어. 블로그 초안 작업 큐 #{task.id}번으로 넘겨둘게.",
+        build_agent1_to_agent2_message(inserted_count, task.id, titles),
         to_agent_id=2,
         topic="news_to_blog",
-        payload={"task_id": task.id, "inserted_count": inserted_count},
+        payload={"task_id": task.id, "inserted_count": inserted_count, "titles": titles},
     )
 
 
@@ -398,12 +464,13 @@ def maybe_enqueue_agent4_youtube_ideas(inserted_count: int, *, force: bool = Fal
             "safety": "idea_only_no_publish",
         },
     )
+    titles = latest_agent1_titles(3)
     create_agent_message(
         1,
-        f"Agent 04도 참고해줘. 같은 자료로 유튜브 아이디어 작업 큐 #{task.id}번을 열어둘게.",
+        build_agent1_to_agent4_message(inserted_count, task.id, titles),
         to_agent_id=4,
         topic="news_to_youtube",
-        payload={"task_id": task.id, "inserted_count": inserted_count},
+        payload={"task_id": task.id, "inserted_count": inserted_count, "titles": titles},
     )
 
 
@@ -585,7 +652,7 @@ def build_agent1_it_news_window(query: str) -> tuple[str, dict]:
     try:
         create_agent_message(
             1,
-            f"오늘 자료 수집해왔어. 블로그로 쓸 만한 IT 뉴스 {len(top_titles)}개를 추려놨어.",
+            build_agent1_news_to_blog_message(top_titles, inserted),
             to_agent_id=2,
             topic="news_to_blog",
             payload={

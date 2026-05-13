@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from datetime import datetime
 from typing import Any
 
@@ -11,12 +12,32 @@ from .news_processing_service import build_blog_ready_news, build_blog_title_fro
 
 AGENT2_STANDBY_MESSAGE = os.getenv(
     "GYUVIS_AGENT2_STANDBY_MESSAGE",
-    "블로그 초안 #{draft_id} 작성 완료했습니다. 발행은 하지 않고 다시 대기하겠습니다.",
+    "초안 #{draft_id} 만들어뒀어. '{title}' 흐름은 블로그로 풀기 좋아 보여. 발행은 하지 않고 보스 확인 기다릴게.",
 )
+
+BLOG_TITLE_REMOVAL_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"\s*,?\s*사용자\s*입장에서\s*보기\s*$"),
+)
+
+
+def clean_blog_draft_title(title: Any) -> str:
+    text = " ".join(str(title or "").split()).strip()
+    for pattern in BLOG_TITLE_REMOVAL_PATTERNS:
+        text = pattern.sub("", text).strip()
+    return text.rstrip(" ,-·")
+
+
+def _with_clean_title(row: dict[str, Any] | None) -> dict[str, Any] | None:
+    if row is None:
+        return None
+    cleaned = dict(row)
+    cleaned["title"] = clean_blog_draft_title(cleaned.get("title"))
+    return cleaned
 
 
 def create_it_blog_draft_from_agent1(limit: int = 5) -> dict[str, Any]:
     news_items = list_agent_news_items(agent_id=AGENT1_ID, limit=limit)
+    processed: dict[str, Any] | None = None
     if not news_items:
         title = "모바일 출시·업데이트와 AI 주요 소식 정리"
         body = (
@@ -31,8 +52,10 @@ def create_it_blog_draft_from_agent1(limit: int = 5) -> dict[str, Any]:
         )
     else:
         processed = build_blog_ready_news(news_items, limit=5)
-        title = build_blog_title_from_grouped_news(processed["grouped"])
+        title = clean_blog_draft_title(build_blog_title_from_grouped_news(processed["grouped"]))
         body = processed["draft"]
+
+    title = clean_blog_draft_title(title)
 
     draft_id = execute(
         """
@@ -48,7 +71,7 @@ def create_it_blog_draft_from_agent1(limit: int = 5) -> dict[str, Any]:
             json.dumps(
                 {
                     "news_items": news_items,
-                    "processed_news": processed if news_items else None,
+                    "processed_news": processed,
                 },
                 ensure_ascii=False,
                 default=str,
@@ -79,7 +102,7 @@ def create_it_blog_draft_from_agent1(limit: int = 5) -> dict[str, Any]:
 
 
 def get_latest_blog_draft(platform: str = "naver_blog") -> dict[str, Any] | None:
-    return fetch_one(
+    return _with_clean_title(fetch_one(
         """
         SELECT *
         FROM agent_blog_drafts
@@ -88,14 +111,17 @@ def get_latest_blog_draft(platform: str = "naver_blog") -> dict[str, Any] | None
         LIMIT 1
         """,
         (platform,),
-    )
+    ))
 
 
 def get_blog_draft(draft_id: int) -> dict[str, Any]:
     row = fetch_one("SELECT * FROM agent_blog_drafts WHERE id = ?", (draft_id,))
     if row is None:
         raise ValueError("Blog draft not found")
-    return row
+    cleaned = _with_clean_title(row)
+    if cleaned is None:
+        raise ValueError("Blog draft not found")
+    return cleaned
 
 
 def update_blog_draft_status(draft_id: int, status: str) -> dict[str, Any]:
@@ -111,7 +137,7 @@ def update_blog_draft_status(draft_id: int, status: str) -> dict[str, Any]:
 
 
 def list_blog_drafts(limit: int = 10) -> list[dict[str, Any]]:
-    return fetch_all(
+    rows = fetch_all(
         """
         SELECT *
         FROM agent_blog_drafts
@@ -120,6 +146,7 @@ def list_blog_drafts(limit: int = 10) -> list[dict[str, Any]]:
         """,
         (limit,),
     )
+    return [row for row in (_with_clean_title(row) for row in rows) if row is not None]
 
 
 def _build_blog_title(news_items: list[dict[str, Any]]) -> str:

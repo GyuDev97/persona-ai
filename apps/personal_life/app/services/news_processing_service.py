@@ -94,7 +94,7 @@ def build_blog_title_from_grouped_news(grouped: dict[str, list[str]]) -> str:
     lead_title = _blog_title_subject(titles[0])
     topics = [topic for topic in grouped if topic != "기타 IT 이슈"][:2]
     topic_suffix = f"{_join_korean_list(topics)} 흐름" if topics else "오늘 IT 흐름"
-    return f"{lead_title}, {topic_suffix} 사용자 입장에서 보기"
+    return f"{lead_title}, {topic_suffix}"
 
 
 def detect_topic(title: str) -> str:
