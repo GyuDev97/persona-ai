@@ -24,7 +24,11 @@ def build_money_core_summary(month: str | None = None) -> dict[str, Any]:
     fixed_expense = sum(int(item.get("amount") or 0) for item in auto_transfers)
     check_card = sum(int(item.get("amount") or 0) for item in expenses)
     credit_card = sum(int(item.get("payment_amount") or item.get("total_amount") or 0) for item in cards)
-    installment_total = sum(int(item.get("monthly_amount") or 0) for item in installments)
+    installment_total = sum(
+        int(item.get("monthly_amount") or 0)
+        for item in installments
+        if item.get("is_active_for_month", True)
+    )
     calculated_remaining = salary - (saving + fixed_expense + check_card + credit_card)
     card_usage_total = sum(int(item.get("total_amount") or item.get("payment_amount") or 0) for item in cards)
     card_usage_rate = round(credit_card / salary, 4) if salary else 0.0
@@ -98,12 +102,24 @@ def list_expenses(month: str | None = None) -> list[dict[str, Any]]:
             (_previous_month(target_month),),
         )
     }
+    latest_ids = [int(row.get("id") or 0) for row in rows if int(row.get("id") or 0)]
+    latest_amounts: dict[int, int] = {}
+    if latest_ids:
+        placeholders = ", ".join("?" for _ in latest_ids)
+        latest_amounts = {
+            int(row.get("id") or 0): int(row.get("amount") or 0)
+            for row in fetch_all(
+                f"SELECT id, amount FROM expenses WHERE id IN ({placeholders})",
+                tuple(latest_ids),
+            )
+        }
     return [
         {
             "category": row["category"],
             "id": int(row.get("id") or 0),
             "month": target_month,
             "amount": int(row.get("amount") or 0),
+            "latest_amount": latest_amounts.get(int(row.get("id") or 0), int(row.get("amount") or 0)),
             "previous_amount": previous.get(row["category"], 0),
             "change_rate": _change_rate(int(row.get("amount") or 0), previous.get(row["category"], 0)),
         }
@@ -393,9 +409,9 @@ def build_saving_tips(
     if saving and salary:
         tips.append(f"이번 달 저축 예정액은 {saving:,}원이며 월급 대비 {saving / salary * 100:.1f}%입니다.")
     if card_usage_rate >= 1:
-        tips.append("신용카드 사용액이 설정 한도를 넘었습니다. 다음 결제 전 할부와 플랫폼 결제를 먼저 점검해보세요.")
+        tips.append("신용카드 결제 예정액이 월급보다 큽니다. 다음 결제 전까지 할부와 플랫폼 결제를 먼저 점검해보세요.")
     elif card_usage_rate >= 0.8:
-        tips.append("신용카드 사용률이 80%를 넘었습니다. 남은 기간에는 체크카드보다 현금 흐름 기준으로 보는 편이 안전합니다.")
+        tips.append("신용카드 결제 예정액이 월급의 80%를 넘었습니다. 남은 기간에는 현금 흐름 기준으로 보는 편이 안전합니다.")
     if expense_change_rate > 0.1:
         tips.append(f"카테고리 소비 합계가 지난달보다 {expense_change_rate * 100:.1f}% 높습니다. 가장 큰 카테고리부터 확인해보세요.")
     if expenses:
@@ -426,6 +442,7 @@ def _installment_payload(row: dict[str, Any], month: str) -> dict[str, Any]:
     stored_current = max(1, int(row.get("current_month") or 1))
     elapsed = _month_diff(str(row.get("start_date") or ""), month)
     expected_current = min(total_month, max(1, elapsed + 1)) if elapsed >= 0 else stored_current
+    is_active_for_month = elapsed < total_month if elapsed >= 0 else True
     current_month = min(total_month, stored_current)
     remaining_month = max(total_month - current_month, 0)
     return {
@@ -435,6 +452,7 @@ def _installment_payload(row: dict[str, Any], month: str) -> dict[str, Any]:
         "current_month": current_month,
         "stored_current_month": stored_current,
         "expected_current_month": expected_current,
+        "is_active_for_month": is_active_for_month,
         "remaining_month": remaining_month,
         "monthly_amount": int(row.get("monthly_amount") or 0),
         "card_name": row.get("card_name") or "",
@@ -513,3 +531,4 @@ def _ensure_money_item(table_name: str, item_id: int) -> None:
     row = fetch_one(f"SELECT id FROM {table_name} WHERE id = ?", (item_id,))
     if row is None:
         raise ValueError("Money Core 항목을 찾을 수 없습니다.")
+

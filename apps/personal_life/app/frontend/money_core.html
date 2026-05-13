@@ -182,6 +182,14 @@ async function request(url){const r=await fetch(url);if(!r.ok)throw new Error(aw
 async function sendJson(url,payload){const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});if(!r.ok)throw new Error(await r.text());return r.json()}
 async function updateJson(url,payload){const r=await fetch(url,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});if(!r.ok)throw new Error(await r.text());return r.json()}
 async function deleteJson(url){const r=await fetch(url,{method:"DELETE"});if(!r.ok)throw new Error(await r.text());return r.json()}
+function errorText(error){
+  try{
+    const parsed=JSON.parse(error.message);
+    return parsed.detail||error.message;
+  }catch{
+    return error.message;
+  }
+}
 function empty(msg){return `<div class="empty">${escapeHtml(msg)}</div>`}
 function monthUrl(path){return `${path}?month=${encodeURIComponent(selectedMonth)}`}
 function updateMonthLabels(){
@@ -226,10 +234,10 @@ function renderCards(cards, limit){
   }).join("")||empty("카드 사용 데이터가 없습니다.");
 }
 function renderExpenses(items){
-  $("expenseList").innerHTML=(items||[]).map(x=>`<article class="item"><div class="item-row"><div><div class="title">${escapeHtml(x.category)}</div><div class="date-line">${escapeHtml(x.month||selectedMonth)} 기준 합산</div><div class="muted">지난달 ${won(x.previous_amount)} · 변화 ${pct(x.change_rate)}</div></div><div class="item-actions"><span class="badge">${won(x.amount)}</span><button class="mini-btn" type="button" title="이 카테고리의 최근 입력 1건을 수정합니다." data-edit-money="expense" data-item='${escapeHtml(JSON.stringify({id:x.id,month:x.month||selectedMonth,category:x.category,amount:x.amount}))}' ${x.id?"":"disabled"}>최근 1건 수정</button><button class="mini-btn danger" type="button" title="이 카테고리의 최근 입력 1건을 삭제합니다." data-delete-money="expenses" data-id="${x.id||""}" ${x.id?"":"disabled"}>최근 1건 삭제</button></div></div></article>`).join("")||empty("카테고리 소비 데이터가 없습니다.");
+  $("expenseList").innerHTML=(items||[]).map(x=>`<article class="item"><div class="item-row"><div><div class="title">${escapeHtml(x.category)}</div><div class="date-line">${escapeHtml(x.month||selectedMonth)} 기준 합산 · 최근 입력 ${won(x.latest_amount)}</div><div class="muted">지난달 ${won(x.previous_amount)} · 변화 ${pct(x.change_rate)}</div></div><div class="item-actions"><span class="badge">${won(x.amount)}</span><button class="mini-btn" type="button" title="이 카테고리의 최근 입력 1건을 수정합니다." data-edit-money="expense" data-item='${escapeHtml(JSON.stringify({id:x.id,month:x.month||selectedMonth,category:x.category,amount:x.latest_amount??x.amount}))}' ${x.id?"":"disabled"}>최근 1건 수정</button><button class="mini-btn danger" type="button" title="이 카테고리의 최근 입력 1건을 삭제합니다." data-delete-money="expenses" data-id="${x.id||""}" ${x.id?"":"disabled"}>최근 1건 삭제</button></div></div></article>`).join("")||empty("카테고리 소비 데이터가 없습니다.");
 }
 function renderInstallments(items){
-  $("installmentList").innerHTML=(items||[]).map(x=>`<article class="item"><div class="item-row"><div><div class="title">${escapeHtml(x.title)}</div><div class="date-line">시작일 ${escapeHtml(x.start_date||"날짜 미지정")} · 조회월 ${escapeHtml(selectedMonth)}</div><div class="muted">${escapeHtml(x.card_name)} · ${x.current_month}/${x.total_month}개월 · 남은 ${x.remaining_month}개월${x.expected_current_month&&x.expected_current_month!==x.current_month?` · 시작일 기준 ${x.expected_current_month}회차`:""}</div></div><div class="item-actions"><span class="badge">${won(x.monthly_amount)}</span><button class="mini-btn" type="button" data-edit-money="installment" data-item='${escapeHtml(JSON.stringify(x))}'>수정</button><button class="mini-btn danger" type="button" data-delete-money="installments" data-id="${x.id}">삭제</button></div></div><div class="bar"><span style="width:${Math.round((x.progress_rate||0)*100)}%"></span></div></article>`).join("")||empty("할부 데이터가 없습니다.");
+  $("installmentList").innerHTML=(items||[]).map(x=>`<article class="item"><div class="item-row"><div><div class="title">${escapeHtml(x.title)}</div><div class="date-line">시작일 ${escapeHtml(x.start_date||"날짜 미지정")} · 조회월 ${escapeHtml(selectedMonth)}${x.is_active_for_month?"":" · 이번 달 합계 제외"}</div><div class="muted">${escapeHtml(x.card_name)} · ${x.current_month}/${x.total_month}개월 · 남은 ${x.remaining_month}개월${x.expected_current_month&&x.expected_current_month!==x.current_month?` · 시작일 기준 ${x.expected_current_month}회차`:""}</div></div><div class="item-actions"><span class="badge">${won(x.monthly_amount)}</span><button class="mini-btn" type="button" data-edit-money="installment" data-item='${escapeHtml(JSON.stringify(x))}'>수정</button><button class="mini-btn danger" type="button" data-delete-money="installments" data-id="${x.id}">삭제</button></div></div><div class="bar"><span style="width:${Math.round((x.progress_rate||0)*100)}%"></span></div></article>`).join("")||empty("할부 데이터가 없습니다.");
 }
 function renderAssets(items){
   const ordered=[...(items||[])].sort((a,b)=>String(a.month||"").localeCompare(String(b.month||"")));
@@ -408,13 +416,14 @@ document.addEventListener("click",async(event)=>{
   const id=button.dataset.id;
   if(!id)return;
   const type=button.dataset.deleteMoney;
+  if(!confirm("이 Money Core 항목을 삭제할까요? 삭제 후에는 되돌릴 수 없습니다."))return;
   button.disabled=true;
   try{
     await deleteJson(`/finance/${type}/${id}`);
     showToast("항목을 삭제했습니다.");
     await load();
   }catch(error){
-    showToast(error.message);
+    showToast(errorText(error));
   }finally{
     button.disabled=false;
   }
