@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Any
 
 from ..storage.database import execute, fetch_all, fetch_one
+from .agent_dialogue_service import build_agent_dialogue, dialogue_payload
 from .agent_message_service import create_agent_message
 from .agent_news_service import AGENT1_ID, list_agent_news_items
 from .news_processing_service import build_blog_ready_news, build_blog_title_from_grouped_news
@@ -80,21 +81,23 @@ def create_it_blog_draft_from_agent1(limit: int = 5) -> dict[str, Any]:
     )
     draft = get_blog_draft(draft_id)
     try:
+        payload = {
+            "draft_id": draft_id,
+            "title": draft.get("title"),
+            "source_agent_id": AGENT1_ID,
+            "news_count": len(news_items),
+        }
+        fallback = AGENT2_STANDBY_MESSAGE.format(
+            draft_id=draft_id,
+            title=draft.get("title") or "",
+            news_count=len(news_items),
+        )
         create_agent_message(
             2,
-            AGENT2_STANDBY_MESSAGE.format(
-                draft_id=draft_id,
-                title=draft.get("title") or "",
-                news_count=len(news_items),
-            ),
+            build_agent_dialogue("blog_draft", agent_id=2, context={**payload, "fallback": fallback}) or fallback,
             to_agent_id=1,
             topic="blog_draft",
-            payload={
-                "draft_id": draft_id,
-                "title": draft.get("title"),
-                "source_agent_id": AGENT1_ID,
-                "news_count": len(news_items),
-            },
+            payload=dialogue_payload(payload),
         )
     except Exception:
         pass

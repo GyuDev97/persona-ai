@@ -5,6 +5,7 @@ from datetime import date
 from typing import Any
 
 from ..storage.database import fetch_all
+from .agent_autonomy_service import list_autonomy_proposals
 from .agent_news_service import AGENT1_ID, get_agent_news_stats, list_agent_news_display_items
 from .agent_message_service import list_agent_messages
 from .agent_standby_service import get_agent_standby_status
@@ -30,6 +31,7 @@ def build_agent_report_center() -> dict[str, Any]:
         "agent3": _build_agent3_panel(),
         "agent4": _build_agent4_panel(),
         "collaboration": _build_collaboration_panel(),
+        "autonomy": _build_autonomy_panel(),
     }
 
 
@@ -262,6 +264,18 @@ def _build_collaboration_panel() -> dict[str, Any]:
     except Exception as error:
         return {"messages": [], "error_message": str(error)}
     return {"messages": messages}
+
+
+def _build_autonomy_panel() -> dict[str, Any]:
+    try:
+        proposals = list_autonomy_proposals(limit=10)
+    except Exception as error:
+        return {"proposals": [], "error_message": str(error)}
+    return {
+        "proposals": proposals,
+        "pending_count": sum(1 for proposal in proposals if proposal.get("status") == "pending"),
+        "queued_count": sum(1 for proposal in proposals if proposal.get("status") == "queued"),
+    }
 
 
 def _latest_task_for_agent(agent: dict[str, Any]) -> dict[str, Any] | None:

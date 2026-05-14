@@ -230,6 +230,41 @@ CREATE TABLE IF NOT EXISTS agent_dev_proposals (
     codex_task_id INTEGER
 );
 
+CREATE TABLE IF NOT EXISTS agent_observations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_id INTEGER NOT NULL DEFAULT 0,
+    source TEXT NOT NULL DEFAULT 'gyuos-core',
+    observation_type TEXT NOT NULL DEFAULT 'status',
+    title TEXT NOT NULL,
+    summary TEXT NOT NULL DEFAULT '',
+    payload_json TEXT NOT NULL DEFAULT '{}',
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
+CREATE TABLE IF NOT EXISTS agent_autonomy_proposals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_id INTEGER NOT NULL DEFAULT 0,
+    title TEXT NOT NULL,
+    summary TEXT NOT NULL DEFAULT '',
+    reason TEXT NOT NULL DEFAULT '',
+    expected_action TEXT NOT NULL DEFAULT '',
+    target_area TEXT NOT NULL DEFAULT '',
+    target_files TEXT NOT NULL DEFAULT '[]',
+    risk_level TEXT NOT NULL DEFAULT 'low',
+    approval_required INTEGER NOT NULL DEFAULT 1,
+    suggested_task_type TEXT NOT NULL DEFAULT 'autonomy_review',
+    command_text TEXT NOT NULL DEFAULT '',
+    payload_json TEXT NOT NULL DEFAULT '{}',
+    status TEXT NOT NULL DEFAULT 'pending',
+    source_key TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    approved_at TEXT,
+    queued_at TEXT,
+    completed_at TEXT,
+    task_id INTEGER,
+    UNIQUE (source_key)
+);
+
 CREATE TABLE IF NOT EXISTS agent_blog_drafts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     agent_id INTEGER NOT NULL DEFAULT 2,
@@ -545,6 +580,43 @@ MARIADB_SCHEMA = [
     )
     """,
     """
+    CREATE TABLE IF NOT EXISTS agent_observations (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        agent_id INT NOT NULL DEFAULT 0,
+        source VARCHAR(100) NOT NULL DEFAULT 'gyuos-core',
+        observation_type VARCHAR(50) NOT NULL DEFAULT 'status',
+        title VARCHAR(255) NOT NULL,
+        summary TEXT NOT NULL,
+        payload_json LONGTEXT NOT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS agent_autonomy_proposals (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        agent_id INT NOT NULL DEFAULT 0,
+        title VARCHAR(255) NOT NULL,
+        summary TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        expected_action TEXT NOT NULL,
+        target_area VARCHAR(255) NOT NULL DEFAULT '',
+        target_files LONGTEXT NOT NULL,
+        risk_level VARCHAR(20) NOT NULL DEFAULT 'low',
+        approval_required BOOLEAN NOT NULL DEFAULT TRUE,
+        suggested_task_type VARCHAR(80) NOT NULL DEFAULT 'autonomy_review',
+        command_text TEXT NOT NULL,
+        payload_json LONGTEXT NOT NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'pending',
+        source_key VARCHAR(255) NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        approved_at DATETIME NULL,
+        queued_at DATETIME NULL,
+        completed_at DATETIME NULL,
+        task_id BIGINT NULL,
+        UNIQUE KEY uniq_agent_autonomy_source (source_key)
+    )
+    """,
+    """
     CREATE TABLE IF NOT EXISTS agent_blog_drafts (
         id BIGINT PRIMARY KEY AUTO_INCREMENT,
         agent_id INT NOT NULL DEFAULT 2,
@@ -638,6 +710,7 @@ def initialize_sqlite() -> None:
     with sqlite3.connect(SQLITE_DB_PATH) as connection:
         connection.executescript(SQLITE_SCHEMA)
         _ensure_sqlite_dev_proposal_columns(connection)
+        _ensure_sqlite_autonomy_tables(connection)
         connection.commit()
 
 
@@ -663,6 +736,7 @@ def initialize_mariadb() -> None:
             for statement in MARIADB_SCHEMA:
                 cursor.execute(statement)
             _ensure_mariadb_dev_proposal_columns(cursor)
+            _ensure_mariadb_autonomy_tables(cursor)
         connection.commit()
 
 
@@ -757,3 +831,91 @@ def _ensure_mariadb_dev_proposal_columns(cursor: Any) -> None:
     for column, definition in required.items():
         if column not in columns:
             cursor.execute(f"ALTER TABLE agent_dev_proposals ADD COLUMN {column} {definition}")
+
+
+def _ensure_sqlite_autonomy_tables(connection: sqlite3.Connection) -> None:
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS agent_observations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_id INTEGER NOT NULL DEFAULT 0,
+            source TEXT NOT NULL DEFAULT 'gyuos-core',
+            observation_type TEXT NOT NULL DEFAULT 'status',
+            title TEXT NOT NULL,
+            summary TEXT NOT NULL DEFAULT '',
+            payload_json TEXT NOT NULL DEFAULT '{}',
+            created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS agent_autonomy_proposals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_id INTEGER NOT NULL DEFAULT 0,
+            title TEXT NOT NULL,
+            summary TEXT NOT NULL DEFAULT '',
+            reason TEXT NOT NULL DEFAULT '',
+            expected_action TEXT NOT NULL DEFAULT '',
+            target_area TEXT NOT NULL DEFAULT '',
+            target_files TEXT NOT NULL DEFAULT '[]',
+            risk_level TEXT NOT NULL DEFAULT 'low',
+            approval_required INTEGER NOT NULL DEFAULT 1,
+            suggested_task_type TEXT NOT NULL DEFAULT 'autonomy_review',
+            command_text TEXT NOT NULL DEFAULT '',
+            payload_json TEXT NOT NULL DEFAULT '{}',
+            status TEXT NOT NULL DEFAULT 'pending',
+            source_key TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+            approved_at TEXT,
+            queued_at TEXT,
+            completed_at TEXT,
+            task_id INTEGER,
+            UNIQUE (source_key)
+        )
+        """
+    )
+
+
+def _ensure_mariadb_autonomy_tables(cursor: Any) -> None:
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS agent_observations (
+            id BIGINT PRIMARY KEY AUTO_INCREMENT,
+            agent_id INT NOT NULL DEFAULT 0,
+            source VARCHAR(100) NOT NULL DEFAULT 'gyuos-core',
+            observation_type VARCHAR(50) NOT NULL DEFAULT 'status',
+            title VARCHAR(255) NOT NULL,
+            summary TEXT NOT NULL,
+            payload_json LONGTEXT NOT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS agent_autonomy_proposals (
+            id BIGINT PRIMARY KEY AUTO_INCREMENT,
+            agent_id INT NOT NULL DEFAULT 0,
+            title VARCHAR(255) NOT NULL,
+            summary TEXT NOT NULL,
+            reason TEXT NOT NULL,
+            expected_action TEXT NOT NULL,
+            target_area VARCHAR(255) NOT NULL DEFAULT '',
+            target_files LONGTEXT NOT NULL,
+            risk_level VARCHAR(20) NOT NULL DEFAULT 'low',
+            approval_required BOOLEAN NOT NULL DEFAULT TRUE,
+            suggested_task_type VARCHAR(80) NOT NULL DEFAULT 'autonomy_review',
+            command_text TEXT NOT NULL,
+            payload_json LONGTEXT NOT NULL,
+            status VARCHAR(30) NOT NULL DEFAULT 'pending',
+            source_key VARCHAR(255) NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            approved_at DATETIME NULL,
+            queued_at DATETIME NULL,
+            completed_at DATETIME NULL,
+            task_id BIGINT NULL,
+            UNIQUE KEY uniq_agent_autonomy_source (source_key)
+        )
+        """
+    )

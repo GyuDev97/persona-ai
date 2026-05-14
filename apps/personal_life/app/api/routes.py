@@ -44,6 +44,15 @@ from ..services.agent_task_service import (
     get_agent_task,
     list_agent_tasks,
 )
+from ..services.agent_autonomy_service import (
+    approve_autonomy_proposal,
+    create_autonomy_proposal,
+    create_observation,
+    get_autonomy_proposal,
+    list_autonomy_proposals,
+    list_observations,
+    update_autonomy_proposal_status,
+)
 from ..services.agent_definition_service import (
     create_agent_definition,
     disable_agent_definition,
@@ -110,6 +119,9 @@ GYUVIS_HUD_DIR = Path(__file__).resolve().parents[3] / "javis-app"
 GYUVIS_STANDBY_V2_PATH = GYUVIS_HUD_DIR / "standby-v2.html"
 GYUVIS_STANDBY_V3_PATH = GYUVIS_HUD_DIR / "standby-v3.html"
 AGENT_REPORT_CENTER_PATH = FRONTEND_DIR / "agent_report_center.html"
+AGENT_LIVE_ROOM_PATH = FRONTEND_DIR / "agent_live_room.html"
+AGENT_LIVE_OFFICE_PATH = FRONTEND_DIR / "agent_live_office.html"
+AGENT_LIVE_OFFICE_SHORTS_PATH = FRONTEND_DIR / "agent_live_office_shorts.html"
 MONEY_CORE_PATH = FRONTEND_DIR / "money_core.html"
 
 
@@ -162,6 +174,35 @@ class DevProposalAiGeneratePayload(BaseModel):
 
 
 class DevProposalStatusPayload(BaseModel):
+    status: str
+
+
+class AutonomyObservationPayload(BaseModel):
+    agent_id: int = 0
+    source: str = "gyuos-core"
+    observation_type: str = "status"
+    title: str
+    summary: str = ""
+    payload: dict = {}
+
+
+class AutonomyProposalPayload(BaseModel):
+    agent_id: int = 0
+    title: str
+    summary: str = ""
+    reason: str = ""
+    expected_action: str = ""
+    target_area: str = ""
+    target_files: list[str] | str = []
+    risk_level: str = "low"
+    approval_required: bool = True
+    suggested_task_type: str = "autonomy_review"
+    command_text: str = ""
+    payload: dict = {}
+    source_key: str | None = None
+
+
+class AutonomyProposalStatusPayload(BaseModel):
     status: str
 
 
@@ -222,6 +263,30 @@ def agent_report_center_page() -> FileResponse:
         raise HTTPException(status_code=404, detail="Agent Report Center not found")
 
     return FileResponse(AGENT_REPORT_CENTER_PATH)
+
+
+@router.get("/agent/live-room", include_in_schema=False)
+def agent_live_room_page() -> FileResponse:
+    if not AGENT_LIVE_ROOM_PATH.exists():
+        raise HTTPException(status_code=404, detail="Agent Live Room not found")
+
+    return FileResponse(AGENT_LIVE_ROOM_PATH)
+
+
+@router.get("/agent/live-office", include_in_schema=False)
+def agent_live_office_page() -> FileResponse:
+    if not AGENT_LIVE_OFFICE_PATH.exists():
+        raise HTTPException(status_code=404, detail="Agent Live Office not found")
+
+    return FileResponse(AGENT_LIVE_OFFICE_PATH)
+
+
+@router.get("/agent/live-office-shorts", include_in_schema=False)
+def agent_live_office_shorts_page() -> FileResponse:
+    if not AGENT_LIVE_OFFICE_SHORTS_PATH.exists():
+        raise HTTPException(status_code=404, detail="Agent Live Office Shorts not found")
+
+    return FileResponse(AGENT_LIVE_OFFICE_SHORTS_PATH)
 
 
 @router.get("/money-core", include_in_schema=False)
@@ -490,6 +555,56 @@ def get_agent_standby_status_route() -> dict:
 @router.get("/agent/report-center/data")
 def get_agent_report_center_data() -> dict:
     return build_agent_report_center()
+
+
+@router.get("/agent/autonomy/observations")
+def get_agent_autonomy_observations(limit: int = 20) -> list[dict]:
+    return list_observations(limit=limit)
+
+
+@router.post("/agent/autonomy/observations")
+def post_agent_autonomy_observation(payload: AutonomyObservationPayload) -> dict:
+    try:
+        return create_observation(payload.dict())
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.get("/agent/autonomy/proposals")
+def get_agent_autonomy_proposals(status: str | None = None, limit: int = 20) -> list[dict]:
+    return list_autonomy_proposals(status=status, limit=limit)
+
+
+@router.get("/agent/autonomy/proposals/{proposal_id}")
+def get_agent_autonomy_proposal_detail(proposal_id: int) -> dict:
+    try:
+        return get_autonomy_proposal(proposal_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.post("/agent/autonomy/proposals")
+def post_agent_autonomy_proposal(payload: AutonomyProposalPayload) -> dict:
+    try:
+        return create_autonomy_proposal(payload.dict())
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.post("/agent/autonomy/proposals/{proposal_id}/approve")
+def post_agent_autonomy_proposal_approve(proposal_id: int) -> dict:
+    try:
+        return approve_autonomy_proposal(proposal_id)
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.post("/agent/autonomy/proposals/{proposal_id}/status")
+def post_agent_autonomy_proposal_status(proposal_id: int, payload: AutonomyProposalStatusPayload) -> dict:
+    try:
+        return update_autonomy_proposal_status(proposal_id, payload.status)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
 
 @router.get("/agent/dev-projects")

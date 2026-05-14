@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GyuOS - Agent Shorts Room</title>
+<style>
+:root{
+  --bg:#fff7ec;--panel:#fffdf9;--line:#eadfd2;--text:#241b15;--muted:#7d7168;
+  --brand:#d95a0b;--green:#18a65c;--orange:#e66f12;--blue:#2278d6;--purple:#8b4de8;
+  --shadow:0 28px 80px rgba(69,43,24,.18);--speed:1;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 50% 0,rgba(255,220,174,.62),transparent 36%),linear-gradient(135deg,#fff9f0,#efe5d8);font-family:"Malgun Gothic","Nanum Gothic",Arial,sans-serif;color:var(--text);overflow:hidden}
+button,a{font:inherit}a{color:inherit;text-decoration:none}
+.wrap{width:min(100vw,calc(100vh * 9 / 16));height:min(100vh,calc(100vw * 16 / 9));position:relative;background:linear-gradient(180deg,#fff8ed,#f2e6d7);box-shadow:var(--shadow);overflow:hidden}
+.frame{position:absolute;inset:0;padding:42px 38px 34px;display:grid;grid-template-rows:auto 1fr auto;gap:24px}
+.bg-grid{position:absolute;inset:0;background:
+  linear-gradient(30deg,rgba(136,100,58,.06) 12%,transparent 12.5%,transparent 87%,rgba(136,100,58,.06) 87.5%,rgba(136,100,58,.06)),
+  linear-gradient(150deg,rgba(136,100,58,.06) 12%,transparent 12.5%,transparent 87%,rgba(136,100,58,.06) 87.5%,rgba(136,100,58,.06));
+  background-size:86px 50px;opacity:.75}
+.halo{position:absolute;border-radius:50%;filter:blur(5px);opacity:.54}.halo.h1{width:340px;height:340px;left:-120px;top:130px;background:#dff8e9}.halo.h2{width:360px;height:360px;right:-130px;top:450px;background:#e7f2ff}.halo.h3{width:340px;height:340px;left:-90px;bottom:170px;background:#fff0dd}.halo.h4{width:320px;height:320px;right:-100px;bottom:80px;background:#f1e4ff}
+.top{position:relative;z-index:5;display:grid;gap:16px}.kicker{display:flex;justify-content:space-between;align-items:center;gap:14px;color:#8b6d55;font-weight:950;font-size:23px;letter-spacing:0}.live{display:inline-flex;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;background:#e8f8ed;color:#0b8b4b;font-size:20px}.dot{width:12px;height:12px;border-radius:50%;background:var(--green);box-shadow:0 0 0 8px rgba(24,166,92,.13)}
+h1{margin:0;font-size:68px;line-height:1;letter-spacing:-.04em}.subtitle{margin:0;color:#6d5d50;font-size:27px;line-height:1.35;font-weight:850}
+.stage{position:relative;z-index:3;min-height:0}.core{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);width:280px;height:194px;display:grid;place-items:center;z-index:12}.screen{width:204px;height:124px;border-radius:24px;background:linear-gradient(135deg,#132b42,#284d77 56%,#111b2b);border:8px solid #3d3a36;display:grid;place-items:center;color:#fff;font-weight:950;text-align:center;font-size:30px;line-height:1.1;box-shadow:0 24px 42px rgba(36,26,19,.24)}.screen span{font-size:18px;color:#bfe5ff}.base{position:absolute;bottom:12px;width:236px;height:40px;border-radius:18px;background:linear-gradient(180deg,#c8c4bc,#817c73);z-index:-1}
+.room{position:absolute;width:43%;height:19%;border-radius:34px;background:rgba(255,253,249,.72);border:1px solid rgba(88,60,38,.12);box-shadow:0 26px 58px rgba(78,54,35,.12);overflow:hidden}.room::before{content:"";position:absolute;inset:16px;border-radius:26px;border:2px dashed rgba(80,52,30,.08)}.room.news{left:0;top:3%;background:rgba(229,250,237,.72)}.room.dev{right:0;top:3%;background:rgba(231,244,255,.76)}.room.blog{left:0;bottom:8%;background:rgba(255,239,218,.76)}.room.studio{right:0;bottom:8%;background:rgba(243,233,255,.76)}
+.room b{position:absolute;left:24px;top:20px;font-size:24px}.room.news b{color:var(--green)}.room.dev b{color:var(--blue)}.room.blog b{color:var(--orange)}.room.studio b{color:var(--purple)}
+.desk{position:absolute;left:34px;bottom:22px;width:150px;height:54px;border-radius:14px;background:linear-gradient(180deg,#bd8954,#8b5b32);box-shadow:0 16px 0 rgba(92,61,35,.12)}.desk::before,.desk::after{content:"";position:absolute;top:-44px;width:46px;height:34px;border:6px solid #4f3d30;border-radius:8px;background:linear-gradient(135deg,#203f50,#0f2330)}.desk::before{left:22px}.desk::after{right:20px}
+.seat{position:absolute;left:78px;bottom:13px;width:56px;height:46px;border-radius:22px 22px 12px 12px;background:#36424a}.room.dev .desk,.room.studio .desk{left:auto;right:34px}.room.dev .seat,.room.studio .seat{left:auto;right:84px}
+.agent{position:absolute;width:78px;height:98px;z-index:8}.agent .head{position:absolute;left:22px;top:0;width:35px;height:35px;border-radius:50%;background:#f0c493;border:3px solid rgba(68,43,27,.13)}.agent .hair{position:absolute;left:17px;top:-2px;width:45px;height:21px;border-radius:24px 24px 8px 8px;background:#1c2024}.agent .body{position:absolute;left:13px;top:36px;width:52px;height:58px;border-radius:20px 20px 15px 15px;background:var(--c);box-shadow:inset 0 -13px 0 rgba(0,0,0,.09)}.agent .arm{position:absolute;top:58px;width:25px;height:10px;border-radius:999px;background:#f0c493}.agent .arm.l{left:0;transform:rotate(18deg)}.agent .arm.r{right:0;transform:rotate(-18deg)}
+.agent.news{--c:var(--green);left:92px;top:145px}.agent.dev{--c:var(--blue);right:100px;top:145px}.agent.blog{--c:var(--orange);left:92px;bottom:90px}.agent.studio{--c:var(--purple);right:100px;bottom:90px}
+.runner{position:absolute;width:86px;height:108px;z-index:15;filter:drop-shadow(0 18px 18px rgba(54,38,25,.2));pointer-events:none}.runner .mini{position:absolute;left:15px;top:10px;width:52px;height:82px;animation:runnerBob calc(.72s / var(--speed)) ease-in-out infinite}.runner .head{position:absolute;left:14px;top:0;width:27px;height:27px;border-radius:50%;background:#f0c493;border:2px solid rgba(68,43,27,.13)}.runner .hair{position:absolute;left:10px;top:-1px;width:35px;height:16px;border-radius:18px 18px 7px 7px;background:#1c2024}.runner .body{position:absolute;left:8px;top:29px;width:40px;height:45px;border-radius:15px;background:var(--c)}.runner .leg{position:absolute;top:72px;width:10px;height:18px;border-radius:6px;background:#28323a}.runner .leg.l{left:12px}.runner .leg.r{right:12px}.cargo{position:absolute;right:-8px;top:42px;min-width:48px;padding:7px 9px;border-radius:13px;background:#fffdf9;border:3px solid var(--c);color:var(--c);font-size:15px;font-weight:950;text-align:center}.runner.a1{--c:var(--green);animation:a1Route calc(9s / var(--speed)) ease-in-out infinite}.runner.a3{--c:var(--blue);animation:a3Route calc(10s / var(--speed)) ease-in-out infinite;animation-delay:calc(-1.5s / var(--speed))}.runner.a4{--c:var(--purple);animation:a4Route calc(11s / var(--speed)) ease-in-out infinite;animation-delay:calc(-3s / var(--speed))}
+.status{position:absolute;z-index:20;width:44%;padding:22px 24px;border:1px solid rgba(80,52,30,.1);border-radius:28px;background:rgba(255,253,249,.93);box-shadow:0 24px 52px rgba(63,44,29,.16);backdrop-filter:blur(12px)}.status h2{margin:0 0 8px;font-size:26px}.status strong{display:block;margin-bottom:13px;color:var(--c);font-size:26px}.status p{margin:0;color:#4f443c;font-size:21px;line-height:1.52;font-weight:850}.status time{display:block;margin-top:12px;color:#7b6c60;font-size:19px;font-weight:950}.status.news{--c:var(--green);left:0;top:24%}.status.dev{--c:var(--blue);right:0;top:24%}.status.blog{--c:var(--orange);left:0;bottom:29%}.status.studio{--c:var(--purple);right:0;bottom:29%}
+.flow-svg{position:absolute;inset:0;z-index:10;pointer-events:none}.flow{fill:none;stroke-width:8;stroke-linecap:round;stroke-dasharray:10 18;filter:drop-shadow(0 5px 5px rgba(60,42,30,.13));animation:dash calc(1.6s / var(--speed)) linear infinite}.flow.green{stroke:var(--green)}.flow.orange{stroke:var(--orange)}.flow.blue{stroke:var(--blue)}.flow.purple{stroke:var(--purple)}
+.bottom{position:relative;z-index:8;display:grid;gap:16px}.handoff{display:grid;grid-template-columns:62px minmax(0,1fr) auto;gap:18px;align-items:center;padding:20px 22px;border:1px solid rgba(80,52,30,.1);border-radius:28px;background:rgba(255,253,249,.94);box-shadow:0 22px 48px rgba(63,44,29,.15)}.check{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:#e9f8ef;color:var(--green);font-size:26px;font-weight:950}.handoff b{font-size:23px}.handoff span{display:block;margin-top:5px;color:#5d5148;font-size:20px;font-weight:850}.handoff time{font-size:19px;color:#7e7268;font-weight:950}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.metric{padding:16px 12px;border:1px solid rgba(80,52,30,.09);border-radius:22px;background:rgba(255,253,249,.82);text-align:center}.metric b{display:block;font-size:34px;line-height:1}.metric span{display:block;margin-top:6px;color:#75695f;font-size:16px;font-weight:900}
+.controls{position:fixed;right:20px;bottom:20px;z-index:50;display:flex;gap:8px}.controls button,.controls a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#fffdf9;color:#5a4a3e;font-weight:950;box-shadow:0 12px 26px rgba(63,44,29,.13)}
+.capture .controls{display:none}
+@keyframes dash{to{stroke-dashoffset:-50}}@keyframes runnerBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}@keyframes a1Route{0%,100%{left:19%;top:22%;transform:scale(1)}32%{left:34%;top:35%;transform:scale(1.04)}56%{left:30%;top:73%;transform:scale(1)}78%{left:20%;top:49%;transform:scale(.98)}}@keyframes a3Route{0%,100%{right:21%;top:21%;transform:scale(1)}36%{right:32%;top:36%;transform:scale(.98)}62%{right:44%;top:48%;transform:scale(1.04)}}@keyframes a4Route{0%,100%{right:18%;top:72%;transform:scale(1)}36%{right:31%;top:63%;transform:scale(.98)}62%{right:44%;top:53%;transform:scale(1.04)}} 
+@media(max-aspect-ratio:9/16){.wrap{width:100vw;height:calc(100vw * 16 / 9)}}@media(min-aspect-ratio:9/16){.wrap{width:calc(100vh * 9 / 16);height:100vh}}
+.frame{padding:34px 34px 30px;gap:16px}
+.top{gap:10px}.kicker{font-size:19px}.live{padding:8px 14px;font-size:17px}.dot{width:10px;height:10px;box-shadow:0 0 0 7px rgba(24,166,92,.13)}
+h1{font-size:52px}.subtitle{font-size:22px;line-height:1.28}
+.stage{border:1px solid rgba(80,52,30,.08);border-radius:34px;background:rgba(255,253,249,.22);box-shadow:inset 0 0 0 1px rgba(255,255,255,.4);overflow:hidden}
+.core{top:50%;transform:translate(-50%,-50%) scale(1.08)}
+.room{height:23%;width:45%;border-radius:30px}.room.news{top:4%;left:3%}.room.dev{top:4%;right:3%}.room.blog{bottom:5%;left:3%}.room.studio{bottom:5%;right:3%}
+.room b{font-size:20px;left:22px;top:18px}.desk{transform:scale(.9);transform-origin:left bottom}.room.dev .desk,.room.studio .desk{transform-origin:right bottom}
+.agent.news{left:82px;top:150px}.agent.dev{right:90px;top:150px}.agent.blog{left:82px;bottom:82px}.agent.studio{right:90px;bottom:82px}
+.status{width:auto;min-width:166px;max-width:210px;padding:11px 13px;border-radius:17px;box-shadow:0 12px 28px rgba(63,44,29,.1);backdrop-filter:blur(8px)}
+.status h2{margin:0;font-size:15px}.status strong{margin:3px 0 0;font-size:17px;line-height:1.25}.status p,.status time{display:none}
+.status.news{left:6%;top:29%}.status.dev{right:6%;top:29%}.status.blog{left:6%;bottom:29%}.status.studio{right:6%;bottom:29%}
+.handoff{padding:15px 17px;border-radius:22px;grid-template-columns:48px minmax(0,1fr) auto}.check{width:38px;height:38px;font-size:22px}.handoff b{font-size:19px}.handoff span{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.handoff time{font-size:15px}
+.metrics{gap:9px}.metric{padding:11px 8px;border-radius:17px}.metric b{font-size:26px}.metric span{font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap">
+  <div class="bg-grid"></div><div class="halo h1"></div><div class="halo h2"></div><div class="halo h3"></div><div class="halo h4"></div>
+  <div class="frame">
+    <header class="top">
+      <div class="kicker"><span>GyuOS Personal AI OS</span><span class="live"><i class="dot"></i><span id="liveState">연결중</span></span></div>
+      <div>
+        <h1>Agent Live Office</h1>
+        <p class="subtitle" id="sceneSummary">쇼츠용 세로 상황실을 준비하고 있습니다.</p>
+      </div>
+    </header>
+
+    <main class="stage">
+      <div class="room news"><b>Internet News Lab</b><div class="desk"></div><div class="seat"></div></div>
+      <div class="room dev"><b>Dev Review</b><div class="desk"></div><div class="seat"></div></div>
+      <div class="room blog"><b>Blog Desk</b><div class="desk"></div><div class="seat"></div></div>
+      <div class="room studio"><b>Content Studio</b><div class="desk"></div><div class="seat"></div></div>
+
+      <div class="agent news"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="arm l"></div><div class="arm r"></div></div>
+      <div class="agent dev"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="arm l"></div><div class="arm r"></div></div>
+      <div class="agent blog"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="arm l"></div><div class="arm r"></div></div>
+      <div class="agent studio"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="arm l"></div><div class="arm r"></div></div>
+
+      <svg class="flow-svg" viewBox="0 0 1080 1340" preserveAspectRatio="none" aria-hidden="true">
+        <path class="flow green" d="M 300 250 C 380 390, 420 570, 500 670" />
+        <path class="flow orange" d="M 300 1040 C 390 910, 430 780, 500 680" />
+        <path class="flow blue" d="M 780 250 C 690 380, 650 570, 540 670" />
+        <path class="flow purple" d="M 780 1040 C 690 910, 650 780, 540 690" />
+      </svg>
+
+      <div class="runner a1"><div class="mini"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="leg l"></div><div class="leg r"></div></div><div class="cargo">뉴스</div></div>
+      <div class="runner a3"><div class="mini"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="leg l"></div><div class="leg r"></div></div><div class="cargo">검토</div></div>
+      <div class="runner a4"><div class="mini"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="leg l"></div><div class="leg r"></div></div><div class="cargo">아이디어</div></div>
+
+      <div class="core"><div class="screen">GyuOS Core<br><span>AI Agent Office</span></div><div class="base"></div></div>
+
+      <article class="status news"><h2>Agent 01</h2><strong id="a1Status">뉴스 수집 중</strong><p id="a1Text">오늘 뉴스 흐름을 확인하고 있습니다.</p><time id="a1Time">-</time></article>
+      <article class="status dev"><h2>Agent 03</h2><strong id="a3Status">승인 검토 중</strong><p id="a3Text">Codex 제안을 승인 전 상태로 확인합니다.</p><time id="a3Time">-</time></article>
+      <article class="status blog"><h2>Agent 02</h2><strong id="a2Status">자리에서 작성 중</strong><p id="a2Text">Agent 01 자료를 받아 초안을 정리합니다.</p><time id="a2Time">-</time></article>
+      <article class="status studio"><h2>Agent 04</h2><strong id="a4Status">아이디어 정리 중</strong><p id="a4Text">쇼츠와 유튜브 아이디어 후보를 정리합니다.</p><time id="a4Time">-</time></article>
+    </main>
+
+    <footer class="bottom">
+      <div class="handoff"><div class="check">✓</div><div><b id="handoffTitle">Agent 01 → Agent 02</b><span id="handoffText">뉴스 전달 상태를 확인하고 있습니다.</span></div><time id="handoffTime">-</time></div>
+      <div class="metrics">
+        <div class="metric"><b id="metricNews">0</b><span>뉴스</span></div>
+        <div class="metric"><b id="metricDrafts">0</b><span>초안</span></div>
+        <div class="metric"><b id="metricQueue">0</b><span>큐</span></div>
+        <div class="metric"><b id="metricIdeas">0</b><span>아이디어</span></div>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<nav class="controls" aria-label="capture controls">
+  <button type="button" id="pauseButton">일시정지</button>
+  <button type="button" id="captureButton">캡처 모드 C</button>
+  <a href="/agent/live-office">일반 화면</a>
+</nav>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const state = { report:null, tasks:[], paused:false, capture:false };
+function shortText(value,max=66){const clean=String(value||"").replace(/\s+/g," ").trim();return clean.length>max?`${clean.slice(0,max-1)}…`:clean}
+async function request(url){const res=await fetch(url,{headers:{"Accept":"application/json"}});if(!res.ok)throw new Error(`${res.status} ${res.statusText}`);return res.json()}
+function formatTime(value){if(!value)return "-";const d=new Date(value);if(Number.isNaN(d.getTime()))return String(value).slice(0,16);return d.toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"})}
+function getCards(){return state.report?.cards||state.report?.agents?.cards||state.report?.agents||[]}
+function getCard(agentId){return getCards().find((card)=>Number(card.agent_id||card.id)===Number(agentId))||{}}
+function getNewsItems(){return state.report?.agent1?.items||state.report?.news?.items||state.report?.agent1?.latest_titles||[]}
+function getNewsCount(){return Number(state.report?.agent1?.today_count||state.report?.agent1?.collected_count||getNewsItems().length||0)}
+function getDrafts(){return state.report?.agent2?.drafts||state.report?.blog?.drafts||[]}
+function getIdeas(){return state.report?.agent4?.ideas||state.report?.youtube?.ideas||[]}
+function getMessages(){return state.report?.collaboration?.messages||[]}
+function inferTaskAgentId(task){const text=`${task.agent_id||""} ${task.source||""} ${task.task_type||""} ${task.command_text||""}`.toLowerCase();if(Number(task.agent_id||0))return Number(task.agent_id);if(text.includes("news"))return 1;if(text.includes("blog")||text.includes("draft")||text.includes("naver"))return 2;if(text.includes("codex")||text.includes("coding")||text.includes("autonomy"))return 3;if(text.includes("youtube")||text.includes("idea"))return 4;return 0}
+function taskCount(agentId){return state.tasks.filter((task)=>inferTaskAgentId(task)===agentId).length}
+function latestMessage(agentId){const msg=getMessages().find((item)=>Number(item.agent_id||item.from_agent_id||0)===agentId);return msg?.message||""}
+function firstTitle(items){const item=items.find(Boolean);return item?.title||item?.headline||item?.name||item||""}
+function updateCard(agentId,prefix,status,text){const card=getCard(agentId);$(`${prefix}Status`).textContent=status||card.status||"대기 중";$(`${prefix}Text`).textContent=shortText(text||card.latest_result_summary||card.description||"최근 상태를 확인하고 있습니다.",78);$(`${prefix}Time`).textContent=formatTime(card.updated_at||card.last_run_at||state.report?.updated_at||new Date())}
+function render(){
+  const newsCount=getNewsCount();
+  const drafts=getDrafts();
+  const ideas=getIdeas();
+  const a3Queue=taskCount(3)+(state.report?.agent3?.codex_pending_tasks||[]).length+(state.report?.autonomy?.proposals||[]).filter((p)=>p.status==="pending").length;
+  const latestNews=firstTitle(getNewsItems());
+  const latestDraft=firstTitle(drafts);
+  const latestIdea=firstTitle(ideas);
+  updateCard(1,"a1","뉴스 수집 중",latestMessage(1)||`오늘 뉴스 ${newsCount}건을 정리했습니다.${latestNews?` ${latestNews}`:""}`);
+  updateCard(2,"a2","자리에서 작성 중",latestMessage(2)||(latestDraft?`초안 "${latestDraft}" 작업 흐름을 확인하고 있습니다.`:"Agent 01 자료를 받아 블로그 초안을 준비합니다."));
+  updateCard(3,"a3",a3Queue?"승인 검토 중":"검토 대기 중",latestMessage(3)||`Codex/자율 제안 ${a3Queue}건을 승인 전 상태로 보고 있습니다.`);
+  updateCard(4,"a4",ideas.length?"아이디어 정리 중":"아이디어 대기 중",latestMessage(4)||(latestIdea?`아이디어 "${latestIdea}" 후보를 정리했습니다.`:"유튜브 아이디어 후보를 기다리고 있습니다."));
+  $("metricNews").textContent=String(newsCount);
+  $("metricDrafts").textContent=String(drafts.length);
+  $("metricQueue").textContent=String(state.tasks.length);
+  $("metricIdeas").textContent=String(ideas.length);
+  $("sceneSummary").textContent=`뉴스 ${newsCount}건, 초안 ${drafts.length}건, 작업 큐 ${state.tasks.length}건이 움직이고 있습니다.`;
+  $("handoffText").textContent=newsCount?`뉴스 ${newsCount}건 전달 준비 완료`:"전달할 뉴스 자료를 확인하는 중";
+  $("handoffTime").textContent=formatTime(state.report?.updated_at||new Date());
+}
+async function loadData(){
+  try{
+    $("liveState").textContent="연결중";
+    const [report,tasksPayload]=await Promise.all([request("/agent/report-center/data"),request("/agent/tasks?limit=20").catch(()=>[])]);
+    state.report=report;
+    state.tasks=tasksPayload.tasks||tasksPayload.items||tasksPayload||[];
+    if(!Array.isArray(state.tasks))state.tasks=[];
+    $("liveState").textContent="LIVE";
+    render();
+  }catch(error){
+    $("liveState").textContent="확인 필요";
+  }
+}
+function setPaused(paused){
+  state.paused=paused;
+  $("pauseButton").textContent=paused?"재생":"일시정지";
+  document.querySelectorAll(".flow,.runner,.runner .mini").forEach((el)=>el.style.animationPlayState=paused?"paused":"running");
+}
+$("pauseButton").addEventListener("click",()=>setPaused(!state.paused));
+function setCaptureMode(capture){
+  state.capture=capture;
+  document.body.classList.toggle("capture",state.capture);
+  $("captureButton").textContent=state.capture?"컨트롤 표시 C":"캡처 모드 C";
+}
+$("captureButton").addEventListener("click",()=>setCaptureMode(!state.capture));
+document.addEventListener("keydown",(event)=>{
+  if(event.key && event.key.toLowerCase()==="c") setCaptureMode(!state.capture);
+});
+if(new URLSearchParams(window.location.search).get("capture")==="1") setCaptureMode(true);
+loadData();
+setInterval(loadData,15000);
+</script>
+</body>
+</html>

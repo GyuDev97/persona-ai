@@ -13,6 +13,7 @@ from datetime import date, datetime, time as dt_time, timedelta
 
 from app.agents import Agent1News, Agent2Blog, Agent3Codex, Agent4Youtube, BaseAgent
 from app.config import load_env_file
+from app.services.agent_dialogue_service import build_agent_dialogue, dialogue_payload
 from app.services.blog_draft_service import create_it_blog_draft_from_agent1
 from app.services.money_core_service import build_money_core_summary
 from app.services.agent_news_service import (
@@ -35,7 +36,12 @@ from app.services.agent_status_service import (
     mark_agent_running,
     mark_agent_success,
 )
-from app.services.naver_news_email_service import is_news_email_enabled, send_agent1_morning_news_email
+from app.services.naver_news_email_service import (
+    is_hourly_agent_email_enabled,
+    is_news_email_enabled,
+    send_agent1_morning_news_email,
+    send_hourly_agent_status_email,
+)
 from app.storage.database import fetch_one, initialize_database
 
 
@@ -47,6 +53,10 @@ AGENT1_COLLECT_INTERVAL_SECONDS = int(os.getenv("GYUVIS_AGENT1_COLLECT_INTERVAL_
 AGENT1_START_TIME = os.getenv("GYUVIS_AGENT1_START_TIME", "06:00")
 AGENT1_END_TIME = os.getenv("GYUVIS_AGENT1_END_TIME", "23:00")
 AGENT1_NEWS_EMAIL_TIME = os.getenv("GYUVIS_AGENT1_NEWS_EMAIL_TIME", "08:00")
+try:
+    HOURLY_AGENT_EMAIL_MINUTE = int(os.getenv("GYUVIS_HOURLY_AGENT_EMAIL_MINUTE", "0"))
+except ValueError:
+    HOURLY_AGENT_EMAIL_MINUTE = 0
 AGENT1_NEWS_RECENT_DAYS = max(1, int(os.getenv("GYUVIS_AGENT1_NEWS_RECENT_DAYS", "1")))
 AGENT2_AUTO_DRAFT_FROM_AGENT1 = os.getenv("GYUVIS_AGENT2_AUTO_DRAFT_FROM_AGENT1", "1")
 AGENT4_AUTO_IDEA_FROM_AGENT1 = os.getenv("GYUVIS_AGENT4_AUTO_IDEA_FROM_AGENT1", "1")
@@ -91,12 +101,14 @@ _last_agent1_collect_at = 0.0
 _last_agent1_on_duty_date: str | None = None
 _last_agent1_report_date: str | None = None
 _last_agent1_email_date: str | None = None
+_last_hourly_agent_email_key: str | None = None
 
 AGENT_HANDLERS: dict[str, BaseAgent] = {
     "agent1_it_news_window": Agent1News(),
     "agent2_it_blog_draft": Agent2Blog(),
     "naver_blog_fill_draft": Agent2Blog(mode="fill"),
     "coding_app_update": Agent3Codex(),
+    "autonomy_review": Agent3Codex(),
     "youtube_idea_research": Agent4Youtube(),
 }
 
@@ -129,6 +141,7 @@ def main() -> None:
 def run_scheduled_collectors() -> None:
     run_agent1_it_news_collector()
     run_agent1_news_email_sender()
+    run_hourly_agent_status_email_sender()
 
 
 def run_agent1_it_news_collector(force: bool = False) -> None:
@@ -203,19 +216,54 @@ def run_agent1_news_email_sender() -> None:
         print(f"[{datetime.now().isoformat(timespec='seconds')}] agent1 news email failed: {error}")
 
 
+def run_hourly_agent_status_email_sender() -> None:
+    global _last_hourly_agent_email_key
+
+    if not is_hourly_agent_email_enabled():
+        return
+
+    now = datetime.now()
+    send_minute = max(0, min(59, HOURLY_AGENT_EMAIL_MINUTE))
+    if now.minute != send_minute:
+        return
+
+    hour_key = now.strftime("%Y-%m-%d-%H")
+    if _last_hourly_agent_email_key == hour_key:
+        return
+
+    try:
+        mark_agent_running(AGENT1_ID, f"Hourly GyuOS agent status email started: {hour_key}")
+        result = send_hourly_agent_status_email()
+        _last_hourly_agent_email_key = hour_key
+        mark_agent_success(
+            AGENT1_ID,
+            f"Hourly GyuOS agent status email sent: {result.get('news_count')} news items",
+        )
+        print(
+            f"[{datetime.now().isoformat(timespec='seconds')}] hourly agent status email sent: "
+            f"{result.get('news_count')} news items"
+        )
+    except Exception as error:
+        _last_hourly_agent_email_key = hour_key
+        mark_agent_error(AGENT1_ID, f"Hourly GyuOS agent status email failed: {error}")
+        print(f"[{datetime.now().isoformat(timespec='seconds')}] hourly agent status email failed: {error}")
+
+
 def post_agent1_off_duty_message(report_date: str, report: dict) -> None:
-    message = AGENT1_OFF_DUTY_MESSAGE.format(
-        date=report_date,
-        start_time=AGENT1_START_TIME,
-        end_time=AGENT1_END_TIME,
-        title=report.get("title") or "",
-    )
     payload = {
         "report_date": report_date,
         "report_title": report.get("title"),
         "start_time": AGENT1_START_TIME,
         "end_time": AGENT1_END_TIME,
     }
+    fallback = AGENT1_OFF_DUTY_MESSAGE.format(
+        date=report_date,
+        start_time=AGENT1_START_TIME,
+        end_time=AGENT1_END_TIME,
+        title=report.get("title") or "",
+    )
+    message = build_agent_dialogue("agent_off_duty", agent_id=1, context={**payload, "fallback": fallback}) or fallback
+    payload = dialogue_payload(payload)
     if not agent_message_exists("agent_off_duty", AGENT1_ID, report_date):
         try:
             create_agent_message(
@@ -239,17 +287,22 @@ def post_agent1_off_duty_replies(report_date: str, payload: dict) -> None:
         if agent_message_exists("agent_off_duty_reply", agent_id, report_date):
             continue
         try:
+            fallback = template.format(
+                date=report_date,
+                start_time=AGENT1_START_TIME,
+                end_time=AGENT1_END_TIME,
+                title=payload.get("report_title") or "",
+            )
             create_agent_message(
                 agent_id,
-                template.format(
-                    date=report_date,
-                    start_time=AGENT1_START_TIME,
-                    end_time=AGENT1_END_TIME,
-                    title=payload.get("report_title") or "",
-                ),
+                build_agent_dialogue(
+                    "agent_off_duty_reply",
+                    agent_id=agent_id,
+                    context={**payload, "fallback": fallback},
+                ) or fallback,
                 to_agent_id=1,
                 topic="agent_off_duty_reply",
-                payload=payload,
+                payload=dialogue_payload(payload),
             )
         except Exception as error:
             print(
@@ -261,21 +314,23 @@ def post_agent1_off_duty_replies(report_date: str, payload: dict) -> None:
 def post_agent1_on_duty_message(report_date: str) -> None:
     if agent_message_exists("agent_on_duty", AGENT1_ID, report_date):
         return
-    message = AGENT1_ON_DUTY_MESSAGE.format(
+    payload = {
+        "report_date": report_date,
+        "start_time": AGENT1_START_TIME,
+        "end_time": AGENT1_END_TIME,
+    }
+    fallback = AGENT1_ON_DUTY_MESSAGE.format(
         date=report_date,
         start_time=AGENT1_START_TIME,
         end_time=AGENT1_END_TIME,
     )
+    message = build_agent_dialogue("agent_on_duty", agent_id=1, context={**payload, "fallback": fallback}) or fallback
     try:
         create_agent_message(
             1,
             message,
             topic="agent_on_duty",
-            payload={
-                "report_date": report_date,
-                "start_time": AGENT1_START_TIME,
-                "end_time": AGENT1_END_TIME,
-            },
+            payload=dialogue_payload(payload),
         )
     except Exception as error:
         print(f"[{datetime.now().isoformat(timespec='seconds')}] agent1 on-duty message failed: {error}")
@@ -328,26 +383,18 @@ def pick_friendly_message(options: list[str], key: str | int | None = None) -> s
 
 
 def build_agent1_to_agent2_message(inserted_count: int, task_id: int, titles: list[str] | None = None) -> str:
-    headline = friendly_headline(titles)
-    return pick_friendly_message(
-        [
-            f"Agent 02, 오늘은 '{headline}' 쪽 흐름이 괜찮아 보여. 새 자료 {inserted_count}건 묶어서 초안 큐 #{task_id}에 올려둘게.",
-            f"Agent 02, 방금 들어온 자료 중에 '{headline}' 이건 블로그로 풀기 좋아 보여. 큐 #{task_id}에 넘겨둘게.",
-            f"Agent 02, 새 뉴스 {inserted_count}건 확인했어. 특히 '{headline}' 쪽은 독자 입장에서 읽기 좋겠더라. 초안 큐 #{task_id} 부탁해.",
-        ],
-        f"agent2-{task_id}-{headline}",
+    return build_agent_dialogue(
+        "news_to_blog",
+        agent_id=1,
+        context={"inserted_count": inserted_count, "task_id": task_id, "titles": titles or []},
     )
 
 
 def build_agent1_to_agent4_message(inserted_count: int, task_id: int, titles: list[str] | None = None) -> str:
-    headline = friendly_headline(titles)
-    return pick_friendly_message(
-        [
-            f"Agent 04, '{headline}' 쪽은 영상 제목으로도 써볼 만해 보여. 같은 자료 {inserted_count}건으로 아이디어 큐 #{task_id} 열어둘게.",
-            f"Agent 04도 참고해줘. 오늘 뉴스 중엔 '{headline}' 흐름이 눈에 띄어서 유튜브 아이디어 큐 #{task_id}로 넘겨둘게.",
-            f"Agent 04, 이 자료는 짧은 영상 소재로도 괜찮겠다. '{headline}' 중심으로 큐 #{task_id}에 정리 부탁해.",
-        ],
-        f"agent4-{task_id}-{headline}",
+    return build_agent_dialogue(
+        "news_to_youtube",
+        agent_id=1,
+        context={"inserted_count": inserted_count, "task_id": task_id, "titles": titles or []},
     )
 
 
@@ -423,7 +470,7 @@ def maybe_enqueue_agent2_blog_draft(inserted_count: int, *, force: bool = False)
         build_agent1_to_agent2_message(inserted_count, task.id, titles),
         to_agent_id=2,
         topic="news_to_blog",
-        payload={"task_id": task.id, "inserted_count": inserted_count, "titles": titles},
+        payload=dialogue_payload({"task_id": task.id, "inserted_count": inserted_count, "titles": titles}),
     )
 
 
@@ -470,7 +517,7 @@ def maybe_enqueue_agent4_youtube_ideas(inserted_count: int, *, force: bool = Fal
         build_agent1_to_agent4_message(inserted_count, task.id, titles),
         to_agent_id=4,
         topic="news_to_youtube",
-        payload={"task_id": task.id, "inserted_count": inserted_count, "titles": titles},
+        payload=dialogue_payload({"task_id": task.id, "inserted_count": inserted_count, "titles": titles}),
     )
 
 
@@ -587,11 +634,16 @@ def build_coding_app_update_report(query: str) -> tuple[str, dict]:
         "요청 내용은 작업 큐에 기록되며, 보스가 승인하면 Codex가 실제 파일 수정과 검증을 진행할 수 있습니다."
     )
     try:
+        fallback = AGENT3_STANDBY_MESSAGE.format(request=query or "")
         create_agent_message(
             3,
-            AGENT3_STANDBY_MESSAGE.format(request=query or ""),
+            build_agent_dialogue(
+                "agent_standby",
+                agent_id=3,
+                context={"request": query, "fallback": fallback},
+            ) or fallback,
             topic="agent_standby",
-            payload={"request": query, "safety": "no_auto_file_write"},
+            payload=dialogue_payload({"request": query, "safety": "no_auto_file_write"}),
         )
     except Exception:
         pass
@@ -608,12 +660,17 @@ def build_youtube_idea_report(query: str) -> tuple[str, dict]:
         f"{index + 1}. {title}" for index, title in enumerate(titles)
     )
     try:
+        fallback = AGENT4_STANDBY_MESSAGE.format(idea_count=len(titles), query=search_query)
         create_agent_message(
             4,
-            AGENT4_STANDBY_MESSAGE.format(idea_count=len(titles), query=search_query),
+            build_agent_dialogue(
+                "youtube_idea",
+                agent_id=4,
+                context={"idea_count": len(titles), "query": search_query, "fallback": fallback},
+            ) or fallback,
             to_agent_id=1,
             topic="youtube_idea",
-            payload={"query": search_query, "ideas": titles},
+            payload=dialogue_payload({"query": search_query, "ideas": titles, "idea_count": len(titles)}),
         )
     except Exception:
         pass

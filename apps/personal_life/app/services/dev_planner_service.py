@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from ..storage.database import execute, fetch_all, fetch_one
+from .agent_dialogue_service import build_agent_dialogue, dialogue_payload
 from .agent_message_service import create_agent_message
 from .agent_task_service import create_agent_task
 from .diff_preview_service import build_diff_preview, summarize_diff
@@ -197,19 +198,21 @@ def approve_dev_proposal(proposal_id: int) -> dict[str, Any]:
         (_now(), task.id, proposal_id),
     )
     try:
+        payload = {
+            "task_id": task.id,
+            "proposal_id": proposal_id,
+            "safety": "preview_only_no_file_write",
+        }
+        fallback = AGENT3_QUEUE_STANDBY_MESSAGE.format(
+            task_id=task.id,
+            proposal_id=proposal_id,
+            title=proposal.get("title") or "",
+        )
         create_agent_message(
             3,
-            AGENT3_QUEUE_STANDBY_MESSAGE.format(
-                task_id=task.id,
-                proposal_id=proposal_id,
-                title=proposal.get("title") or "",
-            ),
+            build_agent_dialogue("codex_queue", agent_id=3, context={**payload, "fallback": fallback}) or fallback,
             topic="codex_queue",
-            payload={
-                "task_id": task.id,
-                "proposal_id": proposal_id,
-                "safety": "preview_only_no_file_write",
-            },
+            payload=dialogue_payload(payload),
         )
     except Exception:
         pass

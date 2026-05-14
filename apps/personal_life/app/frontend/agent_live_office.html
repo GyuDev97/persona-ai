@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GyuOS - Agent Live Office</title>
+<style>
+:root{
+  --paper:#fffaf3;--panel:#fffdf9;--line:#eadfd2;--text:#241b15;--muted:#81746a;
+  --green:#18a65c;--orange:#e66f12;--blue:#2278d6;--purple:#8b4de8;--brand:#d95a0b;
+  --shadow:0 22px 56px rgba(86,58,34,.13);--soft:0 14px 32px rgba(92,64,38,.09);--speed:1;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:"Malgun Gothic","Nanum Gothic",Arial,sans-serif;color:var(--text);background:radial-gradient(circle at 8% 0,rgba(236,214,184,.58),transparent 32%),linear-gradient(135deg,#fff9ef,#f3eee6)}
+button{font:inherit;border:0;cursor:pointer}a{color:inherit;text-decoration:none}
+.page{min-height:100vh;padding:24px;display:grid;grid-template-rows:auto minmax(0,1fr);gap:16px}
+.topbar{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;max-width:1780px;width:100%;margin:0 auto}
+.title h1{margin:0;font-size:32px;letter-spacing:0;line-height:1.05}.title p{margin:8px 0 0;color:var(--muted);font-size:14px;font-weight:800}
+.actions{display:flex;gap:9px;align-items:center;justify-content:flex-end;flex-wrap:wrap}.btn,.speed-btn{min-height:38px;border-radius:999px;border:1px solid var(--line);background:#fffdf9;color:#382d25;font-weight:950;box-shadow:var(--soft)}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:9px 15px}.btn.primary{background:linear-gradient(135deg,var(--brand),#a9430a);border-color:transparent;color:#fff}
+.speed-set{display:flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:999px;background:#fffdf9}.speed-btn{min-width:42px;min-height:30px;padding:5px 8px;box-shadow:none;font-size:12px;color:#766b62}.speed-btn.active{background:var(--brand);border-color:var(--brand);color:#fff}
+.shell{max-width:1780px;width:100%;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;align-items:stretch}
+.scene-card,.side-card{background:rgba(255,253,249,.88);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden}
+.scene-head{height:64px;padding:17px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:14px;align-items:center}.scene-head h2,.side-card h3{margin:0;font-size:17px}.scene-head small{color:var(--muted);font-size:12px;font-weight:850}.live-pill{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;background:#eaf8f0;color:#118148;font-size:12px;font-weight:950}.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 5px rgba(24,166,92,.13)}
+.scene{position:relative;min-height:680px;aspect-ratio:16/9;overflow:hidden;background:
+  linear-gradient(30deg,rgba(136,100,58,.06) 12%,transparent 12.5%,transparent 87%,rgba(136,100,58,.06) 87.5%,rgba(136,100,58,.06)),
+  linear-gradient(150deg,rgba(136,100,58,.06) 12%,transparent 12.5%,transparent 87%,rgba(136,100,58,.06) 87.5%,rgba(136,100,58,.06)),
+  linear-gradient(30deg,rgba(136,100,58,.06) 12%,transparent 12.5%,transparent 87%,rgba(136,100,58,.06) 87.5%,rgba(136,100,58,.06)),
+  linear-gradient(150deg,rgba(136,100,58,.06) 12%,transparent 12.5%,transparent 87%,rgba(136,100,58,.06) 87.5%,rgba(136,100,58,.06)),
+  linear-gradient(135deg,#f4eadb,#eee2d1);
+  background-size:72px 42px;background-position:0 0,0 0,36px 21px,36px 21px,0 0}
+.scene::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 47%,rgba(255,255,255,.68),transparent 34%),linear-gradient(90deg,rgba(255,255,255,.42),transparent 20%,transparent 80%,rgba(255,255,255,.42));pointer-events:none}
+.room{position:absolute;border-radius:22px;transform:skewY(-7deg);background:rgba(255,255,255,.42);border:1px solid rgba(103,78,55,.13);box-shadow:inset 0 0 0 1px rgba(255,255,255,.38),0 22px 46px rgba(90,64,40,.08)}
+.room::before{content:"";position:absolute;left:16px;right:16px;top:15px;height:58px;border-radius:16px;background:linear-gradient(135deg,rgba(255,255,255,.42),rgba(255,255,255,.08));border:1px solid rgba(255,255,255,.38)}
+.room.news{left:4%;top:6%;width:29%;height:28%;background:rgba(211,242,223,.36)}.room.blog{left:5%;bottom:13%;width:31%;height:30%;background:rgba(255,228,200,.38)}
+.room.dev{right:25%;top:6%;width:28%;height:28%;background:rgba(216,235,255,.42)}.room.studio{right:4%;bottom:12%;width:29%;height:32%;background:rgba(237,224,255,.42)}
+.room-label{position:absolute;font-size:15px;font-weight:950;transform:rotate(-8deg);z-index:4}.room-label.news{left:6%;top:9%;color:#118148}.room-label.blog{left:8%;bottom:40%;color:var(--orange)}.room-label.dev{right:37%;top:9%;color:var(--blue)}.room-label.studio{right:17%;bottom:41%;color:var(--purple)}
+.desk{position:absolute;width:138px;height:58px;border-radius:12px;background:linear-gradient(180deg,#bb8753,#8a5b32);box-shadow:0 15px 0 rgba(92,61,35,.12);z-index:5}
+.desk::before{content:"";position:absolute;left:20px;top:-36px;width:44px;height:33px;border:5px solid #4f3d30;border-radius:6px;background:linear-gradient(135deg,#203f50,#0f2330)}.desk::after{content:"";position:absolute;right:22px;top:-32px;width:38px;height:29px;border:5px solid #4f3d30;border-radius:6px;background:linear-gradient(135deg,#2a556c,#122b38)}
+.desk.news{left:12%;top:23%}.desk.blog{left:17%;bottom:25%}.desk.dev{right:34%;top:23%}.desk.studio{right:13%;bottom:25%}
+.chair{position:absolute;width:44px;height:46px;border-radius:18px 18px 12px 12px;background:#36424a;box-shadow:0 12px 0 rgba(44,33,24,.1);z-index:4}.chair.news{left:15%;top:28%}.chair.blog{left:21%;bottom:22%}.chair.dev{right:40%;top:28%}.chair.studio{right:19%;bottom:22%}
+.avatar{position:absolute;width:52px;height:82px;z-index:8;animation:personPulse calc(2.2s / var(--speed)) ease-in-out infinite}
+.avatar .head{position:absolute;left:13px;top:0;width:27px;height:27px;border-radius:50%;background:#f0c493;border:2px solid rgba(68,43,27,.14)}.avatar .hair{position:absolute;left:9px;top:-1px;width:33px;height:16px;border-radius:18px 18px 7px 7px;background:#1c2024}.avatar .body{position:absolute;left:7px;top:28px;width:38px;height:43px;border-radius:14px 14px 11px 11px;background:var(--c);box-shadow:inset 0 -10px 0 rgba(0,0,0,.09)}.avatar .arm{position:absolute;top:43px;width:20px;height:8px;border-radius:99px;background:#f0c493}.avatar .arm.l{left:0;transform:rotate(18deg)}.avatar .arm.r{right:0;transform:rotate(-18deg)}
+.avatar.news{--c:var(--green);left:13.7%;top:18.5%}.avatar.blog{--c:var(--orange);left:21%;bottom:25.5%}.avatar.dev{--c:var(--blue);right:39%;top:18.5%}.avatar.studio{--c:var(--purple);right:19%;bottom:25.5%}
+.monitor-glow{position:absolute;width:60px;height:40px;border-radius:8px;background:radial-gradient(circle,#e5ffff,transparent 62%);filter:blur(4px);opacity:.7;z-index:6;animation:glow calc(2.7s / var(--speed)) ease-in-out infinite}.monitor-glow.news{left:15%;top:20%}.monitor-glow.blog{left:20%;bottom:34%}.monitor-glow.dev{right:34%;top:20%}.monitor-glow.studio{right:13%;bottom:34%}
+.plant{position:absolute;width:30px;height:42px;border-radius:18px 18px 8px 8px;background:#47a96e;box-shadow:0 28px 0 -8px #b46b2e;z-index:3}.plant.p1{left:2%;top:35%}.plant.p2{left:36%;top:3%}.plant.p3{right:3%;top:21%}.plant.p4{left:36%;bottom:4%}.plant.p5{right:34%;bottom:5%}
+.core{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:190px;height:134px;z-index:8;display:grid;place-items:center}.core-screen{width:128px;height:76px;border-radius:12px;background:linear-gradient(135deg,#132b42,#284d77 55%,#111b2b);border:5px solid #3d3a36;box-shadow:0 16px 26px rgba(36,26,19,.18);display:grid;place-items:center;color:#fff;font-weight:950;text-align:center;line-height:1.25}.core-screen span{font-size:12px;color:#bfe5ff}.core-base{position:absolute;bottom:17px;width:150px;height:26px;border-radius:10px;background:linear-gradient(180deg,#c8c4bc,#817c73);box-shadow:0 12px 0 rgba(68,50,36,.1);z-index:-1}.sofa{position:absolute;left:48%;top:66%;transform:translateX(-50%);width:170px;height:58px;border-radius:19px;background:#8d806e;box-shadow:0 16px 0 rgba(75,57,42,.1);z-index:5}.table{position:absolute;left:51%;top:61%;width:76px;height:42px;border-radius:12px;background:#c29a68;box-shadow:0 13px 0 rgba(72,50,33,.09);z-index:5}
+.status-card{position:absolute;width:210px;min-height:140px;padding:17px 18px;border:1px solid rgba(80,52,30,.1);border-radius:18px;background:rgba(255,253,249,.92);box-shadow:0 18px 38px rgba(63,44,29,.13);z-index:14;backdrop-filter:blur(12px)}
+.status-card h3{margin:0 0 7px;font-size:15px}.status-card strong{display:block;margin-bottom:13px;color:var(--c);font-size:15px}.status-card p{margin:0;color:#4f443c;font-size:13px;line-height:1.6;font-weight:850}.status-card time{display:block;margin-top:9px;font-size:12px;font-weight:950;color:#4e433b}
+.status-card.news{--c:var(--green);left:22%;top:9%}.status-card.blog{--c:var(--orange);left:28%;bottom:28%}.status-card.dev{--c:var(--blue);right:15%;top:12%}.status-card.studio{--c:var(--purple);right:2%;bottom:27%}
+.handoff{position:absolute;left:50%;bottom:8%;transform:translateX(-50%);z-index:18;width:min(430px,45%);min-height:64px;border-radius:20px;background:rgba(255,253,249,.94);border:1px solid rgba(80,52,30,.1);box-shadow:0 18px 42px rgba(72,50,33,.13);display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 16px}.check{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#e9f8ef;color:var(--green);font-weight:950}.handoff b{font-size:14px}.handoff span{display:block;margin-top:4px;color:#5d5148;font-size:12px;font-weight:850}.handoff time{color:#7e7268;font-size:12px;font-weight:950}
+.zoom{position:absolute;right:18px;bottom:20px;z-index:18;display:grid;gap:6px}.zoom button{width:36px;height:36px;border-radius:10px;background:#fffdf9;border:1px solid rgba(80,52,30,.12);font-size:20px;font-weight:900;box-shadow:0 12px 24px rgba(70,48,31,.1)}
+.flow-svg{position:absolute;inset:0;z-index:10;pointer-events:none}.flow{fill:none;stroke-width:5;stroke-linecap:round;stroke-dasharray:8 13;filter:drop-shadow(0 5px 5px rgba(60,42,30,.12));animation:dash calc(1.8s / var(--speed)) linear infinite}.flow.green{stroke:var(--green)}.flow.orange{stroke:var(--orange)}.flow.blue{stroke:var(--blue)}.flow.purple{stroke:var(--purple)}
+.packet{position:absolute;width:15px;height:15px;border-radius:50%;background:var(--c);box-shadow:0 0 0 7px rgba(255,255,255,.44);z-index:13;animation:packetMove calc(5.4s / var(--speed)) linear infinite}.packet.p1{--c:var(--green);left:34%;top:36%}.packet.p2{--c:var(--orange);left:36%;top:62%;animation-delay:-1.2s}.packet.p3{--c:var(--blue);left:65%;top:40%;animation-delay:-2.4s}.packet.p4{--c:var(--purple);left:70%;top:61%;animation-delay:-3.2s}
+.runner{position:absolute;left:0;top:0;width:76px;height:92px;z-index:16;filter:drop-shadow(0 14px 16px rgba(54,38,25,.18));pointer-events:none}
+.runner .mini{position:absolute;left:14px;top:12px;width:42px;height:68px;animation:runnerBob calc(.8s / var(--speed)) ease-in-out infinite}
+.runner .head{position:absolute;left:10px;top:0;width:22px;height:22px;border-radius:50%;background:#f0c493;border:2px solid rgba(68,43,27,.14)}
+.runner .hair{position:absolute;left:7px;top:-1px;width:27px;height:13px;border-radius:15px 15px 7px 7px;background:#1c2024}
+.runner .body{position:absolute;left:5px;top:23px;width:32px;height:36px;border-radius:12px;background:var(--c);box-shadow:inset 0 -9px 0 rgba(0,0,0,.09)}
+.runner .leg{position:absolute;top:57px;width:8px;height:15px;border-radius:6px;background:#28323a}.runner .leg.l{left:10px}.runner .leg.r{right:10px}
+.runner .cargo{position:absolute;right:0;top:34px;min-width:38px;padding:5px 7px;border-radius:10px;background:#fffdf9;border:2px solid var(--c);color:var(--c);font-size:10px;font-weight:950;text-align:center;box-shadow:0 9px 18px rgba(68,48,33,.13)}
+.runner .say{position:absolute;left:48px;top:-3px;min-width:78px;padding:6px 8px;border-radius:12px;background:rgba(255,253,249,.94);border:1px solid rgba(80,52,30,.1);font-size:10px;font-weight:950;color:#44372e;opacity:.94}
+.runner.a1{--c:var(--green);animation:a1Route calc(12s / var(--speed)) ease-in-out infinite}
+.runner.a2{--c:var(--orange);left:24%;top:66%;animation:none}
+.runner.a3{--c:var(--blue);animation:a3Route calc(13s / var(--speed)) ease-in-out infinite;animation-delay:calc(-1.5s / var(--speed))}
+.runner.a4{--c:var(--purple);animation:a4Route calc(14s / var(--speed)) ease-in-out infinite;animation-delay:calc(-4s / var(--speed))}
+.side-card{padding:18px}.side-card+.side-card{margin-top:16px}.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.metric{padding:14px;border:1px solid rgba(80,52,30,.09);border-radius:14px;background:#fffdf9}.metric b{display:block;font-size:24px;line-height:1}.metric span{display:block;margin-top:7px;color:var(--muted);font-size:12px;font-weight:850}.log-list{display:grid;gap:10px;margin-top:14px;max-height:300px;overflow:auto}.log{padding:11px 12px;border:1px solid rgba(80,52,30,.09);border-radius:13px;background:#fffdf9}.log b{display:block;font-size:13px}.log p{margin:5px 0 0;color:#675b52;font-size:12px;line-height:1.45;font-weight:800}.log small{color:#8a7e73;font-weight:900}.empty{padding:15px;border:1px dashed rgba(80,52,30,.18);border-radius:13px;text-align:center;color:var(--muted);font-weight:850}
+.toast{position:fixed;right:24px;bottom:24px;max-width:420px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#fffdf9;box-shadow:var(--shadow);font-weight:850;display:none;z-index:40}.toast.show{display:block}
+@keyframes dash{to{stroke-dashoffset:-42}}@keyframes glow{0%,100%{opacity:.45}50%{opacity:.9}}@keyframes personPulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}@keyframes packetMove{0%,100%{transform:translate(0,0) scale(.85);opacity:.35}35%{transform:translate(38px,-20px) scale(1);opacity:1}70%{transform:translate(75px,16px) scale(.9);opacity:.6}} 
+@keyframes runnerBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes a1Route{0%,100%{left:15%;top:24%;transform:scale(1)}28%{left:28%;top:35%;transform:scale(1.03)}52%{left:27%;top:58%;transform:scale(1)}68%{left:24%;top:56%;transform:scale(.96)}84%{left:18%;top:39%;transform:scale(1)}}
+@keyframes a2Route{0%,100%{left:24%;top:66%;transform:scale(1)}28%{left:39%;top:59%;transform:scale(.98)}47%{left:50%;top:52%;transform:scale(1.02)}66%{left:58%;top:42%;transform:scale(1)}82%{left:36%;top:60%;transform:scale(.98)}}
+@keyframes a3Route{0%,100%{left:70%;top:28%;transform:scale(1)}36%{left:62%;top:39%;transform:scale(.98)}58%{left:53%;top:50%;transform:scale(1.02)}78%{left:66%;top:36%;transform:scale(1)}}
+@keyframes a4Route{0%,100%{left:80%;top:67%;transform:scale(1)}32%{left:70%;top:61%;transform:scale(.98)}56%{left:55%;top:56%;transform:scale(1.02)}78%{left:73%;top:63%;transform:scale(1)}}
+@media(max-width:1350px){.shell{grid-template-columns:1fr}.scene{min-height:620px}.side-card{display:inline-block;width:calc(50% - 10px);vertical-align:top}.side-card+.side-card{margin:0 0 0 16px}}
+@media(max-width:900px){.page{padding:18px}.topbar{display:grid}.actions{justify-content:flex-start}.scene{min-height:560px;aspect-ratio:auto}.status-card{width:188px;min-height:124px;padding:14px}.status-card.news{left:18%;top:8%}.status-card.blog{left:20%;bottom:28%}.status-card.dev{right:9%;top:10%}.status-card.studio{right:3%;bottom:25%}.handoff{width:70%}.side-card{display:block;width:100%}.side-card+.side-card{margin:16px 0 0}}
+@media(max-width:680px){.scene-head{height:auto;display:grid}.scene{min-height:900px}.room.news{left:4%;top:7%;width:44%;height:20%}.room.dev{right:4%;top:7%;width:44%;height:20%}.room.blog{left:4%;top:58%;width:44%;height:20%}.room.studio{right:4%;top:58%;width:44%;height:20%}.room-label.news{left:7%;top:10%}.room-label.dev{right:18%;top:10%}.room-label.blog{left:8%;top:59%}.room-label.studio{right:12%;top:59%}.desk{transform:scale(.72);transform-origin:left top}.desk.news{left:12%;top:19%}.desk.dev{right:29%;top:19%}.desk.blog{left:12%;bottom:23%}.desk.studio{right:29%;bottom:23%}.avatar{transform:scale(.78);animation:none}.avatar.news{left:15%;top:18%}.avatar.dev{right:32%;top:18%}.avatar.blog{left:15%;bottom:28%}.avatar.studio{right:32%;bottom:28%}.runner{transform:scale(.72);transform-origin:center}.runner .say{display:none}.status-card{position:absolute;width:42%;min-height:142px;font-size:12px}.status-card.news{left:5%;top:31%}.status-card.dev{right:5%;top:31%}.status-card.blog{left:5%;top:79%}.status-card.studio{right:5%;top:79%}.core{top:51%;transform:translate(-50%,-50%) scale(.72)}.sofa,.table,.handoff,.zoom{display:none}.flow-svg,.packet{opacity:.38}.metric-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="topbar">
+    <div class="title">
+      <h1>Agent Live Office</h1>
+      <p>GyuOS 에이전트들이 각자의 방에서 일하고, 결과가 중앙 Core로 흐르는 오피스 뷰입니다.</p>
+    </div>
+    <div class="actions">
+      <div class="speed-set" aria-label="애니메이션 속도">
+        <button class="speed-btn" type="button" data-speed="0.5">0.5x</button>
+        <button class="speed-btn active" type="button" data-speed="1">1x</button>
+        <button class="speed-btn" type="button" data-speed="2">2x</button>
+        <button class="speed-btn" type="button" data-speed="4">4x</button>
+      </div>
+      <button class="btn" type="button" id="pauseButton">일시정지</button>
+      <button class="btn primary" type="button" id="refreshButton">새로고침</button>
+      <a class="btn" href="/agent/live-office-shorts">Shorts 9:16</a>
+      <a class="btn" href="/agent/live-room">Live Room</a>
+      <a class="btn" href="/agent/report-center">Agent Report</a>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="scene-card">
+      <div class="scene-head">
+        <div><h2>GyuOS AI Agent Office</h2><small id="sceneSummary">Agent 데이터를 불러오는 중입니다.</small></div>
+        <div class="live-pill"><span class="live-dot"></span><span id="liveState">연결 준비중</span></div>
+      </div>
+      <div class="scene" id="scene">
+        <div class="room news"></div><div class="room dev"></div><div class="room blog"></div><div class="room studio"></div>
+        <div class="room-label news">Internet News Lab</div><div class="room-label dev">Dev Review</div><div class="room-label blog">Blog Desk</div><div class="room-label studio">Content Studio</div>
+        <div class="desk news"></div><div class="desk dev"></div><div class="desk blog"></div><div class="desk studio"></div>
+        <div class="chair news"></div><div class="chair dev"></div><div class="chair blog"></div><div class="chair studio"></div>
+        <div class="monitor-glow news"></div><div class="monitor-glow dev"></div><div class="monitor-glow blog"></div><div class="monitor-glow studio"></div>
+        <div class="avatar news"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="arm l"></div><div class="arm r"></div></div>
+        <div class="avatar dev"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="arm l"></div><div class="arm r"></div></div>
+        <div class="avatar blog"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="arm l"></div><div class="arm r"></div></div>
+        <div class="avatar studio"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="arm l"></div><div class="arm r"></div></div>
+        <div class="plant p1"></div><div class="plant p2"></div><div class="plant p3"></div><div class="plant p4"></div><div class="plant p5"></div>
+
+        <svg class="flow-svg" viewBox="0 0 1600 900" preserveAspectRatio="none" aria-hidden="true">
+          <path class="flow green" d="M 430 295 C 520 350, 650 340, 770 430" />
+          <path class="flow orange" d="M 420 625 C 520 590, 650 590, 770 520" />
+          <path class="flow blue" d="M 1110 285 C 1035 360, 950 360, 830 445" />
+          <path class="flow purple" d="M 1110 630 C 1010 600, 950 560, 830 520" />
+        </svg>
+        <div class="packet p1"></div><div class="packet p2"></div><div class="packet p3"></div><div class="packet p4"></div>
+        <div class="runner a1">
+          <div class="mini"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="leg l"></div><div class="leg r"></div></div>
+          <div class="cargo">뉴스</div><div class="say">A02에게 전달</div>
+        </div>
+        <div class="runner a2">
+          <div class="mini"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="leg l"></div><div class="leg r"></div></div>
+          <div class="cargo">초안</div><div class="say">자리에서 작성</div>
+        </div>
+        <div class="runner a3">
+          <div class="mini"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="leg l"></div><div class="leg r"></div></div>
+          <div class="cargo">검토</div><div class="say">승인 전 확인</div>
+        </div>
+        <div class="runner a4">
+          <div class="mini"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="leg l"></div><div class="leg r"></div></div>
+          <div class="cargo">아이디어</div><div class="say">후보 전달</div>
+        </div>
+
+        <article class="status-card news"><h3>Agent 01</h3><strong id="a1Status">뉴스 수집 중</strong><p id="a1Text">오늘 뉴스 흐름을 확인하고 있습니다.</p><time id="a1Time">-</time></article>
+        <article class="status-card blog"><h3>Agent 02</h3><strong id="a2Status">블로그 초안 작성 중</strong><p id="a2Text">수집된 뉴스로 초안을 정리하고 있습니다.</p><time id="a2Time">-</time></article>
+        <article class="status-card dev"><h3>Agent 03</h3><strong id="a3Status">코드 검토 중</strong><p id="a3Text">승인 전 제안과 작업 큐를 검토합니다.</p><time id="a3Time">-</time></article>
+        <article class="status-card studio"><h3>Agent 04</h3><strong id="a4Status">아이디어 대기 중</strong><p id="a4Text">유튜브 아이디어 후보를 정리하고 있습니다.</p><time id="a4Time">-</time></article>
+
+        <div class="core"><div class="core-screen">GyuOS Core<br><span>AI Agent Office</span></div><div class="core-base"></div></div>
+        <div class="sofa"></div><div class="table"></div>
+        <div class="handoff"><div class="check">✓</div><div><b id="handoffTitle">Agent 01 → Agent 02</b><span id="handoffText">뉴스 전달 상태를 확인하고 있습니다.</span></div><time id="handoffTime">-</time></div>
+        <div class="zoom"><button type="button" id="zoomIn">+</button><button type="button" id="zoomOut">-</button></div>
+      </div>
+    </section>
+
+    <aside>
+      <section class="side-card">
+        <h3>팀 현황</h3>
+        <div class="metric-grid">
+          <div class="metric"><b id="metricNews">0</b><span>뉴스 자료</span></div>
+          <div class="metric"><b id="metricDrafts">0</b><span>블로그 초안</span></div>
+          <div class="metric"><b id="metricQueue">0</b><span>작업 큐</span></div>
+          <div class="metric"><b id="metricIdeas">0</b><span>아이디어</span></div>
+        </div>
+      </section>
+      <section class="side-card">
+        <h3>최근 협업 로그</h3>
+        <div class="log-list" id="messageList"></div>
+      </section>
+      <section class="side-card">
+        <h3>진행중 작업</h3>
+        <div class="log-list" id="taskList"></div>
+      </section>
+    </aside>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const state = { report:null, tasks:[], paused:false, zoom:1 };
+
+function escapeHtml(value){
+  return String(value ?? "").replace(/[&<>"']/g,(char)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[char]));
+}
+function shortText(value,max=58){
+  const clean = String(value || "").replace(/\s+/g," ").trim();
+  return clean.length > max ? `${clean.slice(0,max-1)}…` : clean;
+}
+function toast(message){
+  const el = $("toast");
+  el.textContent = message;
+  el.classList.add("show");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(()=>el.classList.remove("show"),2400);
+}
+async function request(url){
+  const res = await fetch(url,{headers:{"Accept":"application/json"}});
+  if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+function formatTime(value){
+  if(!value) return "-";
+  const date = new Date(value);
+  if(Number.isNaN(date.getTime())) return String(value).slice(0,16);
+  return date.toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"});
+}
+function getCards(){
+  return state.report?.cards || state.report?.agents?.cards || state.report?.agents || [];
+}
+function getCard(agentId){
+  return getCards().find((card)=>Number(card.agent_id || card.id) === Number(agentId)) || {};
+}
+function getNewsItems(){
+  return state.report?.agent1?.items || state.report?.news?.items || state.report?.agent1?.latest_titles || [];
+}
+function getNewsCount(){
+  return Number(state.report?.agent1?.today_count || state.report?.agent1?.collected_count || getNewsItems().length || 0);
+}
+function getDrafts(){
+  return state.report?.agent2?.drafts || state.report?.blog?.drafts || [];
+}
+function getIdeas(){
+  return state.report?.agent4?.ideas || state.report?.youtube?.ideas || [];
+}
+function getMessages(){
+  return state.report?.collaboration?.messages || [];
+}
+function inferTaskAgentId(task){
+  const text = `${task.agent_id || ""} ${task.source || ""} ${task.task_type || ""} ${task.command_text || ""}`.toLowerCase();
+  if(Number(task.agent_id || 0)) return Number(task.agent_id);
+  if(text.includes("news")) return 1;
+  if(text.includes("blog") || text.includes("draft") || text.includes("naver")) return 2;
+  if(text.includes("codex") || text.includes("coding") || text.includes("autonomy")) return 3;
+  if(text.includes("youtube") || text.includes("idea")) return 4;
+  return 0;
+}
+function firstTitle(items){
+  const item = items.find(Boolean);
+  return item?.title || item?.headline || item?.name || item || "";
+}
+function taskCount(agentId){
+  return state.tasks.filter((task)=>inferTaskAgentId(task) === agentId).length;
+}
+function latestMessage(agentId){
+  const msg = getMessages().find((item)=>Number(item.agent_id || item.from_agent_id || 0) === agentId);
+  return msg?.message || "";
+}
+function updateCard(agentId,prefix,status,text,time){
+  const card = getCard(agentId);
+  $(`${prefix}Status`).textContent = status || card.status || "대기 중";
+  $(`${prefix}Text`).textContent = shortText(text || card.latest_result_summary || card.description || "최근 상태를 확인하고 있습니다.",78);
+  $(`${prefix}Time`).textContent = formatTime(card.updated_at || card.last_run_at || state.report?.updated_at || new Date());
+}
+function renderScene(){
+  const newsCount = getNewsCount();
+  const drafts = getDrafts();
+  const ideas = getIdeas();
+  const a3Queue = taskCount(3) + (state.report?.agent3?.codex_pending_tasks || []).length + (state.report?.autonomy?.proposals || []).filter((p)=>p.status === "pending").length;
+  const latestNews = firstTitle(getNewsItems());
+  const latestDraft = firstTitle(drafts);
+  const latestIdea = firstTitle(ideas);
+  updateCard(1,"a1","뉴스 수집 중", latestMessage(1) || `오늘 뉴스 ${newsCount}건을 정리했습니다.${latestNews ? ` ${latestNews}` : ""}`);
+  updateCard(2,"a2","블로그 초안 작성 중", latestMessage(2) || (latestDraft ? `초안 "${latestDraft}" 작업 흐름을 확인하고 있습니다.` : "Agent 01 자료를 받아 초안 후보를 준비합니다."));
+  updateCard(3,"a3", a3Queue ? "승인 검토 중" : "검토 대기 중", latestMessage(3) || `Codex/자율 제안 ${a3Queue}건을 승인 전 상태로 보고 있습니다.`);
+  updateCard(4,"a4", ideas.length ? "아이디어 정리 중" : "아이디어 대기 중", latestMessage(4) || (latestIdea ? `아이디어 "${latestIdea}" 후보를 정리했습니다.` : "유튜브 아이디어 후보를 기다리고 있습니다."));
+  $("metricNews").textContent = String(newsCount);
+  $("metricDrafts").textContent = String(drafts.length);
+  $("metricQueue").textContent = String(state.tasks.length);
+  $("metricIdeas").textContent = String(ideas.length);
+  $("sceneSummary").textContent = `뉴스 ${newsCount}건, 초안 ${drafts.length}건, 작업 큐 ${state.tasks.length}건, 아이디어 ${ideas.length}건이 반영됐습니다.`;
+  $("handoffTitle").textContent = "Agent 01 → Agent 02";
+  $("handoffText").textContent = newsCount ? `뉴스 ${newsCount}건 전달 준비 완료` : "전달할 뉴스 자료를 확인하는 중";
+  $("handoffTime").textContent = formatTime(state.report?.updated_at || new Date());
+}
+function renderMessages(){
+  const messages = getMessages().slice(0,7);
+  $("messageList").innerHTML = messages.length ? messages.map((msg)=>{
+    const agent = Number(msg.agent_id || msg.from_agent_id || 0);
+    return `<div class="log"><small>A${String(agent || 0).padStart(2,"0")} · ${escapeHtml(formatTime(msg.created_at || msg.timestamp))}</small><b>${escapeHtml(msg.topic || msg.event_type || "협업 로그")}</b><p>${escapeHtml(shortText(msg.message || msg.summary || "",92))}</p></div>`;
+  }).join("") : `<div class="empty">아직 협업 로그가 없습니다.</div>`;
+}
+function renderTasks(){
+  const tasks = state.tasks.slice(0,7);
+  $("taskList").innerHTML = tasks.length ? tasks.map((task)=>{
+    const agent = inferTaskAgentId(task);
+    return `<div class="log"><small>A${String(agent || 0).padStart(2,"0")} · ${escapeHtml(task.status || "대기")}</small><b>${escapeHtml(shortText(task.command_text || task.title || task.task_type || "Agent 작업",54))}</b><p>${escapeHtml(shortText(task.result_summary || task.error_message || task.task_type || "",90))}</p></div>`;
+  }).join("") : `<div class="empty">현재 작업 큐가 비어 있습니다.</div>`;
+}
+function renderAll(){
+  renderScene();
+  renderMessages();
+  renderTasks();
+}
+async function loadData({silent=false}={}){
+  try{
+    $("liveState").textContent = "연결중";
+    const [report, tasksPayload] = await Promise.all([
+      request("/agent/report-center/data"),
+      request("/agent/tasks?limit=20").catch(()=>[])
+    ]);
+    state.report = report;
+    state.tasks = tasksPayload.tasks || tasksPayload.items || tasksPayload || [];
+    if(!Array.isArray(state.tasks)) state.tasks = [];
+    $("liveState").textContent = "GyuOS 연결됨";
+    renderAll();
+    if(!silent) toast("Agent Live Office를 새로고침했습니다.");
+  }catch(error){
+    $("liveState").textContent = "연결 확인 필요";
+    if(!silent) toast(`데이터를 불러오지 못했습니다: ${error.message}`);
+  }
+}
+function setSpeed(speed){
+  document.documentElement.style.setProperty("--speed", String(speed));
+  document.querySelectorAll("[data-speed]").forEach((btn)=>btn.classList.toggle("active", Number(btn.dataset.speed) === Number(speed)));
+}
+function setPaused(paused){
+  state.paused = paused;
+  $("pauseButton").textContent = paused ? "재생" : "일시정지";
+  document.querySelectorAll(".flow,.packet,.avatar,.monitor-glow,.runner,.runner .mini").forEach((el)=>el.style.animationPlayState = paused ? "paused" : "running");
+}
+function setZoom(next){
+  state.zoom = Math.max(.82,Math.min(1.12,next));
+  $("scene").style.transform = `scale(${state.zoom})`;
+  $("scene").style.transformOrigin = "center center";
+}
+document.addEventListener("click",(event)=>{
+  const speedButton = event.target.closest("[data-speed]");
+  if(speedButton) setSpeed(Number(speedButton.dataset.speed || 1));
+});
+$("pauseButton").addEventListener("click",()=>setPaused(!state.paused));
+$("refreshButton").addEventListener("click",()=>loadData());
+$("zoomIn").addEventListener("click",()=>setZoom(state.zoom + .06));
+$("zoomOut").addEventListener("click",()=>setZoom(state.zoom - .06));
+setSpeed(1);
+loadData({silent:true});
+setInterval(()=>loadData({silent:true}),15000);
+</script>
+</body>
+</html>

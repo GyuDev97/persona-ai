@@ -11,6 +11,7 @@ TASK_AGENT_MAP = {
     "agent2_it_blog_draft": 2,
     "naver_blog_fill_draft": 2,
     "coding_app_update": 3,
+    "autonomy_review": 3,
     "finance_monthly_summary": 3,
     "youtube_idea_research": 4,
 }
