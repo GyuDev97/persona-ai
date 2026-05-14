@@ -37,19 +37,20 @@ h1{margin:0;font-size:68px;line-height:1;letter-spacing:-.04em}.subtitle{margin:
 .capture .controls{display:none}
 @keyframes dash{to{stroke-dashoffset:-50}}@keyframes runnerBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}@keyframes a1Route{0%,100%{left:19%;top:22%;transform:scale(1)}32%{left:34%;top:35%;transform:scale(1.04)}56%{left:30%;top:73%;transform:scale(1)}78%{left:20%;top:49%;transform:scale(.98)}}@keyframes a3Route{0%,100%{right:21%;top:21%;transform:scale(1)}36%{right:32%;top:36%;transform:scale(.98)}62%{right:44%;top:48%;transform:scale(1.04)}}@keyframes a4Route{0%,100%{right:18%;top:72%;transform:scale(1)}36%{right:31%;top:63%;transform:scale(.98)}62%{right:44%;top:53%;transform:scale(1.04)}} 
 @media(max-aspect-ratio:9/16){.wrap{width:100vw;height:calc(100vw * 16 / 9)}}@media(min-aspect-ratio:9/16){.wrap{width:calc(100vh * 9 / 16);height:100vh}}
-.frame{padding:34px 34px 30px;gap:16px}
-.top{gap:10px}.kicker{font-size:19px}.live{padding:8px 14px;font-size:17px}.dot{width:10px;height:10px;box-shadow:0 0 0 7px rgba(24,166,92,.13)}
-h1{font-size:52px}.subtitle{font-size:22px;line-height:1.28}
+.frame{padding:30px 34px 24px;gap:13px}
+.top{gap:8px}.kicker{font-size:18px}.live{padding:7px 13px;font-size:16px}.dot{width:10px;height:10px;box-shadow:0 0 0 7px rgba(24,166,92,.13)}
+h1{font-size:46px}.subtitle{font-size:20px;line-height:1.25}
 .stage{border:1px solid rgba(80,52,30,.08);border-radius:34px;background:rgba(255,253,249,.22);box-shadow:inset 0 0 0 1px rgba(255,255,255,.4);overflow:hidden}
-.core{top:50%;transform:translate(-50%,-50%) scale(1.08)}
-.room{height:23%;width:45%;border-radius:30px}.room.news{top:4%;left:3%}.room.dev{top:4%;right:3%}.room.blog{bottom:5%;left:3%}.room.studio{bottom:5%;right:3%}
-.room b{font-size:20px;left:22px;top:18px}.desk{transform:scale(.9);transform-origin:left bottom}.room.dev .desk,.room.studio .desk{transform-origin:right bottom}
-.agent.news{left:82px;top:150px}.agent.dev{right:90px;top:150px}.agent.blog{left:82px;bottom:82px}.agent.studio{right:90px;bottom:82px}
-.status{width:auto;min-width:166px;max-width:210px;padding:11px 13px;border-radius:17px;box-shadow:0 12px 28px rgba(63,44,29,.1);backdrop-filter:blur(8px)}
-.status h2{margin:0;font-size:15px}.status strong{margin:3px 0 0;font-size:17px;line-height:1.25}.status p,.status time{display:none}
-.status.news{left:6%;top:29%}.status.dev{right:6%;top:29%}.status.blog{left:6%;bottom:29%}.status.studio{right:6%;bottom:29%}
-.handoff{padding:15px 17px;border-radius:22px;grid-template-columns:48px minmax(0,1fr) auto}.check{width:38px;height:38px;font-size:22px}.handoff b{font-size:19px}.handoff span{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.handoff time{font-size:15px}
-.metrics{gap:9px}.metric{padding:11px 8px;border-radius:17px}.metric b{font-size:26px}.metric span{font-size:13px}
+.core{top:50%;transform:translate(-50%,-50%) scale(.9);z-index:18}
+.room{height:20%;width:43%;border-radius:26px}.room::before{inset:12px;border-radius:22px}.room.news{top:6%;left:4%}.room.dev{top:6%;right:4%}.room.blog{bottom:6%;left:4%}.room.studio{bottom:6%;right:4%}
+.room b{font-size:17px;left:18px;top:15px}.desk{transform:scale(.76);transform-origin:left bottom}.room.dev .desk,.room.studio .desk{transform-origin:right bottom}
+.agent{transform:scale(.82)}.agent.news{left:79px;top:136px}.agent.dev{right:84px;top:136px}.agent.blog{left:79px;bottom:70px}.agent.studio{right:84px;bottom:70px}
+.runner{transform:scale(.82);transform-origin:center center}.cargo{font-size:13px;padding:6px 8px}
+.status{width:auto;min-width:142px;max-width:176px;padding:10px 12px;border-radius:16px;box-shadow:0 12px 28px rgba(63,44,29,.1);backdrop-filter:blur(8px)}
+.status h2{margin:0;font-size:14px}.status strong{margin:3px 0 0;font-size:16px;line-height:1.22}.status p,.status time{display:none}
+.status.news{left:6%;top:30%}.status.dev{right:6%;top:30%}.status.blog{left:6%;bottom:30%}.status.studio{right:6%;bottom:30%}
+.handoff{padding:13px 16px;border-radius:21px;grid-template-columns:44px minmax(0,1fr) auto}.check{width:35px;height:35px;font-size:21px}.handoff b{font-size:18px}.handoff span{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.handoff time{font-size:14px}
+.metrics{gap:8px}.metric{padding:10px 8px;border-radius:16px}.metric b{font-size:25px}.metric span{font-size:12px}
 </style>
 </head>
 <body>
@@ -82,22 +83,22 @@ h1{font-size:52px}.subtitle{font-size:22px;line-height:1.28}
         <path class="flow purple" d="M 780 1040 C 690 910, 650 780, 540 690" />
       </svg>
 
-      <div class="runner a1"><div class="mini"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="leg l"></div><div class="leg r"></div></div><div class="cargo">뉴스</div></div>
+      <div class="runner a1"><div class="mini"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="leg l"></div><div class="leg r"></div></div><div class="cargo">자료</div></div>
       <div class="runner a3"><div class="mini"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="leg l"></div><div class="leg r"></div></div><div class="cargo">검토</div></div>
       <div class="runner a4"><div class="mini"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="leg l"></div><div class="leg r"></div></div><div class="cargo">아이디어</div></div>
 
       <div class="core"><div class="screen">GyuOS Core<br><span>AI Agent Office</span></div><div class="base"></div></div>
 
-      <article class="status news"><h2>Agent 01</h2><strong id="a1Status">뉴스 수집 중</strong><p id="a1Text">오늘 뉴스 흐름을 확인하고 있습니다.</p><time id="a1Time">-</time></article>
+      <article class="status news"><h2>Agent 01</h2><strong id="a1Status">자료 수집 중</strong><p id="a1Text">오늘 자료 흐름을 확인하고 있습니다.</p><time id="a1Time">-</time></article>
       <article class="status dev"><h2>Agent 03</h2><strong id="a3Status">승인 검토 중</strong><p id="a3Text">Codex 제안을 승인 전 상태로 확인합니다.</p><time id="a3Time">-</time></article>
       <article class="status blog"><h2>Agent 02</h2><strong id="a2Status">자리에서 작성 중</strong><p id="a2Text">Agent 01 자료를 받아 초안을 정리합니다.</p><time id="a2Time">-</time></article>
       <article class="status studio"><h2>Agent 04</h2><strong id="a4Status">아이디어 정리 중</strong><p id="a4Text">쇼츠와 유튜브 아이디어 후보를 정리합니다.</p><time id="a4Time">-</time></article>
     </main>
 
     <footer class="bottom">
-      <div class="handoff"><div class="check">✓</div><div><b id="handoffTitle">Agent 01 → Agent 02</b><span id="handoffText">뉴스 전달 상태를 확인하고 있습니다.</span></div><time id="handoffTime">-</time></div>
+      <div class="handoff"><div class="check">✓</div><div><b id="handoffTitle">Agent 01 → Agent 02</b><span id="handoffText">자료 전달 상태를 확인하고 있습니다.</span></div><time id="handoffTime">-</time></div>
       <div class="metrics">
-        <div class="metric"><b id="metricNews">0</b><span>뉴스</span></div>
+        <div class="metric"><b id="metricNews">0</b><span>자료</span></div>
         <div class="metric"><b id="metricDrafts">0</b><span>초안</span></div>
         <div class="metric"><b id="metricQueue">0</b><span>큐</span></div>
         <div class="metric"><b id="metricIdeas">0</b><span>아이디어</span></div>
@@ -138,7 +139,7 @@ function render(){
   const latestNews=firstTitle(getNewsItems());
   const latestDraft=firstTitle(drafts);
   const latestIdea=firstTitle(ideas);
-  updateCard(1,"a1","뉴스 수집 중",latestMessage(1)||`오늘 뉴스 ${newsCount}건을 정리했습니다.${latestNews?` ${latestNews}`:""}`);
+  updateCard(1,"a1","자료 수집 중",latestMessage(1)||`오늘 자료 ${newsCount}건을 정리했습니다.${latestNews?` ${latestNews}`:""}`);
   updateCard(2,"a2","자리에서 작성 중",latestMessage(2)||(latestDraft?`초안 "${latestDraft}" 작업 흐름을 확인하고 있습니다.`:"Agent 01 자료를 받아 블로그 초안을 준비합니다."));
   updateCard(3,"a3",a3Queue?"승인 검토 중":"검토 대기 중",latestMessage(3)||`Codex/자율 제안 ${a3Queue}건을 승인 전 상태로 보고 있습니다.`);
   updateCard(4,"a4",ideas.length?"아이디어 정리 중":"아이디어 대기 중",latestMessage(4)||(latestIdea?`아이디어 "${latestIdea}" 후보를 정리했습니다.`:"유튜브 아이디어 후보를 기다리고 있습니다."));
@@ -146,8 +147,8 @@ function render(){
   $("metricDrafts").textContent=String(drafts.length);
   $("metricQueue").textContent=String(state.tasks.length);
   $("metricIdeas").textContent=String(ideas.length);
-  $("sceneSummary").textContent=`뉴스 ${newsCount}건, 초안 ${drafts.length}건, 작업 큐 ${state.tasks.length}건이 움직이고 있습니다.`;
-  $("handoffText").textContent=newsCount?`뉴스 ${newsCount}건 전달 준비 완료`:"전달할 뉴스 자료를 확인하는 중";
+  $("sceneSummary").textContent=`자료 ${newsCount}건, 초안 ${drafts.length}건, 작업 큐 ${state.tasks.length}건이 움직이고 있습니다.`;
+  $("handoffText").textContent=newsCount?`자료 ${newsCount}건 전달 준비 완료`:"전달할 자료를 확인하는 중";
   $("handoffTime").textContent=formatTime(state.report?.updated_at||new Date());
 }
 async function loadData(){

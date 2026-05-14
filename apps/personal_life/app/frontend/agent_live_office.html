@@ -126,7 +126,7 @@ button{font:inherit;border:0;cursor:pointer}a{color:inherit;text-decoration:none
         <div class="packet p1"></div><div class="packet p2"></div><div class="packet p3"></div><div class="packet p4"></div>
         <div class="runner a1">
           <div class="mini"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="leg l"></div><div class="leg r"></div></div>
-          <div class="cargo">뉴스</div><div class="say">A02에게 전달</div>
+          <div class="cargo">자료</div><div class="say">A02에게 전달</div>
         </div>
         <div class="runner a2">
           <div class="mini"><div class="hair"></div><div class="head"></div><div class="body"></div><div class="leg l"></div><div class="leg r"></div></div>
@@ -141,14 +141,14 @@ button{font:inherit;border:0;cursor:pointer}a{color:inherit;text-decoration:none
           <div class="cargo">아이디어</div><div class="say">후보 전달</div>
         </div>
 
-        <article class="status-card news"><h3>Agent 01</h3><strong id="a1Status">뉴스 수집 중</strong><p id="a1Text">오늘 뉴스 흐름을 확인하고 있습니다.</p><time id="a1Time">-</time></article>
-        <article class="status-card blog"><h3>Agent 02</h3><strong id="a2Status">블로그 초안 작성 중</strong><p id="a2Text">수집된 뉴스로 초안을 정리하고 있습니다.</p><time id="a2Time">-</time></article>
+        <article class="status-card news"><h3>Agent 01</h3><strong id="a1Status">자료 수집 중</strong><p id="a1Text">오늘 자료 흐름을 확인하고 있습니다.</p><time id="a1Time">-</time></article>
+        <article class="status-card blog"><h3>Agent 02</h3><strong id="a2Status">블로그 초안 작성 중</strong><p id="a2Text">수집된 자료로 초안을 정리하고 있습니다.</p><time id="a2Time">-</time></article>
         <article class="status-card dev"><h3>Agent 03</h3><strong id="a3Status">코드 검토 중</strong><p id="a3Text">승인 전 제안과 작업 큐를 검토합니다.</p><time id="a3Time">-</time></article>
         <article class="status-card studio"><h3>Agent 04</h3><strong id="a4Status">아이디어 대기 중</strong><p id="a4Text">유튜브 아이디어 후보를 정리하고 있습니다.</p><time id="a4Time">-</time></article>
 
         <div class="core"><div class="core-screen">GyuOS Core<br><span>AI Agent Office</span></div><div class="core-base"></div></div>
         <div class="sofa"></div><div class="table"></div>
-        <div class="handoff"><div class="check">✓</div><div><b id="handoffTitle">Agent 01 → Agent 02</b><span id="handoffText">뉴스 전달 상태를 확인하고 있습니다.</span></div><time id="handoffTime">-</time></div>
+        <div class="handoff"><div class="check">✓</div><div><b id="handoffTitle">Agent 01 → Agent 02</b><span id="handoffText">자료 전달 상태를 확인하고 있습니다.</span></div><time id="handoffTime">-</time></div>
         <div class="zoom"><button type="button" id="zoomIn">+</button><button type="button" id="zoomOut">-</button></div>
       </div>
     </section>
@@ -157,7 +157,7 @@ button{font:inherit;border:0;cursor:pointer}a{color:inherit;text-decoration:none
       <section class="side-card">
         <h3>팀 현황</h3>
         <div class="metric-grid">
-          <div class="metric"><b id="metricNews">0</b><span>뉴스 자료</span></div>
+          <div class="metric"><b id="metricNews">0</b><span>자료</span></div>
           <div class="metric"><b id="metricDrafts">0</b><span>블로그 초안</span></div>
           <div class="metric"><b id="metricQueue">0</b><span>작업 큐</span></div>
           <div class="metric"><b id="metricIdeas">0</b><span>아이디어</span></div>
@@ -260,7 +260,7 @@ function renderScene(){
   const latestNews = firstTitle(getNewsItems());
   const latestDraft = firstTitle(drafts);
   const latestIdea = firstTitle(ideas);
-  updateCard(1,"a1","뉴스 수집 중", latestMessage(1) || `오늘 뉴스 ${newsCount}건을 정리했습니다.${latestNews ? ` ${latestNews}` : ""}`);
+  updateCard(1,"a1","자료 수집 중", latestMessage(1) || `오늘 자료 ${newsCount}건을 정리했습니다.${latestNews ? ` ${latestNews}` : ""}`);
   updateCard(2,"a2","블로그 초안 작성 중", latestMessage(2) || (latestDraft ? `초안 "${latestDraft}" 작업 흐름을 확인하고 있습니다.` : "Agent 01 자료를 받아 초안 후보를 준비합니다."));
   updateCard(3,"a3", a3Queue ? "승인 검토 중" : "검토 대기 중", latestMessage(3) || `Codex/자율 제안 ${a3Queue}건을 승인 전 상태로 보고 있습니다.`);
   updateCard(4,"a4", ideas.length ? "아이디어 정리 중" : "아이디어 대기 중", latestMessage(4) || (latestIdea ? `아이디어 "${latestIdea}" 후보를 정리했습니다.` : "유튜브 아이디어 후보를 기다리고 있습니다."));
@@ -268,9 +268,9 @@ function renderScene(){
   $("metricDrafts").textContent = String(drafts.length);
   $("metricQueue").textContent = String(state.tasks.length);
   $("metricIdeas").textContent = String(ideas.length);
-  $("sceneSummary").textContent = `뉴스 ${newsCount}건, 초안 ${drafts.length}건, 작업 큐 ${state.tasks.length}건, 아이디어 ${ideas.length}건이 반영됐습니다.`;
+  $("sceneSummary").textContent = `자료 ${newsCount}건, 초안 ${drafts.length}건, 작업 큐 ${state.tasks.length}건, 아이디어 ${ideas.length}건이 반영됐습니다.`;
   $("handoffTitle").textContent = "Agent 01 → Agent 02";
-  $("handoffText").textContent = newsCount ? `뉴스 ${newsCount}건 전달 준비 완료` : "전달할 뉴스 자료를 확인하는 중";
+  $("handoffText").textContent = newsCount ? `자료 ${newsCount}건 전달 준비 완료` : "전달할 자료를 확인하는 중";
   $("handoffTime").textContent = formatTime(state.report?.updated_at || new Date());
 }
 function renderMessages(){
