@@ -11,7 +11,7 @@ import webbrowser
 import xml.etree.ElementTree as ET
 from datetime import date, datetime, time as dt_time, timedelta
 
-from app.agents import Agent1News, Agent2Blog, Agent3Codex, Agent4Youtube, BaseAgent
+from app.agents import Agent1News, Agent2Blog, Agent3Codex, Agent4Youtube, AgentRuntime, BaseAgent
 from app.config import load_env_file
 from app.services.agent_dialogue_service import build_agent_dialogue, dialogue_payload
 from app.services.blog_draft_service import create_it_blog_draft_from_agent1
@@ -27,11 +27,9 @@ from app.services.agent_news_service import (
     score_news_title,
     split_title_source,
 )
-from app.services.agent_task_service import claim_next_agent_task, complete_agent_task, fail_agent_task
-from app.services.agent_task_service import create_agent_task
+from app.services.agent_task_service import claim_next_agent_task, create_agent_task
 from app.services.agent_message_service import create_agent_message, list_agent_messages
 from app.services.agent_status_service import (
-    agent_id_for_task_type,
     mark_agent_error,
     mark_agent_running,
     mark_agent_success,
@@ -116,6 +114,7 @@ AGENT_HANDLERS: dict[str, BaseAgent] = {
 def main() -> None:
     load_env_file()
     initialize_database()
+    runtime = AgentRuntime(handle_task)
     print(f"[{datetime.now().isoformat(timespec='seconds')}] PC agent started as '{DEVICE_LABEL}'")
     while True:
         run_scheduled_collectors()
@@ -125,17 +124,11 @@ def main() -> None:
             continue
 
         print(f"[{datetime.now().isoformat(timespec='seconds')}] claimed task #{task.id} ({task.task_type})")
-        agent_id = agent_id_for_task_type(task.task_type)
-        mark_agent_running(agent_id, f"Task #{task.id} started: {task.task_type}")
-        try:
-            summary, payload = handle_task(task.task_type, task.search_query or task.command_text)
-            complete_agent_task(task.id, summary, payload)
-            mark_agent_success(agent_id, f"Task #{task.id} completed: {task.task_type}")
+        result = runtime.run_claimed_task(task)
+        if result.status == "completed":
             print(f"[{datetime.now().isoformat(timespec='seconds')}] completed task #{task.id}")
-        except Exception as error:
-            fail_agent_task(task.id, str(error))
-            mark_agent_error(agent_id, f"Task #{task.id} failed: {error}")
-            print(f"[{datetime.now().isoformat(timespec='seconds')}] failed task #{task.id}: {error}")
+        else:
+            print(f"[{datetime.now().isoformat(timespec='seconds')}] failed task #{task.id}: {result.error}")
 
 
 def run_scheduled_collectors() -> None:
