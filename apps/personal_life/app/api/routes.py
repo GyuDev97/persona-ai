@@ -1,24 +1,20 @@
-from datetime import datetime
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+from .routers.finance_routes import router as finance_router
+from .routers.system_routes import router as system_router
+
 from ..domain.schemas import (
     AgentTaskClaimRequest,
     AgentTaskCompleteRequest,
     AgentTaskFailRequest,
     AgentTaskResponse,
-    AssetCreate,
-    AssetResponse,
-    AssetSummaryResponse,
-    AssetUpdate,
-    AssistantStatusResponse,
     BriefingDigestResponse,
     BriefingResponse,
     ConversationMessageResponse,
-    FinanceBriefingResponse,
     MobileAssistantCommandCreate,
     MobileAssistantCommandResponse,
     NaturalCommandCreate,
@@ -63,8 +59,6 @@ from ..services.agent_definition_service import (
 from ..services.agent_report_center_service import build_agent_report_center, create_naver_blog_fill_task
 from ..services.agent_standby_service import focus_agent, get_agent_standby_status, open_agent_detail, recover_agent
 from ..services.agent3_dev_planner_ai_service import generate_ai_dev_proposal
-from ..config import get_settings
-from ..services.asset_service import build_asset_summary, create_asset, list_assets, update_asset
 from ..services.blog_draft_service import get_blog_draft
 from ..services.briefing_service import build_evening_briefing, build_morning_briefing, build_today_briefing
 from ..services.capture_service import create_quick_capture, list_quick_captures
@@ -80,38 +74,18 @@ from ..services.dev_planner_service import (
     update_dev_proposal_code_preview,
     update_dev_proposal_status,
 )
-from ..services.finance_service import build_finance_briefing
 from ..services.memory_service import import_profile_yaml, list_profile_memories
 from ..services.mobile_assistant_service import process_mobile_assistant_command
-from ..services.money_core_service import (
-    build_money_core_summary,
-    create_auto_transfer,
-    create_card_usage,
-    create_expense,
-    create_installment,
-    delete_money_core_item,
-    list_assets_history,
-    list_auto_transfer,
-    list_card_usage,
-    list_expenses,
-    list_installments,
-    save_asset_history,
-    save_income_summary,
-    update_auto_transfer,
-    update_card_usage,
-    update_expense,
-    update_installment,
-)
-from ..services.money_ai_chat_service import ask_money_core_ai
 from ..services.natural_language_service import process_natural_command
 from ..services.reminder_service import list_reminders
 from ..services.routine_service import create_routine, create_routine_checkin, list_routines
 from ..services.schedule_service import create_schedule, list_schedules
-from ..services.system_status_service import build_system_status
 from ..services.subtitle_service import get_subtitles, update_subtitles
 from ..services.task_service import create_task, list_tasks, mark_task_done
 
 router = APIRouter()
+router.include_router(system_router)
+router.include_router(finance_router)
 FRONTEND_PATH = Path(__file__).resolve().parents[1] / "frontend" / "index.html"
 FRONTEND_DIR = Path(__file__).resolve().parents[1] / "frontend"
 MOBILE_FRONTEND_DIR = FRONTEND_DIR / "mobile"
@@ -206,11 +180,6 @@ class AutonomyProposalStatusPayload(BaseModel):
     status: str
 
 
-class MoneyAiChatPayload(BaseModel):
-    question: str
-    month: str | None = None
-
-
 @router.get("/", include_in_schema=False)
 def frontend() -> FileResponse:
     return FileResponse(FRONTEND_PATH)
@@ -295,25 +264,6 @@ def money_core_page() -> FileResponse:
         raise HTTPException(status_code=404, detail="Money Core page not found")
 
     return FileResponse(MONEY_CORE_PATH)
-    
-@router.get("/health")
-def health_check() -> dict[str, str]:
-    return {"status": "ok", "timestamp": datetime.now().isoformat()}
-
-
-@router.get("/system/status")
-def get_system_status() -> dict:
-    return build_system_status()
-
-
-@router.get("/assistant/status", response_model=AssistantStatusResponse)
-def get_assistant_status() -> AssistantStatusResponse:
-    settings = get_settings()
-    return AssistantStatusResponse(
-        ai_enabled=settings.has_openai,
-        mode="openai" if settings.has_openai else "fallback",
-        model=settings.openai_model if settings.has_openai else None,
-    )
 
 
 @router.get("/briefing/today", response_model=BriefingResponse)
@@ -329,184 +279,6 @@ def get_morning_briefing() -> BriefingDigestResponse:
 @router.get("/briefing/evening", response_model=BriefingDigestResponse)
 def get_evening_briefing() -> BriefingDigestResponse:
     return build_evening_briefing()
-
-
-@router.get("/finance/briefing", response_model=FinanceBriefingResponse)
-def get_finance_briefing() -> FinanceBriefingResponse:
-    return build_finance_briefing()
-
-
-@router.get("/finance/summary")
-def get_money_core_summary(month: str | None = None) -> dict:
-    return build_money_core_summary(month)
-
-
-@router.post("/finance/summary")
-def post_money_core_summary(payload: dict) -> dict:
-    try:
-        return save_income_summary(payload)
-    except ValueError as error:
-        raise HTTPException(status_code=400, detail=str(error)) from error
-
-
-@router.post("/finance/ai-chat")
-def post_money_core_ai_chat(payload: MoneyAiChatPayload) -> dict:
-    try:
-        return ask_money_core_ai(payload.question, payload.month)
-    except ValueError as error:
-        raise HTTPException(status_code=400, detail=str(error)) from error
-
-
-@router.get("/finance/expenses")
-def get_money_core_expenses(month: str | None = None) -> list[dict]:
-    return list_expenses(month)
-
-
-@router.post("/finance/expenses")
-def post_money_core_expense(payload: dict) -> dict:
-    try:
-        return create_expense(payload)
-    except ValueError as error:
-        raise HTTPException(status_code=400, detail=str(error)) from error
-
-
-@router.put("/finance/expenses/{item_id}")
-def put_money_core_expense(item_id: int, payload: dict) -> dict:
-    try:
-        return update_expense(item_id, payload)
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
-
-
-@router.delete("/finance/expenses/{item_id}")
-def delete_money_core_expense(item_id: int) -> dict:
-    try:
-        return delete_money_core_item("expenses", item_id)
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
-
-
-@router.get("/finance/card")
-def get_money_core_card(month: str | None = None) -> list[dict]:
-    return list_card_usage(month)
-
-
-@router.post("/finance/card")
-def post_money_core_card(payload: dict) -> dict:
-    try:
-        return create_card_usage(payload)
-    except ValueError as error:
-        raise HTTPException(status_code=400, detail=str(error)) from error
-
-
-@router.put("/finance/card/{item_id}")
-def put_money_core_card(item_id: int, payload: dict) -> dict:
-    try:
-        return update_card_usage(item_id, payload)
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
-
-
-@router.delete("/finance/card/{item_id}")
-def delete_money_core_card(item_id: int) -> dict:
-    try:
-        return delete_money_core_item("card_usage", item_id)
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
-
-
-@router.get("/finance/installments")
-def get_money_core_installments(month: str | None = None) -> list[dict]:
-    return list_installments(month)
-
-
-@router.post("/finance/installments")
-def post_money_core_installment(payload: dict) -> dict:
-    try:
-        return create_installment(payload)
-    except ValueError as error:
-        raise HTTPException(status_code=400, detail=str(error)) from error
-
-
-@router.put("/finance/installments/{item_id}")
-def put_money_core_installment(item_id: int, payload: dict) -> dict:
-    try:
-        return update_installment(item_id, payload)
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
-
-
-@router.delete("/finance/installments/{item_id}")
-def delete_money_core_installment(item_id: int) -> dict:
-    try:
-        return delete_money_core_item("installments", item_id)
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
-
-
-@router.get("/finance/assets")
-def get_money_core_assets() -> list[dict]:
-    return list_assets_history()
-
-
-@router.post("/finance/assets")
-def post_money_core_asset(payload: dict) -> dict:
-    try:
-        return save_asset_history(payload)
-    except ValueError as error:
-        raise HTTPException(status_code=400, detail=str(error)) from error
-
-
-@router.get("/finance/auto-transfer")
-def get_money_core_auto_transfer() -> list[dict]:
-    return list_auto_transfer()
-
-
-@router.post("/finance/auto-transfer")
-def post_money_core_auto_transfer(payload: dict) -> dict:
-    try:
-        return create_auto_transfer(payload)
-    except ValueError as error:
-        raise HTTPException(status_code=400, detail=str(error)) from error
-
-
-@router.put("/finance/auto-transfer/{item_id}")
-def put_money_core_auto_transfer(item_id: int, payload: dict) -> dict:
-    try:
-        return update_auto_transfer(item_id, payload)
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
-
-
-@router.delete("/finance/auto-transfer/{item_id}")
-def delete_money_core_auto_transfer(item_id: int) -> dict:
-    try:
-        return delete_money_core_item("auto_transfer", item_id)
-    except ValueError as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
-
-
-@router.post("/assets", response_model=AssetResponse)
-def post_asset(payload: AssetCreate) -> AssetResponse:
-    return create_asset(payload)
-
-
-@router.get("/assets", response_model=list[AssetResponse])
-def get_assets(limit: int = 100) -> list[AssetResponse]:
-    return list_assets(limit=limit)
-
-
-@router.get("/assets/summary", response_model=AssetSummaryResponse)
-def get_asset_summary() -> AssetSummaryResponse:
-    return build_asset_summary()
-
-
-@router.put("/assets/{asset_id}", response_model=AssetResponse)
-def put_asset(asset_id: int, payload: AssetUpdate) -> AssetResponse:
-    asset = update_asset(asset_id, payload)
-    if asset is None:
-        raise HTTPException(status_code=404, detail="Asset not found")
-    return asset
 
 
 @router.post("/commands/natural", response_model=NaturalCommandResponse)

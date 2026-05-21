@@ -105,8 +105,8 @@ def _build_agent1_card_summary(stats: dict[str, Any]) -> str:
 def _build_card_summary(agent_id: int, task: dict[str, Any]) -> str:
     payload = _payload_dict(task)
     status = str(task.get("status") or "")
-    command_text = str(task.get("command_text") or "").strip()
-    result_summary = str(task.get("result_summary") or "").strip()
+    command_text = _clean_display_text(task.get("command_text"))
+    result_summary = _clean_display_text(task.get("result_summary"))
 
     if status == "failed":
         return "최근 작업 확인이 필요합니다."
@@ -225,12 +225,12 @@ def _build_agent3_panel() -> dict[str, Any]:
             {
                 "id": int(task.get("id")),
                 "status": task.get("status"),
-                "request": task.get("command_text") or task.get("search_query"),
-                "summary": task.get("result_summary"),
+                "request": _clean_display_text(task.get("command_text") or task.get("search_query")),
+                "summary": _clean_display_text(task.get("result_summary")),
                 "requires_codex": _payload_dict(task).get("requires_codex", True),
                 "created_at": _stringify(task.get("created_at")),
                 "updated_at": _stringify(task.get("completed_at") or task.get("claimed_at") or task.get("created_at")),
-                "error_message": task.get("error_message"),
+                "error_message": _clean_display_text(task.get("error_message")),
             }
             for task in tasks
             if task.get("status") in {"pending", "claimed", "completed", "failed"}
@@ -307,9 +307,9 @@ def _task_payload(task: dict[str, Any]) -> dict[str, Any]:
         "id": int(task.get("id")),
         "task_type": task.get("task_type"),
         "status": task.get("status"),
-        "command_text": task.get("command_text"),
-        "result_summary": task.get("result_summary"),
-        "error_message": task.get("error_message"),
+        "command_text": _clean_display_text(task.get("command_text")),
+        "result_summary": _clean_display_text(task.get("result_summary")),
+        "error_message": _clean_display_text(task.get("error_message")),
         "created_at": _stringify(task.get("created_at")),
         "updated_at": _stringify(task.get("completed_at") or task.get("claimed_at") or task.get("created_at")),
     }
@@ -327,12 +327,32 @@ def _payload_dict(task: dict[str, Any]) -> dict[str, Any]:
 
 
 def _clean_report_text(value: str) -> str:
-    text = " ".join(str(value or "").split())
+    text = _clean_display_text(value)
     text = re.sub(r"^에이전트\s*\d+번?\s*보고입니다\.?\s*", "", text)
     text = re.sub(r"^보고입니다\.?\s*", "", text)
     text = re.sub(r"\s*\d+\.\s*", " / ", text)
     text = re.sub(r"\s*/\s*/\s*", " / ", text).strip(" /")
     return text
+
+
+def _clean_display_text(value: Any) -> str:
+    text = " ".join(str(value or "").split())
+    if _looks_like_mojibake(text):
+        return "이전 작업 요약은 문자 인코딩 문제로 표시하지 않았습니다."
+    return text
+
+
+def _looks_like_mojibake(text: str) -> bool:
+    if not text:
+        return False
+    if "\ufffd" in text:
+        return True
+    cjk_count = sum(1 for char in text if 0x4E00 <= ord(char) <= 0x9FFF)
+    hangul_count = sum(1 for char in text if 0xAC00 <= ord(char) <= 0xD7A3)
+    if cjk_count >= 3 and cjk_count > hangul_count:
+        return True
+    suspicious_tokens = ("Ã", "ì", "í", "ê", "ë")
+    return any(token in text for token in suspicious_tokens)
 
 
 def _truncate(value: str, limit: int) -> str:
@@ -345,7 +365,7 @@ def _truncate(value: str, limit: int) -> str:
 def extract_draft_id_from_query(value: str | None) -> int | None:
     if not value:
         return None
-    match = re.search(r"draft_id\s*=\s*(\d+)|珥덉븞\s*#?\s*(\d+)", value)
+    match = re.search(r"draft_id\s*=\s*(\d+)|초안\s*#?\s*(\d+)", value)
     if not match:
         return None
     return int(next(group for group in match.groups() if group))
