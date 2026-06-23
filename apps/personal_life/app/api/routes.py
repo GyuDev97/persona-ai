@@ -57,6 +57,7 @@ from ..services.agent_definition_service import (
     update_agent_definition,
 )
 from ..services.agent_report_center_service import build_agent_report_center, create_naver_blog_fill_task
+from ..services.agent_room_chat_flexible_service import get_agent_room_messages, run_agent_room_chat
 from ..services.agent_standby_service import focus_agent, get_agent_standby_status, open_agent_detail, recover_agent
 from ..services.agent3_dev_planner_ai_service import generate_ai_dev_proposal
 from ..services.blog_draft_service import get_blog_draft
@@ -96,6 +97,7 @@ AGENT_REPORT_CENTER_PATH = FRONTEND_DIR / "agent_report_center.html"
 AGENT_LIVE_ROOM_PATH = FRONTEND_DIR / "agent_live_room.html"
 AGENT_LIVE_OFFICE_PATH = FRONTEND_DIR / "agent_live_office.html"
 AGENT_LIVE_OFFICE_SHORTS_PATH = FRONTEND_DIR / "agent_live_office_shorts.html"
+AGENT_HEADQURATER_PATH = FRONTEND_DIR / "agent_headqurater_chat.html"
 MONEY_CORE_PATH = FRONTEND_DIR / "money_core.html"
 
 
@@ -180,6 +182,11 @@ class AutonomyProposalStatusPayload(BaseModel):
     status: str
 
 
+class AgentRoomChatPayload(BaseModel):
+    message: str
+    target_agent_id: int | None = None
+
+
 @router.get("/", include_in_schema=False)
 def frontend() -> FileResponse:
     return FileResponse(FRONTEND_PATH)
@@ -258,6 +265,22 @@ def agent_live_office_shorts_page() -> FileResponse:
     return FileResponse(AGENT_LIVE_OFFICE_SHORTS_PATH)
 
 
+@router.get("/agent/headqurater", include_in_schema=False)
+def agent_headqurater_page() -> FileResponse:
+    if not AGENT_HEADQURATER_PATH.exists():
+        raise HTTPException(status_code=404, detail="GYUOS Headquarters page not found")
+
+    return FileResponse(AGENT_HEADQURATER_PATH)
+
+
+@router.get("/agent/headquarter", include_in_schema=False)
+def agent_headquarter_page() -> FileResponse:
+    if not AGENT_HEADQURATER_PATH.exists():
+        raise HTTPException(status_code=404, detail="GYUOS Headquarters page not found")
+
+    return FileResponse(AGENT_HEADQURATER_PATH)
+
+
 @router.get("/money-core", include_in_schema=False)
 def money_core_page() -> FileResponse:
     if not MONEY_CORE_PATH.exists():
@@ -327,6 +350,19 @@ def get_agent_standby_status_route() -> dict:
 @router.get("/agent/report-center/data")
 def get_agent_report_center_data() -> dict:
     return build_agent_report_center()
+
+
+@router.get("/agent/dialogue/messages")
+def get_agent_dialogue_messages(limit: int = 24) -> list[dict]:
+    return get_agent_room_messages(limit=limit)
+
+
+@router.post("/agent/dialogue/chat")
+def post_agent_dialogue_chat(payload: AgentRoomChatPayload) -> dict:
+    try:
+        return run_agent_room_chat(payload.message, target_agent_id=payload.target_agent_id)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
 
 @router.get("/agent/autonomy/observations")

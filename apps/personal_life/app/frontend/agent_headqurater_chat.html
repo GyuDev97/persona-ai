@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GYUOS Agent Headquarters</title>
+  <style>
+    :root {
+      --panel: #fffdf9;
+      --line: #eadfd2;
+      --text: #241b15;
+      --muted: #746a61;
+      --orange: #f97316;
+      --orange-deep: #b94608;
+      --green: #19a765;
+      --blue: #2e86de;
+      --purple: #8b5cf6;
+      --shadow: 0 22px 58px rgba(86, 58, 34, 0.13);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Malgun Gothic", "Noto Sans KR", Arial, sans-serif;
+      background: radial-gradient(circle at 9% 0%, rgba(249,115,22,.18), transparent 30%),
+        radial-gradient(circle at 90% 8%, rgba(46,134,222,.12), transparent 32%),
+        linear-gradient(135deg, #fff9ef, #f5efe7);
+    }
+    button, input { font: inherit; }
+    button { border: 0; cursor: pointer; }
+    .page { min-height: 100vh; padding: 24px; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 16px; }
+    .topbar { width: min(1760px, 100%); margin: 0 auto; display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; }
+    h1 { margin: 0; font-size: clamp(28px, 4vw, 42px); line-height: 1; letter-spacing: 0; }
+    .topbar p { margin: 9px 0 0; color: var(--muted); font-size: 14px; font-weight: 800; }
+    .badge { display: inline-flex; align-items: center; gap: 8px; padding: 9px 12px; border: 1px solid rgba(25,167,101,.22); border-radius: 999px; background: #edf8f1; color: #118148; font-size: 12px; font-weight: 950; white-space: nowrap; }
+    .badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 5px rgba(25,167,101,.12); }
+    .shell { width: min(1760px, 100%); margin: 0 auto; display: grid; grid-template-columns: minmax(720px, 1fr) 420px; gap: 16px; align-items: stretch; }
+    .scene-card, .chat-card { border: 1px solid var(--line); border-radius: 18px; background: rgba(255,253,249,.88); box-shadow: var(--shadow); overflow: hidden; }
+    .scene-head, .chat-head { min-height: 68px; padding: 17px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .scene-head h2, .chat-head h2 { margin: 0; font-size: 18px; }
+    .scene-head small, .chat-head small { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; font-weight: 800; }
+    .office { position: relative; min-height: 710px; overflow: hidden; background:
+      linear-gradient(30deg, rgba(136,100,58,.055) 12%, transparent 12.5%, transparent 87%, rgba(136,100,58,.055) 87.5%),
+      linear-gradient(150deg, rgba(136,100,58,.055) 12%, transparent 12.5%, transparent 87%, rgba(136,100,58,.055) 87.5%),
+      linear-gradient(135deg, #f4eadb, #eee2d1); background-size: 76px 44px; }
+    .office::before { content: "GYUOS"; position: absolute; left: 28px; top: 24px; z-index: 20; padding: 11px 14px; border: 1px solid rgba(249,115,22,.28); border-radius: 8px; background: rgba(255,247,234,.9); color: var(--orange); font-size: 22px; font-weight: 950; letter-spacing: .14em; }
+    .room { position: absolute; border: 1px solid rgba(103,78,55,.13); border-radius: 18px; background: rgba(255,255,255,.42); box-shadow: inset 0 0 0 1px rgba(255,255,255,.38), 0 22px 46px rgba(90,64,40,.08); transform: skewY(-7deg); }
+    .room.money { left: 5%; top: 14%; width: 26%; height: 22%; background: rgba(211,242,223,.38); }
+    .room.news { right: 8%; top: 14%; width: 30%; height: 22%; background: rgba(216,235,255,.42); }
+    .room.creator { left: 6%; bottom: 15%; width: 31%; height: 28%; background: rgba(255,228,200,.42); }
+    .room.lab { right: 7%; bottom: 15%; width: 31%; height: 28%; background: rgba(237,224,255,.42); }
+    .label { position: absolute; z-index: 4; color: #513923; font-size: 14px; font-weight: 950; }
+    .label.money { left: 8%; top: 17%; color: #118148; }
+    .label.news { right: 25%; top: 17%; color: var(--blue); }
+    .label.creator { left: 9%; bottom: 39%; color: var(--orange); }
+    .label.lab { right: 21%; bottom: 39%; color: var(--purple); }
+    .core { position: absolute; left: 50%; top: 50%; z-index: 7; width: 178px; height: 138px; transform: translate(-50%, -50%); display: grid; place-items: center; }
+    .core-screen { width: 140px; height: 86px; border: 5px solid #3d3a36; border-radius: 13px; background: linear-gradient(135deg, #132b42, #284d77 55%, #111b2b); box-shadow: 0 16px 28px rgba(36,26,19,.18); color: white; display: grid; place-items: center; text-align: center; font-weight: 950; line-height: 1.25; }
+    .core-screen span { color: #bfe5ff; font-size: 12px; }
+    .flow { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+    .flow path { fill: none; stroke-width: 5; stroke-linecap: round; stroke-dasharray: 9 14; animation: dash 1.8s linear infinite; filter: drop-shadow(0 5px 5px rgba(60,42,30,.12)); }
+    .flow .green { stroke: var(--green); } .flow .blue { stroke: var(--blue); } .flow .orange { stroke: var(--orange); } .flow .purple { stroke: var(--purple); }
+    .agent { position: absolute; z-index: 10; width: 78px; height: 112px; filter: drop-shadow(0 14px 16px rgba(54,38,25,.16)); animation: float 2.2s ease-in-out infinite; }
+    .agent .head { position: absolute; left: 25px; top: 0; width: 28px; height: 28px; border-radius: 50%; background: #f0c493; border: 2px solid rgba(68,43,27,.14); }
+    .agent .body { position: absolute; left: 18px; top: 30px; width: 42px; height: 46px; border-radius: 14px; background: var(--agent); box-shadow: inset 0 -10px 0 rgba(0,0,0,.08); }
+    .agent .name { position: absolute; left: 50%; top: 82px; min-width: 106px; transform: translateX(-50%); padding: 7px 9px; border: 1px solid rgba(80,52,30,.1); border-radius: 11px; background: rgba(255,253,249,.94); text-align: center; font-size: 11px; font-weight: 950; }
+    .agent .cube { position: absolute; right: 8px; top: 42px; width: 17px; height: 17px; border-radius: 4px; transform: rotate(45deg); background: linear-gradient(135deg, #fff, #ffd48c, var(--agent)); box-shadow: 0 0 15px rgba(249,115,22,.3); }
+    .agent.a1 { --agent: var(--green); left: 15%; top: 24%; animation-name: roam-a; }
+    .agent.a2 { --agent: var(--orange); left: 20%; top: 66%; animation-name: roam-b; animation-delay: -1.5s; }
+    .agent.a3 { --agent: var(--blue); right: 28%; top: 23%; animation-name: roam-c; animation-delay: -2s; }
+    .agent.a4 { --agent: var(--purple); right: 16%; top: 64%; animation-name: roam-d; animation-delay: -3s; }
+    .speech { position: absolute; left: 50%; bottom: 28px; z-index: 18; width: min(620px, calc(100% - 48px)); transform: translateX(-50%); display: grid; grid-template-columns: 46px minmax(0,1fr); gap: 12px; align-items: center; padding: 14px 16px; border: 1px solid rgba(80,52,30,.1); border-radius: 18px; background: rgba(255,253,249,.94); box-shadow: 0 18px 42px rgba(72,50,33,.13); }
+    .speech-icon { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: #e9f8ef; color: var(--green); font-weight: 950; }
+    .speech b { display: block; font-size: 14px; } .speech span { display: block; margin-top: 4px; color: #5d5148; font-size: 12px; font-weight: 850; }
+    .chat-card { display: grid; grid-template-rows: auto auto minmax(0,1fr) auto; min-height: 710px; }
+    .chat-log { padding: 16px; display: grid; gap: 10px; align-content: start; overflow: auto; background: rgba(255,248,236,.46); }
+    .message { max-width: 92%; padding: 11px 12px; border: 1px solid rgba(80,52,30,.1); border-radius: 14px; background: var(--panel); box-shadow: 0 8px 18px rgba(82,55,33,.06); }
+    .message.user { justify-self: end; background: linear-gradient(135deg, var(--orange), var(--orange-deep)); color: white; border-color: transparent; }
+    .message strong { display: block; margin-bottom: 5px; font-size: 12px; } .message p { margin: 0; font-size: 13px; line-height: 1.55; font-weight: 750; }
+    .message small { display: block; margin-top: 6px; color: var(--muted); font-size: 10px; font-weight: 800; } .message.user small { color: rgba(255,255,255,.78); }
+    .quick { display: flex; gap: 7px; flex-wrap: wrap; padding: 12px 16px 0; background: rgba(255,248,236,.46); }
+    .quick button { padding: 8px 10px; border: 1px solid rgba(80,52,30,.1); border-radius: 999px; background: var(--panel); color: #59473a; font-size: 12px; font-weight: 900; }
+    .chat-form { display: grid; grid-template-columns: minmax(0,1fr) 82px; gap: 8px; padding: 14px; border-top: 1px solid var(--line); background: rgba(255,253,249,.94); }
+    .chat-form input { min-height: 44px; border: 1px solid var(--line); border-radius: 12px; padding: 0 13px; outline: none; background: white; color: var(--text); font-weight: 800; }
+    .chat-form button { border-radius: 12px; background: linear-gradient(135deg, var(--orange), var(--orange-deep)); color: white; font-weight: 950; }
+    .empty { padding: 16px; border: 1px dashed rgba(80,52,30,.18); border-radius: 13px; color: var(--muted); text-align: center; font-weight: 850; }
+    @keyframes dash { to { stroke-dashoffset: -46; } }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+    @keyframes roam-a { 0%,100% { left: 15%; top: 24%; } 50% { left: 30%; top: 32%; } }
+    @keyframes roam-b { 0%,100% { left: 20%; top: 66%; } 50% { left: 42%; top: 58%; } }
+    @keyframes roam-c { 0%,100% { right: 28%; top: 23%; } 50% { right: 39%; top: 40%; } }
+    @keyframes roam-d { 0%,100% { right: 16%; top: 64%; } 50% { right: 34%; top: 56%; } }
+    @media (max-width: 1180px) { .shell { grid-template-columns: 1fr; } .chat-card { min-height: 560px; } }
+    @media (max-width: 760px) { .page { padding: 12px; } .topbar { display: grid; } .office { min-height: 620px; } .agent { transform: scale(.82); } .chat-form { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div>
+        <h1>GYUOS Agent Headquarters</h1>
+        <p>에이전트들이 일하는 상황실에 직접 질문하면 관련 부서가 대화 형태로 응답합니다.</p>
+      </div>
+      <div class="badge">Agent chat online</div>
+    </header>
+    <main class="shell">
+      <section class="scene-card">
+        <div class="scene-head">
+          <div>
+            <h2>Agent Situation Room</h2>
+            <small>Money, Creator, News, Innovation, Approval, GYUVIS Core가 같은 상황실에서 협업 중입니다.</small>
+          </div>
+          <div class="badge">LIVE</div>
+        </div>
+        <div class="office">
+          <div class="room money"></div><div class="room news"></div><div class="room creator"></div><div class="room lab"></div>
+          <div class="label money">Money Core</div><div class="label news">News Intelligence</div><div class="label creator">Creator Studio</div><div class="label lab">Innovation Lab</div>
+          <svg class="flow" viewBox="0 0 1600 900" preserveAspectRatio="none" aria-hidden="true">
+            <path class="green" d="M 390 285 C 520 355, 650 345, 770 430" />
+            <path class="orange" d="M 420 640 C 535 590, 660 590, 770 515" />
+            <path class="blue" d="M 1190 285 C 1060 360, 950 360, 830 445" />
+            <path class="purple" d="M 1130 650 C 1010 600, 945 560, 830 520" />
+          </svg>
+          <div class="core"><div class="core-screen">GYUVIS<br><span>CORE</span></div></div>
+          <div class="agent a1"><div class="head"></div><div class="body"></div><div class="cube"></div><div class="name">Money Core</div></div>
+          <div class="agent a2"><div class="head"></div><div class="body"></div><div class="cube"></div><div class="name">Creator Studio</div></div>
+          <div class="agent a3"><div class="head"></div><div class="body"></div><div class="cube"></div><div class="name">News Intelligence</div></div>
+          <div class="agent a4"><div class="head"></div><div class="body"></div><div class="cube"></div><div class="name">Innovation Lab</div></div>
+          <div class="speech"><div class="speech-icon">AI</div><div><b id="speechTitle">GYUVIS Core 대기 중</b><span id="speechText">오른쪽 채팅창에 질문하면 관련 에이전트들이 답합니다.</span></div></div>
+        </div>
+      </section>
+      <aside class="chat-card">
+        <div class="chat-head"><div><h2>Agent Chat</h2><small>질문을 입력하면 상황실 에이전트들이 각자 관점으로 응답합니다.</small></div></div>
+        <div class="quick">
+          <button type="button" data-question="지금 전체 에이전트 상황 요약해줘">전체 상황</button>
+          <button type="button" data-question="오늘 IT 뉴스에서 콘텐츠로 만들만한 거 있어?">뉴스/콘텐츠</button>
+          <button type="button" data-question="승인 대기 중인 작업 있어?">승인 대기</button>
+          <button type="button" data-question="새 프로젝트 아이디어로 볼 만한 거 정리해줘">프로젝트 아이디어</button>
+        </div>
+        <div class="chat-log" id="chatLog"><div class="empty">아직 대화가 없습니다. 질문을 던져보세요.</div></div>
+        <form class="chat-form" id="chatForm">
+          <input id="chatInput" name="message" autocomplete="off" placeholder="예: 지금 에이전트들 뭐 하고 있어?" />
+          <button type="submit">전송</button>
+        </form>
+      </aside>
+    </main>
+  </div>
+  <script>
+    const chatLog = document.getElementById("chatLog");
+    const chatForm = document.getElementById("chatForm");
+    const chatInput = document.getElementById("chatInput");
+    const speechTitle = document.getElementById("speechTitle");
+    const speechText = document.getElementById("speechText");
+    function escapeHtml(value) { return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[char])); }
+    function formatTime(value) {
+      if (!value) return "";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value).slice(0, 16);
+      return date.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+    }
+    function renderMessages(messages) {
+      messages = messages.filter((message) => !String(message.message || "").startsWith("?? "));
+      if (!messages.length) {
+        chatLog.innerHTML = '<div class="empty">아직 대화가 없습니다. 질문을 던져보세요.</div>';
+        return;
+      }
+      chatLog.innerHTML = messages.map((message) => {
+        const isUser = Number(message.from_agent_id || 0) === 0;
+        const label = isUser ? "You" : message.from_agent_label || `Agent ${message.from_agent_id}`;
+        const role = isUser ? "질문" : message.from_agent_role || message.topic || "응답";
+        return `<article class="message ${isUser ? "user" : ""}"><strong>${escapeHtml(label)} · ${escapeHtml(role)}</strong><p>${escapeHtml(message.message || "")}</p><small>${escapeHtml(formatTime(message.created_at))}</small></article>`;
+      }).join("");
+      chatLog.scrollTop = chatLog.scrollHeight;
+      const lastAgent = [...messages].reverse().find((message) => Number(message.from_agent_id || 0) !== 0);
+      if (lastAgent) {
+        speechTitle.textContent = `${lastAgent.from_agent_label || "Agent"} 응답`;
+        speechText.textContent = lastAgent.message || "";
+      }
+    }
+    async function loadMessages() {
+      const response = await fetch("/agent/dialogue/messages?limit=24", { headers: { Accept: "application/json" } });
+      if (!response.ok) throw new Error("messages failed");
+      renderMessages(await response.json());
+    }
+    async function sendQuestion(question) {
+      const clean = question.trim();
+      if (!clean) return;
+      chatInput.value = "";
+      speechTitle.textContent = "GYUVIS Core 처리 중";
+      speechText.textContent = "질문을 관련 에이전트에게 전달하고 있습니다.";
+      const response = await fetch("/agent/dialogue/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ message: clean }),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      const data = await response.json();
+      renderMessages(data.messages || []);
+    }
+    chatForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = chatForm.querySelector("button");
+      button.disabled = true;
+      try { await sendQuestion(chatInput.value); }
+      catch (error) { speechTitle.textContent = "대화 실패"; speechText.textContent = "서버 연결이나 데이터베이스 상태를 확인해주세요."; }
+      finally { button.disabled = false; chatInput.focus(); }
+    });
+    document.querySelectorAll("[data-question]").forEach((button) => {
+      button.addEventListener("click", () => { chatInput.value = button.dataset.question || ""; chatForm.requestSubmit(); });
+    });
+    loadMessages().catch(() => { chatLog.innerHTML = '<div class="empty">대화 기록을 불러오지 못했습니다.</div>'; });
+  </script>
+</body>
+</html>

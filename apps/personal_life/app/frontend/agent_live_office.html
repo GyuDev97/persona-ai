@@ -66,6 +66,9 @@ button{font:inherit;border:0;cursor:pointer}a{color:inherit;text-decoration:none
 .runner.a4{--c:var(--purple);animation:a4Route calc(14s / var(--speed)) ease-in-out infinite;animation-delay:calc(-4s / var(--speed))}
 .side-card{padding:18px}.side-card+.side-card{margin-top:16px}.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.metric{padding:14px;border:1px solid rgba(80,52,30,.09);border-radius:14px;background:#fffdf9}.metric b{display:block;font-size:24px;line-height:1}.metric span{display:block;margin-top:7px;color:var(--muted);font-size:12px;font-weight:850}.log-list{display:grid;gap:10px;margin-top:14px;max-height:300px;overflow:auto}.log{padding:11px 12px;border:1px solid rgba(80,52,30,.09);border-radius:13px;background:#fffdf9}.log b{display:block;font-size:13px}.log p{margin:5px 0 0;color:#675b52;font-size:12px;line-height:1.45;font-weight:800}.log small{color:#8a7e73;font-weight:900}.empty{padding:15px;border:1px dashed rgba(80,52,30,.18);border-radius:13px;text-align:center;color:var(--muted);font-weight:850}
 .toast{position:fixed;right:24px;bottom:24px;max-width:420px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#fffdf9;box-shadow:var(--shadow);font-weight:850;display:none;z-index:40}.toast.show{display:block}
+.chat-modal{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:flex-end;padding:24px;background:rgba(33,24,17,.28);backdrop-filter:blur(5px)}
+.chat-modal.open{display:flex}.chat-dialog{width:min(440px,calc(100vw - 28px));height:min(720px,calc(100vh - 48px));display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;border:1px solid var(--line);border-radius:18px;background:#fffdf9;box-shadow:0 28px 80px rgba(52,35,23,.24);overflow:hidden}.chat-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line)}.chat-head h3{margin:0;font-size:17px}.chat-head small{display:block;margin-top:4px;color:var(--muted);font-size:12px;font-weight:850}.chat-close{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:#fff7ed;color:#7a4b24;font-weight:950}.chat-quick{display:flex;gap:7px;flex-wrap:wrap;padding:12px 16px 0;background:rgba(255,248,236,.52)}.chat-quick button{padding:8px 10px;border:1px solid rgba(80,52,30,.1);border-radius:999px;background:#fffdf9;color:#59473a;font-size:12px;font-weight:900}.chat-log{padding:16px;display:grid;gap:10px;align-content:start;overflow:auto;background:rgba(255,248,236,.52)}.chat-msg{max-width:94%;padding:11px 12px;border:1px solid rgba(80,52,30,.1);border-radius:14px;background:#fffdf9;box-shadow:0 8px 18px rgba(82,55,33,.06)}.chat-msg.user{justify-self:end;background:linear-gradient(135deg,var(--brand),#a9430a);color:#fff;border-color:transparent}.chat-msg strong{display:block;margin-bottom:5px;font-size:12px}.chat-msg p{margin:0;font-size:13px;line-height:1.55;font-weight:780}.chat-msg small{display:block;margin-top:6px;color:var(--muted);font-size:10px;font-weight:850}.chat-msg.user small{color:rgba(255,255,255,.78)}.chat-empty{padding:16px;border:1px dashed rgba(80,52,30,.18);border-radius:13px;text-align:center;color:var(--muted);font-weight:850}.chat-form{display:grid;grid-template-columns:minmax(0,1fr)76px;gap:8px;padding:14px;border-top:1px solid var(--line);background:#fffdf9}.chat-form input{min-height:44px;border:1px solid var(--line);border-radius:12px;padding:0 13px;outline:none;background:#fff;color:var(--text);font-weight:850}.chat-form button{border-radius:12px;background:linear-gradient(135deg,var(--brand),#a9430a);color:#fff;font-weight:950}
+.chat-summary{margin:0 0 10px;color:#352a22;font-size:13px;line-height:1.55;font-weight:850}.chat-news-list,.chat-bullet-list{margin:0;padding:0;display:grid;gap:8px;list-style:none}.chat-news-list li,.chat-bullet-list li{padding:9px 10px;border:1px solid rgba(80,52,30,.08);border-radius:10px;background:rgba(255,248,236,.55)}.chat-news-title{display:block;color:#211b17;font-size:13px;line-height:1.45;font-weight:900}.chat-news-meta{display:block;margin-top:4px;color:#82766b;font-size:11px;font-weight:850}.chat-bullet-list li{font-size:13px;line-height:1.5;font-weight:820}
 @keyframes dash{to{stroke-dashoffset:-42}}@keyframes glow{0%,100%{opacity:.45}50%{opacity:.9}}@keyframes personPulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}@keyframes packetMove{0%,100%{transform:translate(0,0) scale(.85);opacity:.35}35%{transform:translate(38px,-20px) scale(1);opacity:1}70%{transform:translate(75px,16px) scale(.9);opacity:.6}} 
 @keyframes runnerBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 @keyframes a1Route{0%,100%{left:15%;top:24%;transform:scale(1)}28%{left:28%;top:35%;transform:scale(1.03)}52%{left:27%;top:58%;transform:scale(1)}68%{left:24%;top:56%;transform:scale(.96)}84%{left:18%;top:39%;transform:scale(1)}}
@@ -74,7 +77,7 @@ button{font:inherit;border:0;cursor:pointer}a{color:inherit;text-decoration:none
 @keyframes a4Route{0%,100%{left:80%;top:67%;transform:scale(1)}32%{left:70%;top:61%;transform:scale(.98)}56%{left:55%;top:56%;transform:scale(1.02)}78%{left:73%;top:63%;transform:scale(1)}}
 @media(max-width:1350px){.shell{grid-template-columns:1fr}.scene{min-height:620px}.side-card{display:inline-block;width:calc(50% - 10px);vertical-align:top}.side-card+.side-card{margin:0 0 0 16px}}
 @media(max-width:900px){.page{padding:18px}.topbar{display:grid}.actions{justify-content:flex-start}.scene{min-height:560px;aspect-ratio:auto}.status-card{width:188px;min-height:124px;padding:14px}.status-card.news{left:18%;top:8%}.status-card.blog{left:20%;bottom:28%}.status-card.dev{right:9%;top:10%}.status-card.studio{right:3%;bottom:25%}.handoff{width:70%}.side-card{display:block;width:100%}.side-card+.side-card{margin:16px 0 0}}
-@media(max-width:680px){.scene-head{height:auto;display:grid}.scene{min-height:900px}.room.news{left:4%;top:7%;width:44%;height:20%}.room.dev{right:4%;top:7%;width:44%;height:20%}.room.blog{left:4%;top:58%;width:44%;height:20%}.room.studio{right:4%;top:58%;width:44%;height:20%}.room-label.news{left:7%;top:10%}.room-label.dev{right:18%;top:10%}.room-label.blog{left:8%;top:59%}.room-label.studio{right:12%;top:59%}.desk{transform:scale(.72);transform-origin:left top}.desk.news{left:12%;top:19%}.desk.dev{right:29%;top:19%}.desk.blog{left:12%;bottom:23%}.desk.studio{right:29%;bottom:23%}.avatar{transform:scale(.78);animation:none}.avatar.news{left:15%;top:18%}.avatar.dev{right:32%;top:18%}.avatar.blog{left:15%;bottom:28%}.avatar.studio{right:32%;bottom:28%}.runner{transform:scale(.72);transform-origin:center}.runner .say{display:none}.status-card{position:absolute;width:42%;min-height:142px;font-size:12px}.status-card.news{left:5%;top:31%}.status-card.dev{right:5%;top:31%}.status-card.blog{left:5%;top:79%}.status-card.studio{right:5%;top:79%}.core{top:51%;transform:translate(-50%,-50%) scale(.72)}.sofa,.table,.handoff,.zoom{display:none}.flow-svg,.packet{opacity:.38}.metric-grid{grid-template-columns:1fr}}
+@media(max-width:680px){.scene-head{height:auto;display:grid}.scene{min-height:900px}.room.news{left:4%;top:7%;width:44%;height:20%}.room.dev{right:4%;top:7%;width:44%;height:20%}.room.blog{left:4%;top:58%;width:44%;height:20%}.room.studio{right:4%;top:58%;width:44%;height:20%}.room-label.news{left:7%;top:10%}.room-label.dev{right:18%;top:10%}.room-label.blog{left:8%;top:59%}.room-label.studio{right:12%;top:59%}.desk{transform:scale(.72);transform-origin:left top}.desk.news{left:12%;top:19%}.desk.dev{right:29%;top:19%}.desk.blog{left:12%;bottom:23%}.desk.studio{right:29%;bottom:23%}.avatar{transform:scale(.78);animation:none}.avatar.news{left:15%;top:18%}.avatar.dev{right:32%;top:18%}.avatar.blog{left:15%;bottom:28%}.avatar.studio{right:32%;bottom:28%}.runner{transform:scale(.72);transform-origin:center}.runner .say{display:none}.status-card{position:absolute;width:42%;min-height:142px;font-size:12px}.status-card.news{left:5%;top:31%}.status-card.dev{right:5%;top:31%}.status-card.blog{left:5%;top:79%}.status-card.studio{right:5%;top:79%}.core{top:51%;transform:translate(-50%,-50%) scale(.72)}.sofa,.table,.handoff,.zoom{display:none}.flow-svg,.packet{opacity:.38}.metric-grid{grid-template-columns:1fr}.chat-modal{padding:10px;align-items:stretch}.chat-dialog{width:100%;height:100%}.chat-form{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -93,6 +96,7 @@ button{font:inherit;border:0;cursor:pointer}a{color:inherit;text-decoration:none
       </div>
       <button class="btn" type="button" id="pauseButton">일시정지</button>
       <button class="btn primary" type="button" id="refreshButton">새로고침</button>
+      <button class="btn" type="button" id="agentChatButton">Agent Chat</button>
       <a class="btn" href="/agent/live-office-shorts">Shorts 9:16</a>
       <a class="btn" href="/agent/live-room">Live Room</a>
       <a class="btn" href="/agent/report-center">Agent Report</a>
@@ -174,11 +178,36 @@ button{font:inherit;border:0;cursor:pointer}a{color:inherit;text-decoration:none
     </aside>
   </main>
 </div>
+<div class="chat-modal" id="agentChatModal" aria-hidden="true">
+  <section class="chat-dialog" role="dialog" aria-modal="true" aria-labelledby="agentChatTitle">
+    <div class="chat-head">
+      <div>
+        <h3 id="agentChatTitle">Agent Chat</h3>
+        <small>상황실 에이전트에게 바로 질문할 수 있습니다.</small>
+      </div>
+      <button class="chat-close" type="button" id="agentChatClose" aria-label="채팅 닫기">×</button>
+    </div>
+    <div class="chat-quick">
+      <button type="button" data-chat-question="지금 전체 에이전트 상황 요약해줘">전체 상황</button>
+      <button type="button" data-chat-question="오늘 IT 뉴스에서 콘텐츠로 만들만한 거 있어?">뉴스/콘텐츠</button>
+      <button type="button" data-chat-question="승인 대기 중인 작업 있어?">승인 대기</button>
+      <button type="button" data-chat-question="새 프로젝트 아이디어로 볼 만한 거 정리해줘">프로젝트</button>
+    </div>
+    <div class="chat-log" id="agentChatLog">
+      <div class="chat-empty">아직 대화가 없습니다. 질문을 입력해보세요.</div>
+    </div>
+    <form class="chat-form" id="agentChatForm">
+      <input id="agentChatInput" name="message" autocomplete="off" placeholder="예: 지금 에이전트들 뭐 하고 있어?" />
+      <button type="submit">전송</button>
+    </form>
+  </section>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
 const $ = (id) => document.getElementById(id);
 const state = { report:null, tasks:[], paused:false, zoom:1 };
+const agentChatState = { messages: [] };
 
 function escapeHtml(value){
   return String(value ?? "").replace(/[&<>"']/g,(char)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[char]));
@@ -196,6 +225,15 @@ function toast(message){
 }
 async function request(url){
   const res = await fetch(url,{headers:{"Accept":"application/json"}});
+  if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
+async function postJson(url,payload){
+  const res = await fetch(url,{
+    method:"POST",
+    headers:{"Accept":"application/json","Content-Type":"application/json"},
+    body:JSON.stringify(payload)
+  });
   if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
   return res.json();
 }
@@ -287,6 +325,119 @@ function renderTasks(){
     return `<div class="log"><small>A${String(agent || 0).padStart(2,"0")} · ${escapeHtml(task.status || "대기")}</small><b>${escapeHtml(shortText(task.command_text || task.title || task.task_type || "Agent 작업",54))}</b><p>${escapeHtml(shortText(task.result_summary || task.error_message || task.task_type || "",90))}</p></div>`;
   }).join("") : `<div class="empty">현재 작업 큐가 비어 있습니다.</div>`;
 }
+function renderAgentChat(messages){
+  const list = (messages || []).filter((message)=>!String(message.message || "").startsWith("?? "));
+  $("agentChatLog").innerHTML = list.length ? list.map((message)=>{
+    const isUser = Number(message.from_agent_id || 0) === 0;
+    const label = isUser ? "You" : (message.from_agent_label || `Agent ${message.from_agent_id || ""}`);
+    const role = isUser ? "질문" : (message.from_agent_role || message.topic || "응답");
+    return `<article class="chat-msg ${isUser ? "user" : ""}"><strong>${escapeHtml(label)} · ${escapeHtml(role)}</strong>${renderChatBody(message)}<small>${escapeHtml(formatTime(message.created_at))}</small></article>`;
+  }).join("") : `<div class="chat-empty">아직 대화가 없습니다. 질문을 입력해보세요.</div>`;
+  $("agentChatLog").scrollTop = $("agentChatLog").scrollHeight;
+}
+function renderChatBody(message){
+  if(message.format === "news-list" && Array.isArray(message.items)){
+    return `<p class="chat-summary">${escapeHtml(message.message || "확인된 뉴스 목록입니다.")}</p><ol class="chat-news-list">${message.items.map((item)=>`<li><span class="chat-news-title">${escapeHtml(item.title || "제목 없음")}</span>${item.meta ? `<span class="chat-news-meta">${escapeHtml(item.meta)}</span>` : ""}</li>`).join("")}</ol>`;
+  }
+  if(message.format === "bullets" && Array.isArray(message.items)){
+    return `<p class="chat-summary">${escapeHtml(message.message || "정리하면 이렇습니다.")}</p><ul class="chat-bullet-list">${message.items.map((item)=>`<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+  }
+  const parts = String(message.message || "").split("\n").filter(Boolean);
+  if(parts.length > 1){
+    return `<p class="chat-summary">${escapeHtml(parts.shift())}</p><ul class="chat-bullet-list">${parts.map((part)=>`<li>${escapeHtml(part.replace(/^[-\d. ]+/, ""))}</li>`).join("")}</ul>`;
+  }
+  return `<p>${escapeHtml(message.message || "")}</p>`;
+}
+async function loadAgentChat(){
+  renderAgentChat(agentChatState.messages);
+}
+function openAgentChat(){
+  $("agentChatModal").classList.add("open");
+  $("agentChatModal").setAttribute("aria-hidden","false");
+  loadAgentChat().catch(()=>toast("채팅 기록을 불러오지 못했습니다."));
+  setTimeout(()=>$("agentChatInput").focus(),50);
+}
+function closeAgentChat(){
+  $("agentChatModal").classList.remove("open");
+  $("agentChatModal").setAttribute("aria-hidden","true");
+}
+async function sendAgentChat(message){
+  const clean = String(message || "").trim();
+  if(!clean) return;
+  $("agentChatInput").value = "";
+  const now = new Date().toISOString();
+  agentChatState.messages.push({from_agent_id:0,from_agent_label:"You",from_agent_role:"질문",message:clean,created_at:now});
+  renderAgentChat(agentChatState.messages);
+  const report = state.report || await request("/agent/report-center/data");
+  buildLiveOfficeReplies(clean, report).forEach((reply)=>{
+    agentChatState.messages.push({...reply,created_at:new Date().toISOString()});
+  });
+  renderAgentChat(agentChatState.messages);
+}
+function buildLiveOfficeReplies(question,report){
+  const text = question.toLowerCase();
+  if(asksNewsList(text)){
+    const news = newsListReply(report,true);
+    return [formattedAgentReply(4,"News Intelligence","IT 뉴스/트렌드",news.message,"news-list",news.items)];
+  }
+  if(text.includes("뉴스") || text.includes("기사") || text.includes("트렌드")){
+    const news = newsListReply(report,false);
+    return [formattedAgentReply(4,"News Intelligence","IT 뉴스/트렌드",news.message,"news-list",news.items)];
+  }
+  if(text.includes("콘텐츠") || text.includes("블로그") || text.includes("유튜브") || text.includes("영상") || text.includes("아이디어")){
+    const news = newsListReply(report,false);
+    return [
+      formattedAgentReply(4,"News Intelligence","IT 뉴스/트렌드",news.message,"news-list",news.items),
+      agentReply(3,"Creator Studio","블로그/유튜브/콘텐츠",creatorReply(report))
+    ];
+  }
+  if(text.includes("승인") || text.includes("결재") || text.includes("검토") || text.includes("대기")) return [agentReply(5,"Approval Center","승인/검토/결재",approvalReply(report))];
+  if(text.includes("프로젝트") || text.includes("실험") || text.includes("연구") || text.includes("개선")) return [agentReply(6,"Innovation Lab","신규 프로젝트/실험",innovationReply(question,report))];
+  return [agentReply(7,"GYUVIS Core","총괄 관제",coreReply(report))];
+}
+function agentReply(id,label,role,message){
+  return {from_agent_id:id,from_agent_label:label,from_agent_role:role,message};
+}
+function formattedAgentReply(id,label,role,message,format,items){
+  return {from_agent_id:id,from_agent_label:label,from_agent_role:role,message,format,items};
+}
+function asksNewsList(text){
+  return (text.includes("뉴스") || text.includes("기사") || text.includes("news")) && ["뭐","무엇","어떤","목록","리스트","보여","알려","5건","건이"].some((token)=>text.includes(token));
+}
+function newsListReply(report,listMode){
+  const panel = report?.agent1 || {};
+  const items = (panel.items && panel.items.length ? panel.items : (panel.latest_titles || []).map((title)=>({title}))).slice(0,5);
+  if(!items.length) return {message:"지금 표시 가능한 뉴스 목록이 비어 있어요. Agent 01 뉴스 수집을 먼저 돌리면 제목 기준으로 바로 정리해드릴게요.",items:[]};
+  const count = Number(panel.display_count || panel.selected_count || items.length);
+  const rows = items.map((item)=>{
+    const title = item.title || item.headline || "제목 없음";
+    const meta = [item.source, item.published_at ? String(item.published_at).slice(0,10) : ""].filter(Boolean).join(" · ");
+    return {title,meta};
+  });
+  return {message:listMode ? `말한 뉴스 ${count}건은 아래 목록입니다.` : `현재 보고 있는 IT 뉴스 ${count}건입니다.`,items:rows};
+}
+function creatorReply(report){
+  const drafts = report?.agent2?.drafts || [];
+  const ideas = report?.agent4?.ideas || [];
+  const rows = [];
+  if(drafts.length) rows.push(`블로그 초안: ${drafts.slice(0,3).map((draft)=>draft.title || "제목 없음").join(", ")}`);
+  if(ideas.length) rows.push(`영상 아이디어: ${ideas.slice(0,3).map((idea)=>idea.title || "제목 없음").join(", ")}`);
+  return rows.length ? `콘텐츠 재료는 이렇습니다.\n- ${rows.join("\n- ")}` : "아직 바로 이어갈 초안이나 영상 아이디어가 많지는 않아요. 뉴스 하나를 골라주면 블로그/유튜브 제목 후보로 바꿔드릴게요.";
+}
+function approvalReply(report){
+  const proposals = report?.autonomy?.proposals || [];
+  const pending = proposals.filter((item)=>String(item.status || "").toLowerCase() === "pending");
+  const queued = proposals.filter((item)=>String(item.status || "").toLowerCase() === "queued");
+  if(!pending.length && !queued.length) return "지금 자동화 승인 대기나 큐에 걸린 제안은 크게 보이지 않습니다.";
+  return `대기 ${pending.length}건, 큐 ${queued.length}건이 보여요.\n${pending.concat(queued).slice(0,5).map((item)=>`- ${item.title || item.summary || "승인 항목"} (${item.status})`).join("\n")}`;
+}
+function innovationReply(question,report){
+  const firstNews = report?.agent1?.items?.[0]?.title || "현재 Agent Live Office";
+  return `작은 실험으로 쪼개면 좋겠습니다.\n1. 기준 재료: ${firstNews}\n2. 실험안: "${shortText(question,28)}"를 상황실 액션/요약/승인 플로우 중 하나로 붙이기\n3. 다음 단계: 화면 버튼, API 응답, 저장 기록 중 어디까지 자동화할지 정하면 됩니다.`;
+}
+function coreReply(report){
+  return `현재 상황은 이렇게 볼 수 있어요.\n- 활성 에이전트 카드: ${(report?.cards || []).length}개\n- 표시 뉴스: ${Number(report?.agent1?.display_count || 0)}건\n- 블로그 초안: ${(report?.agent2?.drafts || []).length}개\n- 영상 아이디어: ${(report?.agent4?.ideas || []).length}개\n궁금한 항목을 찍어주면 해당 부서가 실제 목록이나 다음 액션까지 이어서 답합니다.`;
+}
 function renderAll(){
   renderScene();
   renderMessages();
@@ -330,6 +481,34 @@ document.addEventListener("click",(event)=>{
 });
 $("pauseButton").addEventListener("click",()=>setPaused(!state.paused));
 $("refreshButton").addEventListener("click",()=>loadData());
+$("agentChatButton").addEventListener("click",openAgentChat);
+$("agentChatClose").addEventListener("click",closeAgentChat);
+$("agentChatModal").addEventListener("click",(event)=>{
+  if(event.target === $("agentChatModal")) closeAgentChat();
+});
+$("agentChatForm").addEventListener("submit",async (event)=>{
+  event.preventDefault();
+  const button = $("agentChatForm").querySelector("button");
+  button.disabled = true;
+  try{
+    await sendAgentChat($("agentChatInput").value);
+  }catch(error){
+    toast(`Agent Chat 전송 실패: ${error.message}`);
+    await loadAgentChat().catch(()=>{});
+  }finally{
+    button.disabled = false;
+    $("agentChatInput").focus();
+  }
+});
+document.querySelectorAll("[data-chat-question]").forEach((button)=>{
+  button.addEventListener("click",()=>{
+    $("agentChatInput").value = button.dataset.chatQuestion || "";
+    $("agentChatForm").requestSubmit();
+  });
+});
+document.addEventListener("keydown",(event)=>{
+  if(event.key === "Escape" && $("agentChatModal").classList.contains("open")) closeAgentChat();
+});
 $("zoomIn").addEventListener("click",()=>setZoom(state.zoom + .06));
 $("zoomOut").addEventListener("click",()=>setZoom(state.zoom - .06));
 setSpeed(1);

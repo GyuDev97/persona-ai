@@ -1,0 +1,1783 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GYUOS Headquarters</title>
+  <style>
+    :root {
+      --cream: #fff8ec;
+      --paper: #fffdf7;
+      --warm: #ffe6bd;
+      --orange: #f97316;
+      --orange-soft: #ffb15f;
+      --ink: #26313a;
+      --muted: #6b7280;
+      --line: rgba(127, 92, 45, 0.18);
+      --glass: rgba(255, 255, 255, 0.74);
+      --mint: #47c7aa;
+      --blue: #5da7e8;
+      --violet: #8b75ff;
+      --shadow: rgba(102, 75, 39, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(255, 177, 95, 0.28), transparent 28%),
+        radial-gradient(circle at 82% 18%, rgba(71, 199, 170, 0.18), transparent 30%),
+        linear-gradient(145deg, #fff7e8 0%, #f7fbff 48%, #fffdf7 100%);
+      color: var(--ink);
+      font-family: "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+      overflow-x: hidden;
+    }
+
+    body {
+      padding: 28px;
+    }
+
+    .page {
+      width: min(1480px, 100%);
+      margin: 0 auto;
+      min-height: calc(100vh - 56px);
+      display: grid;
+      grid-template-columns: minmax(250px, 330px) minmax(760px, 1fr);
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .brand-panel {
+      position: sticky;
+      top: 28px;
+      align-self: start;
+      min-height: calc(100vh - 56px);
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 253, 247, 0.78);
+      box-shadow: 0 22px 56px var(--shadow);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .logo-lockup {
+      display: grid;
+      gap: 16px;
+    }
+
+    .logo {
+      width: fit-content;
+      padding: 10px 14px 11px;
+      border: 1px solid rgba(249, 115, 22, 0.35);
+      border-radius: 8px;
+      background: #fff7ea;
+      color: var(--orange);
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+    }
+
+    h1 {
+      margin: 0;
+      color: #1f2933;
+      font-size: clamp(32px, 5vw, 58px);
+      line-height: 0.96;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      max-width: 280px;
+      color: #53606c;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .system-stats {
+      display: grid;
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .stat {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 13px;
+      border: 1px solid rgba(127, 92, 45, 0.14);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.66);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #fff1d9, #ffffff);
+      border: 1px solid rgba(249, 115, 22, 0.25);
+      color: var(--orange);
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 14px;
+      letter-spacing: 0;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 26px;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.64);
+      border: 1px solid var(--line);
+      color: #4b5563;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--orange);
+      box-shadow: 0 0 12px rgba(249, 115, 22, 0.48);
+    }
+
+    .dot.mint {
+      background: var(--mint);
+      box-shadow: 0 0 12px rgba(71, 199, 170, 0.42);
+    }
+
+    .dot.blue {
+      background: var(--blue);
+      box-shadow: 0 0 12px rgba(93, 167, 232, 0.38);
+    }
+
+    .campus {
+      position: relative;
+      min-height: 1060px;
+      padding: 18px 22px 24px;
+      border: 1px solid rgba(127, 92, 45, 0.12);
+      border-radius: 8px;
+      background:
+        linear-gradient(rgba(249, 115, 22, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(249, 115, 22, 0.05) 1px, transparent 1px),
+        rgba(255, 255, 255, 0.46);
+      background-size: 42px 42px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.62), 0 28px 80px var(--shadow);
+      overflow: hidden;
+    }
+
+    .campus::before {
+      content: "";
+      position: absolute;
+      inset: auto 8% 26px 14%;
+      height: 88px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(92, 70, 42, 0.17), transparent 70%);
+      filter: blur(6px);
+      transform: skewX(-20deg);
+    }
+
+    .roof-title {
+      position: absolute;
+      left: 32px;
+      top: 24px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #2d3742;
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 10px;
+      border: 1px solid rgba(71, 199, 170, 0.28);
+      border-radius: 999px;
+      background: rgba(243, 255, 251, 0.76);
+      color: #187d68;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .live-pill::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--mint);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    .building-wrap {
+      position: absolute;
+      left: 50%;
+      top: 52px;
+      width: min(930px, calc(100% - 56px));
+      height: 970px;
+      transform: translateX(-50%);
+      perspective: 1600px;
+    }
+
+    .building {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+      transform: rotateX(2deg) rotateZ(-2deg);
+    }
+
+    .floor {
+      position: absolute;
+      left: 72px;
+      width: 760px;
+      height: 112px;
+      border: 1px solid rgba(127, 92, 45, 0.16);
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.92), rgba(255,247,232,0.88)),
+        linear-gradient(135deg, transparent 0 72%, rgba(249, 115, 22, 0.05) 72% 100%);
+      box-shadow: 0 16px 30px rgba(107, 78, 42, 0.11);
+      overflow: visible;
+    }
+
+    .floor::before {
+      content: "";
+      position: absolute;
+      left: 18px;
+      right: -28px;
+      top: -20px;
+      height: 28px;
+      transform: skewX(-44deg);
+      transform-origin: left bottom;
+      border-radius: 8px 8px 0 0;
+      background: linear-gradient(90deg, #fffaf0, #ffe8bf);
+      border: 1px solid rgba(127, 92, 45, 0.12);
+      border-bottom: 0;
+    }
+
+    .floor::after {
+      content: "";
+      position: absolute;
+      right: -56px;
+      top: 8px;
+      width: 56px;
+      height: 104px;
+      transform: skewY(-28deg);
+      transform-origin: left top;
+      border-radius: 0 8px 8px 0;
+      background: linear-gradient(180deg, #ffe5b9, #ffd18a);
+      border: 1px solid rgba(127, 92, 45, 0.15);
+      border-left: 0;
+      opacity: 0.94;
+    }
+
+    .floor-top {
+      top: 10px;
+      height: 136px;
+      background: linear-gradient(90deg, #fffaf0, #fffefd);
+    }
+
+    .floor-6 { top: 155px; }
+    .floor-5 { top: 275px; }
+    .floor-4 { top: 395px; }
+    .floor-3 { top: 515px; }
+    .floor-2 { top: 635px; }
+    .floor-1 { top: 755px; }
+
+    .floor-inner {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      display: grid;
+      grid-template-columns: 176px 1fr 110px;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 18px;
+    }
+
+    .floor-label {
+      position: relative;
+      height: 84px;
+      display: grid;
+      align-content: center;
+      padding: 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(127, 92, 45, 0.13);
+    }
+
+    .floor-number {
+      color: var(--orange);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+    }
+
+    .floor-label h2 {
+      margin: 4px 0 0;
+      font-size: 18px;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    .floor-label small {
+      margin-top: 6px;
+      color: #64707c;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .room {
+      position: relative;
+      min-height: 82px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(104px, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .module {
+      position: relative;
+      padding: 10px 10px 9px;
+      border: 1px solid rgba(127, 92, 45, 0.12);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.7);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+      overflow: hidden;
+    }
+
+    .module b {
+      display: block;
+      color: #2f3b45;
+      font-size: 12px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .module span {
+      display: block;
+      margin-top: 7px;
+      height: 6px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--orange), rgba(249, 115, 22, 0.1));
+    }
+
+    .module .bars {
+      display: grid;
+      gap: 4px;
+      margin-top: 7px;
+    }
+
+    .bars i {
+      display: block;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(93, 167, 232, 0.25);
+    }
+
+    .bars i:nth-child(1) { width: 86%; }
+    .bars i:nth-child(2) { width: 64%; background: rgba(71, 199, 170, 0.28); }
+    .bars i:nth-child(3) { width: 74%; background: rgba(249, 115, 22, 0.22); }
+
+    .mini-screen {
+      position: absolute;
+      right: 9px;
+      bottom: 8px;
+      width: 34px;
+      height: 24px;
+      border-radius: 5px;
+      border: 1px solid rgba(93, 167, 232, 0.32);
+      background:
+        linear-gradient(90deg, transparent 46%, rgba(255,255,255,0.42) 47% 53%, transparent 54%),
+        linear-gradient(180deg, rgba(93, 167, 232, 0.2), rgba(71, 199, 170, 0.18));
+    }
+
+    .activity {
+      position: relative;
+      height: 82px;
+      border-left: 1px dashed rgba(127, 92, 45, 0.18);
+    }
+
+    .staff {
+      position: absolute;
+      width: 20px;
+      height: 30px;
+      transform: translate(-50%, -50%);
+    }
+
+    .staff::before {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: 0;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #f5a55b;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.86);
+    }
+
+    .staff::after {
+      content: "";
+      position: absolute;
+      left: 3px;
+      top: 11px;
+      width: 15px;
+      height: 18px;
+      border-radius: 7px 7px 4px 4px;
+      background: linear-gradient(180deg, #ffffff, #dfefff);
+      border: 1px solid rgba(93, 167, 232, 0.24);
+    }
+
+    .staff.mint::after {
+      background: linear-gradient(180deg, #ffffff, #dffbf3);
+    }
+
+    .staff.violet::after {
+      background: linear-gradient(180deg, #ffffff, #ebe7ff);
+    }
+
+    .cube {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      transform: rotate(45deg);
+      border-radius: 3px;
+      background: linear-gradient(135deg, #fff 0%, #ffe1a8 42%, #f97316 100%);
+      box-shadow: 0 0 16px rgba(249, 115, 22, 0.45);
+      animation: bob 2.7s ease-in-out infinite;
+    }
+
+    .cube.blue {
+      background: linear-gradient(135deg, #fff 0%, #cfeaff 46%, #5da7e8 100%);
+      box-shadow: 0 0 16px rgba(93, 167, 232, 0.38);
+    }
+
+    .cube.mint {
+      background: linear-gradient(135deg, #fff 0%, #dffbf3 46%, #47c7aa 100%);
+      box-shadow: 0 0 16px rgba(71, 199, 170, 0.38);
+    }
+
+    .lift {
+      position: absolute;
+      top: 42px;
+      right: 108px;
+      width: 52px;
+      height: 830px;
+      z-index: 8;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.38);
+      border: 1px solid rgba(93, 167, 232, 0.2);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.72);
+    }
+
+    .lift::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 12px;
+      bottom: 12px;
+      width: 3px;
+      border-radius: 99px;
+      background: linear-gradient(180deg, var(--blue), var(--orange), var(--mint));
+      box-shadow: 0 0 18px rgba(93, 167, 232, 0.28);
+      transform: translateX(-50%);
+    }
+
+    .lift-car {
+      position: absolute;
+      left: 8px;
+      top: 510px;
+      width: 36px;
+      height: 52px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #ffffff, #e9f6ff);
+      border: 1px solid rgba(93, 167, 232, 0.38);
+      box-shadow: 0 8px 20px rgba(93, 167, 232, 0.18);
+      animation: elevator 8s ease-in-out infinite;
+    }
+
+    .stairs {
+      position: absolute;
+      right: 22px;
+      top: 70px;
+      width: 62px;
+      height: 790px;
+      z-index: 9;
+      opacity: 0.78;
+    }
+
+    .stairs i {
+      display: block;
+      width: 48px;
+      height: 17px;
+      margin-bottom: 13px;
+      border-bottom: 3px solid rgba(127, 92, 45, 0.24);
+      border-right: 3px solid rgba(127, 92, 45, 0.18);
+      transform: skewX(-24deg);
+    }
+
+    .server-core {
+      position: absolute;
+      left: 330px;
+      top: 122px;
+      width: 118px;
+      height: 760px;
+      z-index: 7;
+      pointer-events: none;
+    }
+
+    .data-spine {
+      position: absolute;
+      left: 51px;
+      top: 0;
+      width: 16px;
+      height: 100%;
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 178, 96, 0.7), rgba(93, 167, 232, 0.64), rgba(71, 199, 170, 0.58));
+      box-shadow: 0 0 24px rgba(249, 115, 22, 0.3), 0 0 34px rgba(93, 167, 232, 0.17);
+    }
+
+    .data-spine::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: repeating-linear-gradient(180deg, transparent 0 28px, rgba(255,255,255,0.9) 28px 36px);
+      animation: stream 2.2s linear infinite;
+      mix-blend-mode: screen;
+    }
+
+    .branch {
+      position: absolute;
+      left: 58px;
+      width: 230px;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(249, 115, 22, 0.95), rgba(249, 115, 22, 0));
+      box-shadow: 0 0 12px rgba(249, 115, 22, 0.36);
+    }
+
+    .branch::after {
+      content: "";
+      position: absolute;
+      left: 18px;
+      top: -3px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 12px rgba(249, 115, 22, 0.58);
+      animation: packet 2.4s linear infinite;
+    }
+
+    .branch.left {
+      left: auto;
+      right: 60px;
+      background: linear-gradient(270deg, rgba(93, 167, 232, 0.9), rgba(93, 167, 232, 0));
+    }
+
+    .branch.left::after {
+      animation-name: packet-left;
+      background: #f6fbff;
+      box-shadow: 0 0 12px rgba(93, 167, 232, 0.52);
+    }
+
+    .b0 { top: 26px; }
+    .b1 { top: 126px; }
+    .b2 { top: 246px; }
+    .b3 { top: 366px; }
+    .b4 { top: 486px; }
+    .b5 { top: 606px; }
+    .b6 { top: 726px; }
+
+    .core-room {
+      position: relative;
+      height: 108px;
+      display: grid;
+      grid-template-columns: 176px 1fr 120px;
+      gap: 16px;
+      align-items: center;
+      padding: 16px 18px;
+      z-index: 3;
+    }
+
+    .ai-core {
+      position: relative;
+      height: 104px;
+      border: 1px solid rgba(249, 115, 22, 0.2);
+      border-radius: 8px;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.98) 0 14%, rgba(255, 177, 95, 0.55) 15% 32%, rgba(93, 167, 232, 0.18) 33% 55%, transparent 56%),
+        rgba(255, 255, 255, 0.68);
+      overflow: hidden;
+    }
+
+    .ai-core::before,
+    .ai-core::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 82px;
+      height: 82px;
+      border: 2px solid rgba(249, 115, 22, 0.34);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      animation: rotate 10s linear infinite;
+    }
+
+    .ai-core::after {
+      width: 56px;
+      height: 56px;
+      border-color: rgba(71, 199, 170, 0.42);
+      animation-duration: 6s;
+      animation-direction: reverse;
+    }
+
+    .core-text {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #25313b;
+      font-size: 12px;
+      font-weight: 900;
+      text-align: center;
+      z-index: 2;
+    }
+
+    .wall-logo {
+      position: absolute;
+      left: 0;
+      top: 250px;
+      z-index: 5;
+      width: 58px;
+      height: 390px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 231, 195, 0.74));
+      border: 1px solid rgba(127, 92, 45, 0.14);
+      box-shadow: 14px 20px 30px rgba(102, 75, 39, 0.1);
+      display: grid;
+      place-items: center;
+    }
+
+    .wall-logo span {
+      transform: rotate(-90deg);
+      color: var(--orange);
+      font-size: 26px;
+      font-weight: 950;
+      letter-spacing: 0.18em;
+      text-shadow: 0 8px 20px rgba(249, 115, 22, 0.14);
+    }
+
+    .plaza {
+      position: absolute;
+      left: 172px;
+      right: 100px;
+      bottom: 24px;
+      height: 96px;
+      transform: skewX(-18deg);
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.68), rgba(255,230,189,0.48)),
+        repeating-linear-gradient(90deg, transparent 0 48px, rgba(127, 92, 45, 0.08) 48px 49px);
+      border: 1px solid rgba(127, 92, 45, 0.12);
+    }
+
+    .plaza-label {
+      position: absolute;
+      right: 30px;
+      bottom: 52px;
+      z-index: 10;
+      color: #7b5a32;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .monitor {
+      position: relative;
+      min-height: 48px;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(93, 167, 232, 0.22);
+      background: linear-gradient(180deg, #f8fcff, #eef8ff);
+      overflow: hidden;
+    }
+
+    .monitor::before {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border-radius: 5px;
+      background:
+        linear-gradient(90deg, rgba(93, 167, 232, 0.24) 0 18%, transparent 18% 22%, rgba(71, 199, 170, 0.22) 22% 48%, transparent 48% 53%, rgba(249, 115, 22, 0.22) 53% 78%, transparent 78%),
+        repeating-linear-gradient(180deg, rgba(38, 49, 58, 0.18) 0 2px, transparent 2px 7px);
+    }
+
+    .holo {
+      position: absolute;
+      left: 54%;
+      top: 45%;
+      width: 58px;
+      height: 42px;
+      transform: translate(-50%, -50%) skewX(-16deg);
+      border: 1px solid rgba(93, 167, 232, 0.38);
+      border-radius: 8px;
+      background: rgba(226, 246, 255, 0.44);
+      box-shadow: 0 0 28px rgba(93, 167, 232, 0.24);
+      animation: bob 3.4s ease-in-out infinite;
+    }
+
+    .holo::before {
+      content: "";
+      position: absolute;
+      inset: 9px 14px;
+      border-radius: 50%;
+      border: 2px solid rgba(71, 199, 170, 0.54);
+    }
+
+    .news-ticker {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 8px;
+      height: 17px;
+      overflow: hidden;
+      color: #326d8f;
+      font-size: 10px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .news-ticker span {
+      display: inline-block;
+      padding-left: 100%;
+      animation: ticker 9s linear infinite;
+    }
+
+    .approval-docs {
+      position: absolute;
+      right: 12px;
+      top: 15px;
+      display: grid;
+      gap: 5px;
+    }
+
+    .approval-docs i {
+      display: block;
+      width: 30px;
+      height: 20px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, #ffffff, #ffe5b9);
+      border: 1px solid rgba(249, 115, 22, 0.22);
+      box-shadow: 0 5px 12px rgba(249, 115, 22, 0.14);
+    }
+
+    .route {
+      position: absolute;
+      z-index: 11;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(249, 115, 22, 0), rgba(249, 115, 22, 0.78), rgba(249, 115, 22, 0));
+      box-shadow: 0 0 10px rgba(249, 115, 22, 0.22);
+    }
+
+    .route.r1 {
+      left: 548px;
+      top: 602px;
+      width: 150px;
+      transform: rotate(-6deg);
+    }
+
+    .route.r2 {
+      left: 512px;
+      top: 360px;
+      width: 172px;
+      transform: rotate(5deg);
+    }
+
+    .route.r3 {
+      left: 230px;
+      top: 726px;
+      width: 152px;
+      transform: rotate(3deg);
+    }
+
+    .route::after {
+      content: "";
+      position: absolute;
+      top: -5px;
+      left: 20px;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      transform: rotate(45deg);
+      background: #ffffff;
+      border: 1px solid rgba(249, 115, 22, 0.32);
+      box-shadow: 0 0 14px rgba(249, 115, 22, 0.46);
+      animation: courier 4s linear infinite;
+    }
+
+    .floor-1 .module:nth-child(1) span { background: linear-gradient(90deg, #47c7aa 82%, rgba(71,199,170,0.12)); }
+    .floor-1 .module:nth-child(2) span { background: linear-gradient(90deg, #f97316 68%, rgba(249,115,22,0.12)); }
+    .floor-1 .module:nth-child(3) span { background: linear-gradient(90deg, #5da7e8 74%, rgba(93,167,232,0.12)); }
+
+    .floor-2 .module:nth-child(1) span { background: linear-gradient(90deg, #5da7e8 78%, rgba(93,167,232,0.12)); }
+    .floor-2 .module:nth-child(2) span { background: linear-gradient(90deg, #f97316 62%, rgba(249,115,22,0.12)); }
+    .floor-2 .module:nth-child(3) span { background: linear-gradient(90deg, #47c7aa 86%, rgba(71,199,170,0.12)); }
+
+    .floor-6 .module {
+      background: rgba(250, 255, 253, 0.76);
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.72; }
+      50% { transform: scale(1.38); opacity: 1; }
+    }
+
+    @keyframes bob {
+      0%, 100% { translate: 0 0; }
+      50% { translate: 0 -7px; }
+    }
+
+    @keyframes elevator {
+      0%, 100% { transform: translateY(0); }
+      22% { transform: translateY(-320px); }
+      48% { transform: translateY(-120px); }
+      72% { transform: translateY(-520px); }
+    }
+
+    @keyframes stream {
+      from { background-position: 0 0; }
+      to { background-position: 0 64px; }
+    }
+
+    @keyframes packet {
+      from { left: 16px; opacity: 0; }
+      12%, 86% { opacity: 1; }
+      to { left: 208px; opacity: 0; }
+    }
+
+    @keyframes packet-left {
+      from { left: 208px; opacity: 0; }
+      12%, 86% { opacity: 1; }
+      to { left: 16px; opacity: 0; }
+    }
+
+    @keyframes rotate {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to { transform: translateX(-100%); }
+    }
+
+    @keyframes courier {
+      from { left: 8px; opacity: 0; }
+      12%, 88% { opacity: 1; }
+      to { left: calc(100% - 18px); opacity: 0; }
+    }
+
+    @media (max-width: 1180px) {
+      body {
+        padding: 18px;
+      }
+
+      .page {
+        grid-template-columns: 1fr;
+      }
+
+      .brand-panel {
+        position: relative;
+        top: 0;
+        min-height: auto;
+      }
+
+      .brand-panel {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+
+      .system-stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .campus {
+        min-height: 1040px;
+      }
+    }
+
+    @media (max-width: 860px) {
+      body {
+        padding: 10px;
+      }
+
+      .page {
+        gap: 12px;
+      }
+
+      .brand-panel {
+        padding: 18px;
+      }
+
+      .system-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .campus {
+        min-height: 1180px;
+        overflow-x: auto;
+        padding: 14px;
+      }
+
+      .building-wrap {
+        left: 18px;
+        width: 920px;
+        transform: none;
+      }
+    }
+
+    .subtitle {
+      font-size: 0;
+    }
+
+    .subtitle::after {
+      content: "단면도 대신, 하나의 사무실 건물 안에서 AI 직원들이 실제 회사처럼 업무를 주고받는 장면입니다.";
+      display: block;
+      color: #53606c;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .system-stats .stat:nth-child(1) .stat-icon {
+      font-size: 0;
+    }
+
+    .system-stats .stat:nth-child(1) .stat-icon::after {
+      content: "↔";
+      font-size: 22px;
+    }
+
+    .system-stats .stat:nth-child(2) .stat-icon {
+      font-size: 0;
+    }
+
+    .system-stats .stat:nth-child(2) .stat-icon::after {
+      content: "AI";
+      font-size: 22px;
+    }
+
+    .system-stats .stat:nth-child(3) .stat-icon {
+      font-size: 0;
+    }
+
+    .system-stats .stat:nth-child(3) .stat-icon::after {
+      content: "▣";
+      font-size: 22px;
+    }
+
+    .system-stats strong,
+    .system-stats span {
+      font-size: 0;
+    }
+
+    .system-stats .stat:nth-child(1) strong::after {
+      content: "Office Flow";
+      font-size: 14px;
+    }
+
+    .system-stats .stat:nth-child(1) span::after {
+      content: "AI 직원들이 통로를 따라 왔다갔다하며 데이터 전달";
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .system-stats .stat:nth-child(2) strong::after {
+      content: "GYUVIS Core";
+      font-size: 14px;
+    }
+
+    .system-stats .stat:nth-child(2) span::after {
+      content: "중앙 코어가 모든 업무 존과 계속 연결";
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .system-stats .stat:nth-child(3) strong::after {
+      content: "Data Cubes";
+      font-size: 14px;
+    }
+
+    .system-stats .stat:nth-child(3) span::after {
+      content: "문서 대신 빛나는 큐브로 업무를 전달";
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .roof-title span:last-child {
+      font-size: 0;
+    }
+
+    .roof-title span:last-child::after {
+      content: "single office building flow";
+      font-size: 15px;
+    }
+
+    .campus {
+      min-height: 900px;
+    }
+
+    .building-wrap {
+      display: none;
+    }
+
+    .office-scene {
+      position: absolute;
+      left: 50%;
+      top: 88px;
+      width: min(980px, calc(100% - 54px));
+      height: 760px;
+      transform: translateX(-50%);
+      perspective: 1400px;
+    }
+
+    .office-scene .ground-shadow {
+      position: absolute;
+      left: 8%;
+      right: 6%;
+      bottom: 8px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(95, 72, 42, 0.22), transparent 72%);
+      filter: blur(5px);
+      transform: skewX(-18deg);
+    }
+
+    .office-building {
+      position: absolute;
+      left: 70px;
+      right: 70px;
+      top: 20px;
+      height: 650px;
+      transform: rotateX(3deg) rotateZ(-2deg);
+      transform-style: preserve-3d;
+    }
+
+    .office-roof {
+      position: absolute;
+      left: 66px;
+      right: 10px;
+      top: 0;
+      height: 92px;
+      border: 1px solid rgba(127, 92, 45, 0.16);
+      border-radius: 8px;
+      background: linear-gradient(135deg, #fffaf0 0%, #ffe2ad 72%, #ffd28b 100%);
+      transform: skewX(-34deg);
+      box-shadow: 0 20px 34px rgba(102, 75, 39, 0.12);
+    }
+
+    .office-front {
+      position: absolute;
+      left: 36px;
+      right: 88px;
+      top: 76px;
+      height: 506px;
+      border: 1px solid rgba(127, 92, 45, 0.17);
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.9), rgba(255,250,240,0.78)),
+        repeating-linear-gradient(90deg, rgba(93, 167, 232, 0.13) 0 74px, rgba(255,255,255,0.28) 74px 80px),
+        repeating-linear-gradient(180deg, rgba(249, 115, 22, 0.08) 0 76px, rgba(255,255,255,0.34) 76px 84px);
+      box-shadow: 0 24px 54px rgba(102, 75, 39, 0.15);
+      overflow: hidden;
+    }
+
+    .office-front::before {
+      content: "GYUOS";
+      position: absolute;
+      left: 28px;
+      top: 28px;
+      z-index: 3;
+      padding: 10px 13px;
+      border-radius: 8px;
+      background: rgba(255, 247, 234, 0.9);
+      border: 1px solid rgba(249, 115, 22, 0.3);
+      color: var(--orange);
+      font-size: 22px;
+      font-weight: 950;
+      letter-spacing: 0.14em;
+      box-shadow: 0 12px 26px rgba(249, 115, 22, 0.12);
+    }
+
+    .office-front::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(115deg, transparent 0 42%, rgba(255,255,255,0.48) 43% 47%, transparent 48%),
+        linear-gradient(180deg, rgba(255,255,255,0.42), transparent 36% 70%, rgba(255, 226, 173, 0.18));
+      pointer-events: none;
+    }
+
+    .office-side {
+      position: absolute;
+      right: 30px;
+      top: 116px;
+      width: 86px;
+      height: 468px;
+      border: 1px solid rgba(127, 92, 45, 0.15);
+      border-left: 0;
+      border-radius: 0 8px 8px 0;
+      background:
+        repeating-linear-gradient(180deg, rgba(255,255,255,0.52) 0 62px, rgba(249,115,22,0.12) 62px 70px),
+        linear-gradient(180deg, #ffe5b9, #ffd08b);
+      transform: skewY(-26deg);
+      transform-origin: left top;
+      box-shadow: 12px 18px 36px rgba(102, 75, 39, 0.12);
+    }
+
+    .office-atrium {
+      position: absolute;
+      left: 104px;
+      right: 132px;
+      top: 142px;
+      height: 378px;
+      z-index: 4;
+      border: 1px solid rgba(127, 92, 45, 0.13);
+      border-radius: 8px;
+      background: rgba(255, 253, 247, 0.76);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8), 0 18px 36px rgba(102, 75, 39, 0.08);
+      overflow: hidden;
+    }
+
+    .office-atrium::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 126px;
+      background:
+        repeating-linear-gradient(90deg, transparent 0 58px, rgba(127, 92, 45, 0.08) 58px 59px),
+        linear-gradient(180deg, rgba(255, 248, 236, 0.12), rgba(255, 226, 189, 0.52));
+      transform: skewX(-18deg);
+      transform-origin: bottom;
+    }
+
+    .office-core {
+      position: absolute;
+      left: 50%;
+      top: 52%;
+      width: 150px;
+      height: 150px;
+      transform: translate(-50%, -50%);
+      border: 1px solid rgba(249, 115, 22, 0.24);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle, #ffffff 0 18%, rgba(255, 177, 95, 0.62) 19% 39%, rgba(93, 167, 232, 0.2) 40% 63%, rgba(255,255,255,0.24) 64%),
+        rgba(255,255,255,0.72);
+      box-shadow: 0 0 38px rgba(249, 115, 22, 0.18), inset 0 0 0 10px rgba(255,255,255,0.28);
+    }
+
+    .office-core::before,
+    .office-core::after {
+      content: "";
+      position: absolute;
+      inset: 22px;
+      border: 2px solid rgba(249, 115, 22, 0.36);
+      border-radius: 50%;
+      animation: rotate 9s linear infinite;
+    }
+
+    .office-core::after {
+      inset: 43px;
+      border-color: rgba(71, 199, 170, 0.48);
+      animation-duration: 6s;
+      animation-direction: reverse;
+    }
+
+    .office-core-label {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #28333d;
+      font-size: 13px;
+      font-weight: 950;
+      text-align: center;
+      z-index: 2;
+    }
+
+    .office-zone {
+      position: absolute;
+      z-index: 5;
+      width: 172px;
+      min-height: 82px;
+      padding: 12px;
+      border: 1px solid rgba(127, 92, 45, 0.13);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.76);
+      box-shadow: 0 10px 22px rgba(102, 75, 39, 0.08);
+    }
+
+    .office-zone b {
+      display: block;
+      color: #2d3843;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .office-zone span {
+      display: block;
+      margin-top: 7px;
+      color: #687481;
+      font-size: 11px;
+      line-height: 1.42;
+    }
+
+    .office-zone i {
+      display: block;
+      height: 6px;
+      margin-top: 9px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--orange), rgba(249, 115, 22, 0.08));
+    }
+
+    .office-money { left: 26px; top: 28px; }
+    .office-car { right: 28px; top: 30px; }
+    .office-creator { left: 34px; bottom: 30px; }
+    .office-news { right: 34px; bottom: 30px; }
+    .office-approval { left: 50%; top: 18px; transform: translateX(-50%); }
+    .office-lab { left: 50%; bottom: 18px; transform: translateX(-50%); }
+
+    .office-walkway {
+      position: absolute;
+      z-index: 3;
+      border-radius: 999px;
+      background: rgba(249, 115, 22, 0.16);
+      box-shadow: 0 0 18px rgba(249, 115, 22, 0.16);
+    }
+
+    .office-walkway.h1 { left: 48px; right: 48px; top: 178px; height: 8px; }
+    .office-walkway.h2 { left: 56px; right: 56px; bottom: 132px; height: 8px; }
+    .office-walkway.v1 { left: calc(50% - 4px); top: 42px; bottom: 42px; width: 8px; background: rgba(93, 167, 232, 0.14); }
+
+    .office-agent {
+      position: absolute;
+      z-index: 8;
+      width: 24px;
+      height: 36px;
+      filter: drop-shadow(0 8px 10px rgba(72, 55, 34, 0.16));
+    }
+
+    .office-agent::before {
+      content: "";
+      position: absolute;
+      left: 7px;
+      top: 0;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #f2a65c;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.9);
+    }
+
+    .office-agent::after {
+      content: "";
+      position: absolute;
+      left: 4px;
+      top: 13px;
+      width: 17px;
+      height: 22px;
+      border: 1px solid rgba(93, 167, 232, 0.22);
+      border-radius: 8px 8px 5px 5px;
+      background: linear-gradient(180deg, #ffffff, #e4f2ff);
+    }
+
+    .office-agent.mint::after {
+      background: linear-gradient(180deg, #ffffff, #e3fbf4);
+    }
+
+    .office-agent.violet::after {
+      background: linear-gradient(180deg, #ffffff, #ece8ff);
+    }
+
+    .office-cube {
+      position: absolute;
+      left: 20px;
+      top: 6px;
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      transform: rotate(45deg);
+      background: linear-gradient(135deg, #fff 0%, #ffe1aa 42%, #f97316 100%);
+      box-shadow: 0 0 16px rgba(249, 115, 22, 0.45);
+      animation: cube-bob 2.6s ease-in-out infinite;
+    }
+
+    .office-cube.blue {
+      background: linear-gradient(135deg, #fff 0%, #d5ecff 46%, #5da7e8 100%);
+      box-shadow: 0 0 16px rgba(93, 167, 232, 0.38);
+    }
+
+    .office-cube.mint {
+      background: linear-gradient(135deg, #fff 0%, #ddfbf2 46%, #47c7aa 100%);
+      box-shadow: 0 0 16px rgba(71, 199, 170, 0.38);
+    }
+
+    .oa1 { animation: walk-a 9s linear infinite; }
+    .oa2 { animation: walk-a 11s linear infinite reverse; animation-delay: -2s; }
+    .oa3 { animation: walk-b 10s linear infinite; animation-delay: -4s; }
+    .oa4 { animation: walk-b 8s linear infinite reverse; animation-delay: -1s; }
+    .oa5 { animation: walk-c 12s linear infinite; animation-delay: -3s; }
+    .oa6 { animation: walk-c 9s linear infinite reverse; animation-delay: -5s; }
+    .oa7 { animation: loop-d 14s linear infinite; animation-delay: -6s; }
+    .oa8 { animation: loop-e 13s linear infinite; animation-delay: -2.5s; }
+
+    .office-lobby {
+      position: absolute;
+      left: 100px;
+      right: 142px;
+      bottom: 36px;
+      height: 86px;
+      z-index: 6;
+      border: 1px solid rgba(127, 92, 45, 0.12);
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.82), rgba(255,231,195,0.54)),
+        repeating-linear-gradient(90deg, transparent 0 58px, rgba(127, 92, 45, 0.08) 58px 59px);
+      transform: skewX(-18deg);
+      box-shadow: 0 14px 30px rgba(102, 75, 39, 0.09);
+    }
+
+    .office-lobby-label {
+      position: absolute;
+      right: 172px;
+      bottom: 72px;
+      z-index: 10;
+      color: #7b5a32;
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .office-shuttle {
+      position: absolute;
+      left: 120px;
+      bottom: 70px;
+      z-index: 12;
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      padding: 7px 10px;
+      border: 1px solid rgba(249, 115, 22, 0.22);
+      border-radius: 999px;
+      background: rgba(255, 253, 247, 0.92);
+      color: #7c4b1d;
+      font-size: 11px;
+      font-weight: 850;
+      animation: office-shuttle 12s linear infinite;
+    }
+
+    .office-shuttle::before {
+      content: "";
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      transform: rotate(45deg);
+      background: linear-gradient(135deg, #fff, #ffd48c, var(--orange));
+      box-shadow: 0 0 14px rgba(249, 115, 22, 0.42);
+    }
+
+    @keyframes cube-bob {
+      0%, 100% { translate: 0 0; }
+      50% { translate: 0 -6px; }
+    }
+
+    @keyframes walk-a {
+      0% { transform: translate(90px, 168px); }
+      48% { transform: translate(590px, 168px); }
+      52% { transform: translate(590px, 168px) scaleX(-1); }
+      100% { transform: translate(90px, 168px) scaleX(-1); }
+    }
+
+    @keyframes walk-b {
+      0% { transform: translate(110px, 264px); }
+      46% { transform: translate(600px, 264px); }
+      54% { transform: translate(600px, 264px) scaleX(-1); }
+      100% { transform: translate(110px, 264px) scaleX(-1); }
+    }
+
+    @keyframes walk-c {
+      0% { transform: translate(364px, 62px); }
+      48% { transform: translate(364px, 316px); }
+      52% { transform: translate(364px, 316px) scaleX(-1); }
+      100% { transform: translate(364px, 62px) scaleX(-1); }
+    }
+
+    @keyframes loop-d {
+      0% { transform: translate(156px, 90px); }
+      25% { transform: translate(560px, 90px); }
+      50% { transform: translate(560px, 300px); }
+      75% { transform: translate(156px, 300px); }
+      100% { transform: translate(156px, 90px); }
+    }
+
+    @keyframes loop-e {
+      0% { transform: translate(580px, 300px) scaleX(-1); }
+      25% { transform: translate(180px, 300px) scaleX(-1); }
+      50% { transform: translate(180px, 90px) scaleX(-1); }
+      75% { transform: translate(580px, 90px) scaleX(-1); }
+      100% { transform: translate(580px, 300px) scaleX(-1); }
+    }
+
+    @keyframes office-shuttle {
+      0% { transform: translateX(0); }
+      48% { transform: translateX(530px); }
+      52% { transform: translateX(530px) scaleX(-1); }
+      100% { transform: translateX(0) scaleX(-1); }
+    }
+
+    @media (max-width: 860px) {
+      .campus {
+        min-height: 880px;
+        overflow-x: auto;
+      }
+
+      .office-scene {
+        left: 16px;
+        width: 910px;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <aside class="brand-panel" aria-label="GYUOS headquarters summary">
+      <div>
+        <div class="logo-lockup">
+          <div class="logo">GYUOS</div>
+          <h1>GYUOS Headquarters</h1>
+          <p class="subtitle">개인 AI 운영체제의 모든 에이전트가 한 건물처럼 협업하는 밝은 미래형 IT 본사 단면도입니다.</p>
+        </div>
+
+        <div class="system-stats">
+          <div class="stat">
+            <div class="stat-icon">$</div>
+            <div>
+              <strong>Money Core</strong>
+              <span>자산, 주식, 금융 데이터 흐름을 실시간 분석</span>
+            </div>
+          </div>
+          <div class="stat">
+            <div class="stat-icon">AI</div>
+            <div>
+              <strong>Agent Workforce</strong>
+              <span>작은 AI 직원들이 데이터 큐브로 업무 전달</span>
+            </div>
+          </div>
+          <div class="stat">
+            <div class="stat-icon">OK</div>
+            <div>
+              <strong>Human Approval</strong>
+              <span>결재, 검토, 자동화 승인이 한눈에 보이는 구조</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="legend">
+          <span><i class="dot"></i>Approval/Data</span>
+          <span><i class="dot blue"></i>Monitoring</span>
+          <span><i class="dot mint"></i>Research</span>
+        </div>
+      </div>
+    </aside>
+
+    <section class="campus" aria-label="Isometric cutaway view of GYUOS Headquarters">
+      <div class="roof-title">
+        <span class="live-pill">LIVE AI OFFICE</span>
+        <span>isometric cutaway view</span>
+      </div>
+
+      <div class="office-scene">
+        <div class="ground-shadow"></div>
+
+        <div class="office-building">
+          <div class="office-roof"></div>
+          <div class="office-side"></div>
+          <div class="office-front"></div>
+
+          <div class="office-atrium">
+            <div class="office-walkway h1"></div>
+            <div class="office-walkway h2"></div>
+            <div class="office-walkway v1"></div>
+
+            <div class="office-zone office-money">
+              <b>Money Core</b>
+              <span>자산 현황, 주식, 금융 대시보드</span>
+              <i></i>
+            </div>
+            <div class="office-zone office-car">
+              <b>Car Management</b>
+              <span>정비 이력, 주유 기록, 차량 상태</span>
+              <i></i>
+            </div>
+            <div class="office-zone office-approval">
+              <b>Approval Center</b>
+              <span>인간 승인 대기와 자동화 결재</span>
+              <i></i>
+            </div>
+            <div class="office-zone office-creator">
+              <b>Creator Studio</b>
+              <span>블로그, 유튜브 아이디어, 콘텐츠 기획</span>
+              <i></i>
+            </div>
+            <div class="office-zone office-news">
+              <b>News Intelligence</b>
+              <span>IT 뉴스 수집과 기술 트렌드 분석</span>
+              <i></i>
+            </div>
+            <div class="office-zone office-lab">
+              <b>Innovation Lab</b>
+              <span>신규 프로젝트 연구와 홀로그램 토론</span>
+              <i></i>
+            </div>
+
+            <div class="office-core">
+              <div class="office-core-label">GYUVIS<br />CORE</div>
+            </div>
+
+            <div class="office-agent oa1"><i class="office-cube"></i></div>
+            <div class="office-agent mint oa2"><i class="office-cube mint"></i></div>
+            <div class="office-agent violet oa3"><i class="office-cube blue"></i></div>
+            <div class="office-agent oa4"><i class="office-cube"></i></div>
+            <div class="office-agent mint oa5"><i class="office-cube mint"></i></div>
+            <div class="office-agent violet oa6"><i class="office-cube blue"></i></div>
+            <div class="office-agent oa7"><i class="office-cube"></i></div>
+            <div class="office-agent mint oa8"><i class="office-cube mint"></i></div>
+          </div>
+
+          <div class="office-lobby"></div>
+          <div class="office-lobby-label">shared lobby and server corridor</div>
+          <div class="office-shuttle">data courier</div>
+        </div>
+      </div>
+
+      <div class="building-wrap">
+        <div class="wall-logo"><span>GYUOS</span></div>
+
+        <div class="server-core" aria-hidden="true">
+          <div class="data-spine"></div>
+          <div class="branch b0"></div>
+          <div class="branch b1 left"></div>
+          <div class="branch b2"></div>
+          <div class="branch b3 left"></div>
+          <div class="branch b4"></div>
+          <div class="branch b5 left"></div>
+          <div class="branch b6"></div>
+        </div>
+
+        <div class="lift" aria-hidden="true">
+          <div class="lift-car"></div>
+        </div>
+
+        <div class="stairs" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          <i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+
+        <div class="building">
+          <article class="floor floor-top">
+            <div class="core-room">
+              <div class="floor-label">
+                <div class="floor-number">TOP FLOOR</div>
+                <h2>GYUVIS Core</h2>
+                <small>중앙 관제실과 거대한 AI 코어</small>
+              </div>
+              <div class="ai-core">
+                <div class="core-text">GYUVIS<br />CORE</div>
+                <span class="cube" style="left:18%; top:28%;"></span>
+                <span class="cube blue" style="left:76%; top:30%; animation-delay:-1.2s;"></span>
+                <span class="cube mint" style="left:62%; top:72%; animation-delay:-0.5s;"></span>
+              </div>
+              <div class="monitor" title="All agents connected"></div>
+            </div>
+          </article>
+
+          <article class="floor floor-6">
+            <div class="floor-inner">
+              <div class="floor-label">
+                <div class="floor-number">6F</div>
+                <h2>Innovation Lab</h2>
+                <small>신규 프로젝트 연구와 홀로그램 토론</small>
+              </div>
+              <div class="room">
+                <div class="module"><b>신규 프로젝트 연구</b><span></span><div class="mini-screen"></div></div>
+                <div class="module"><b>실험실 분위기</b><span></span><div class="holo"></div></div>
+                <div class="module"><b>홀로그램 토론</b><span></span><div class="bars"><i></i><i></i><i></i></div></div>
+              </div>
+              <div class="activity">
+                <i class="staff mint" style="left:30%; top:66%;"></i>
+                <i class="staff violet" style="left:62%; top:42%;"></i>
+                <i class="cube mint" style="left:72%; top:56%;"></i>
+              </div>
+            </div>
+          </article>
+
+          <article class="floor floor-5">
+            <div class="floor-inner">
+              <div class="floor-label">
+                <div class="floor-number">5F</div>
+                <h2>Approval Center</h2>
+                <small>인간 승인 대기, 문서 검토, 자동화 승인</small>
+              </div>
+              <div class="room">
+                <div class="module"><b>인간 승인 대기</b><span></span><div class="approval-docs"><i></i><i></i></div></div>
+                <div class="module"><b>문서 검토</b><span></span><div class="bars"><i></i><i></i><i></i></div></div>
+                <div class="module"><b>자동화 승인</b><span></span><div class="mini-screen"></div></div>
+              </div>
+              <div class="activity">
+                <i class="staff" style="left:26%; top:36%;"></i>
+                <i class="staff mint" style="left:64%; top:70%;"></i>
+                <i class="cube" style="left:48%; top:50%; animation-delay:-1s;"></i>
+              </div>
+            </div>
+          </article>
+
+          <article class="floor floor-4">
+            <div class="floor-inner">
+              <div class="floor-label">
+                <div class="floor-number">4F</div>
+                <h2>News Intelligence Center</h2>
+                <small>IT 뉴스 수집과 기술 트렌드 분석</small>
+              </div>
+              <div class="room">
+                <div class="module"><b>IT 뉴스 수집</b><span></span><div class="news-ticker"><span>AI chip updates · cloud trends · startup signals · security alerts · </span></div></div>
+                <div class="module"><b>기술 트렌드 분석</b><span></span><div class="bars"><i></i><i></i><i></i></div></div>
+                <div class="module"><b>실시간 뉴스 모니터</b><span></span><div class="monitor"></div></div>
+              </div>
+              <div class="activity">
+                <i class="staff blue" style="left:28%; top:64%;"></i>
+                <i class="staff violet" style="left:68%; top:38%;"></i>
+                <i class="cube blue" style="left:50%; top:54%; animation-delay:-0.6s;"></i>
+              </div>
+            </div>
+          </article>
+
+          <article class="floor floor-3">
+            <div class="floor-inner">
+              <div class="floor-label">
+                <div class="floor-number">3F</div>
+                <h2>Creator Studio</h2>
+                <small>블로그, 유튜브 아이디어, 콘텐츠 기획</small>
+              </div>
+              <div class="room">
+                <div class="module"><b>블로그 작성</b><span></span><div class="bars"><i></i><i></i><i></i></div></div>
+                <div class="module"><b>유튜브 아이디어 생성</b><span></span><div class="mini-screen"></div></div>
+                <div class="module"><b>콘텐츠 기획 회의</b><span></span><div class="bars"><i></i><i></i><i></i></div></div>
+              </div>
+              <div class="activity">
+                <i class="staff" style="left:22%; top:62%;"></i>
+                <i class="staff mint" style="left:48%; top:36%;"></i>
+                <i class="staff violet" style="left:73%; top:58%;"></i>
+                <i class="cube mint" style="left:58%; top:54%; animation-delay:-1.4s;"></i>
+              </div>
+            </div>
+          </article>
+
+          <article class="floor floor-2">
+            <div class="floor-inner">
+              <div class="floor-label">
+                <div class="floor-number">2F</div>
+                <h2>Car Management Center</h2>
+                <small>차량 정비 이력, 주유 기록, 상태 모니터링</small>
+              </div>
+              <div class="room">
+                <div class="module"><b>차량 정비 이력</b><span></span><div class="mini-screen"></div></div>
+                <div class="module"><b>주유 기록</b><span></span><div class="bars"><i></i><i></i><i></i></div></div>
+                <div class="module"><b>차량 상태 모니터링</b><span></span><div class="monitor"></div></div>
+              </div>
+              <div class="activity">
+                <i class="staff mint" style="left:30%; top:34%;"></i>
+                <i class="staff" style="left:66%; top:68%;"></i>
+                <i class="cube blue" style="left:50%; top:50%; animation-delay:-1.1s;"></i>
+              </div>
+            </div>
+          </article>
+
+          <article class="floor floor-1">
+            <div class="floor-inner">
+              <div class="floor-label">
+                <div class="floor-number">1F</div>
+                <h2>Money Core</h2>
+                <small>자산 현황, 주식, 금융 대시보드</small>
+              </div>
+              <div class="room">
+                <div class="module"><b>자산 현황 모니터</b><span></span><div class="monitor"></div></div>
+                <div class="module"><b>주식 및 금융 대시보드</b><span></span><div class="bars"><i></i><i></i><i></i></div></div>
+                <div class="module"><b>재무 데이터 분석</b><span></span><div class="mini-screen"></div></div>
+              </div>
+              <div class="activity">
+                <i class="staff" style="left:26%; top:62%;"></i>
+                <i class="staff blue" style="left:60%; top:38%;"></i>
+                <i class="cube" style="left:45%; top:54%; animation-delay:-0.3s;"></i>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="route r1"></div>
+        <div class="route r2"></div>
+        <div class="route r3"></div>
+        <div class="plaza"></div>
+        <div class="plaza-label">central server room data plaza</div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
