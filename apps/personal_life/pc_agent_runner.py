@@ -38,8 +38,8 @@ from app.services.naver_news_email_service import (
     is_hourly_agent_email_enabled,
     is_news_email_enabled,
     send_agent1_morning_news_email,
-    send_hourly_agent_status_email,
 )
+from app.services.topic_news_email_service import send_hourly_topic_news_emails
 from app.storage.database import fetch_one, initialize_database
 
 
@@ -91,6 +91,22 @@ AGENT1_NEWS_QUERIES = [
     for query in os.getenv(
         "GYUVIS_AGENT1_NEWS_QUERIES",
         "AI,모바일,스마트폰,갤럭시,아이폰,iOS,안드로이드,웨어러블",
+    ).split(",")
+    if query.strip()
+]
+HOURLY_IT_NEWS_QUERIES = [
+    query.strip()
+    for query in os.getenv(
+        "GYUVIS_HOURLY_IT_NEWS_QUERIES",
+        "AI 인공지능 최신 뉴스,모바일 스마트폰 최신 뉴스",
+    ).split(",")
+    if query.strip()
+]
+HOURLY_FINANCE_NEWS_QUERIES = [
+    query.strip()
+    for query in os.getenv(
+        "GYUVIS_HOURLY_FINANCE_NEWS_QUERIES",
+        "대출 금리 환율 원달러 최신 뉴스,경제 부동산 증권 최신 뉴스",
     ).split(",")
     if query.strip()
 ]
@@ -226,15 +242,18 @@ def run_hourly_agent_status_email_sender() -> None:
 
     try:
         mark_agent_running(AGENT1_ID, f"Hourly GyuOS agent status email started: {hour_key}")
-        result = send_hourly_agent_status_email()
+        limit = max(1, min(20, int(os.getenv("GYUVIS_HOURLY_AGENT_EMAIL_LIMIT", "8"))))
+        it_items = collect_topic_news_items(HOURLY_IT_NEWS_QUERIES, limit=limit)
+        finance_items = collect_topic_news_items(HOURLY_FINANCE_NEWS_QUERIES, limit=limit)
+        result = send_hourly_topic_news_emails(it_items, finance_items)
         _last_hourly_agent_email_key = hour_key
         mark_agent_success(
             AGENT1_ID,
-            f"Hourly GyuOS agent status email sent: {result.get('news_count')} news items",
+            f"Hourly GyuOS topic news emails sent: {result.get('mail_count')} emails",
         )
         print(
-            f"[{datetime.now().isoformat(timespec='seconds')}] hourly agent status email sent: "
-            f"{result.get('news_count')} news items"
+            f"[{datetime.now().isoformat(timespec='seconds')}] hourly topic news emails sent: "
+            f"IT {result.get('it_news_count')} items, finance {result.get('finance_news_count')} items"
         )
     except Exception as error:
         _last_hourly_agent_email_key = hour_key
@@ -539,6 +558,28 @@ def collect_agent1_it_news_items(limit: int = 5, recent_days: int | None = 1) ->
     return ordered[: max(limit, 5)]
 
 
+def collect_topic_news_items(queries: list[str], limit: int = 8) -> list[dict]:
+    merged: dict[str, dict] = {}
+    per_query_limit = max(limit, 8)
+    for query in queries:
+        try:
+            items = fetch_google_news_items(
+                query,
+                limit=per_query_limit,
+                recent_days=1,
+                filter_relevant=False,
+            )
+        except Exception as error:
+            print(f"[{datetime.now().isoformat(timespec='seconds')}] hourly news query failed ({query}): {error}")
+            continue
+        for item in items:
+            url = str(item.get("url") or "").strip()
+            if url and url not in merged:
+                merged[url] = item
+    ordered = sorted(merged.values(), key=news_sort_key, reverse=True)
+    return ordered[:limit]
+
+
 def build_agent1_news_query(keyword: str) -> str:
     return f"{keyword} IT 모바일 뉴스"
 
@@ -758,7 +799,12 @@ def fetch_google_news_titles(query: str, limit: int = 5) -> tuple[list[str], lis
     return [item["title"] for item in items], [item["url"] for item in items]
 
 
-def fetch_google_news_items(query: str, limit: int = 5, recent_days: int | None = 1) -> list[dict]:
+def fetch_google_news_items(
+    query: str,
+    limit: int = 5,
+    recent_days: int | None = 1,
+    filter_relevant: bool = True,
+) -> list[dict]:
     search_query = query.strip()
     if recent_days and "when:" not in search_query:
         search_query = f"{search_query} when:{max(1, recent_days)}d"
@@ -787,7 +833,7 @@ def fetch_google_news_items(query: str, limit: int = 5, recent_days: int | None 
             }
         )
     relevant_items = [item for item in parsed_items if int(item.get("importance_score") or 0) > 1]
-    if relevant_items:
+    if filter_relevant and relevant_items:
         parsed_items = relevant_items
     parsed_items.sort(key=news_sort_key, reverse=True)
     if recent_days:
