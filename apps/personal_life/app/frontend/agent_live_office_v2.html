@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="GyuNexus AI Agent Office 아이소메트릭 운영 대시보드">
+  <title>GyuNexus AI Agent Office V2</title>
+  <link rel="stylesheet" href="/shared/gyuos-shell.css">
+  <link rel="stylesheet" href="/shared/agent-office.css">
+  <link rel="stylesheet" href="/shared/agent-office-v2.css">
+  <script src="/shared/gyuos-shell.js" defer></script>
+</head>
+<body class="office-v2">
+  <div class="app-shell">
+    <gyuos-sidebar active="agent"></gyuos-sidebar>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="GyuNexus 홈으로 이동"><span class="brand-mark" aria-hidden="true">G</span><span class="brand-copy"><strong>GyuNexus</strong><small>AI Agent Office</small></span></a>
+      <div class="header-actions">
+        <div class="connection-pill" id="connectionPill" role="status"><span class="status-dot"></span><span id="liveState">연결 확인 중</span></div>
+        <div class="header-metrics" id="headerMetrics" aria-label="팀 요약"></div>
+        <button class="icon-button notification-button" type="button" aria-label="알림"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span class="notification-badge">3</span></button>
+        <a class="icon-button" href="/settings.html" aria-label="설정"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.08A1.7 1.7 0 0 0 8.94 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.57 15 1.7 1.7 0 0 0 3 14H3v-4h.08A1.7 1.7 0 0 0 4.6 8.94a1.7 1.7 0 0 0-.34-1.88L4.2 7l2.83-2.83.06.06A1.7 1.7 0 0 0 9 4.57 1.7 1.7 0 0 0 10 3V3h4v.08A1.7 1.7 0 0 0 15.06 4.6a1.7 1.7 0 0 0 1.88-.34L17 4.2 19.83 7l-.06.06A1.7 1.7 0 0 0 19.43 9 1.7 1.7 0 0 0 21 10h.08v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg></a>
+      </div>
+    </header>
+
+    <aside class="sidebar" aria-label="주요 메뉴">
+      <nav class="sidebar-nav">
+        <a class="nav-item active" href="/agent/live-office" aria-current="page"><span data-icon="home"></span><span>홈</span></a>
+        <a class="nav-item" href="/agent/live-room"><span data-icon="agents"></span><span>에이전트</span></a>
+        <a class="nav-item" href="/memory.html"><span data-icon="archive"></span><span>자료실</span></a>
+        <a class="nav-item" href="/agent/report-center"><span data-icon="queue"></span><span>작업 큐</span></a>
+        <a class="nav-item" href="/creator.html"><span data-icon="idea"></span><span>아이디어</span></a>
+        <a class="nav-item" href="/agent/report-center"><span data-icon="report"></span><span>보고서</span></a>
+        <a class="nav-item" href="/settings.html"><span data-icon="settings"></span><span>설정</span></a>
+      </nav>
+      <div class="sidebar-status"><span class="status-dot"></span><div><strong>GyuNexus 연결됨</strong><small>모든 시스템 정상</small></div></div>
+    </aside>
+
+    <main class="main-content">
+      <section class="workspace-header">
+        <div><span class="eyebrow">ISOMETRIC WORKSPACE · V2</span><h1>AI Agent Office</h1><p>네 개의 전문 작업실과 중앙 Core의 협업 흐름을 확인하세요.</p></div>
+        <div class="workspace-actions">
+          <a class="secondary-button version-switch" href="/agent/live-office"><span>V1</span> 카드뷰</a>
+          <button class="secondary-button" type="button" id="agentChatButton"><span data-icon="chat"></span>Agent Chat</button>
+          <button class="primary-button" type="button" id="refreshButton"><span data-icon="refresh"></span>새로고침</button>
+        </div>
+      </section>
+
+      <section class="office-canvas office-v2-canvas" aria-label="아이소메트릭 에이전트 워크스페이스">
+        <img class="office-v2-art" src="/shared/assets/agent-office/agent-office-v2.png" alt="네 개의 작업실이 중앙 GyuNexus Core와 연결된 아이소메트릭 AI Agent Office">
+        <div class="canvas-status"><span class="live-wave"></span><span id="sceneSummary">실시간 상태를 불러오는 중입니다.</span></div>
+        <div class="v2-data-pulse v2-pulse-1" aria-hidden="true"></div><div class="v2-data-pulse v2-pulse-2" aria-hidden="true"></div>
+        <div class="v2-data-pulse v2-pulse-3" aria-hidden="true"></div><div class="v2-data-pulse v2-pulse-4" aria-hidden="true"></div>
+        <div class="agent-grid" id="agentGrid"></div>
+        <button class="core-hub" type="button" id="coreHub" aria-label="GyuNexus Core 상세 보기"><span class="core-orbit"></span><span class="core-mark">G</span><strong>GyuNexus Core</strong><small>AI Agent Office</small><span class="core-status"><i></i>시스템 정상</span></button>
+      </section>
+    </main>
+
+    <aside class="info-panel" aria-label="운영 현황">
+      <section class="panel-section team-section"><div class="section-heading"><div><span class="section-kicker">OVERVIEW</span><h2>팀 현황</h2></div><span class="updated-time" id="updatedTime">방금 전</span></div><div class="metric-grid" id="metricGrid"></div></section>
+      <section class="panel-section activity-section"><div class="section-heading"><div><span class="section-kicker">ACTIVITY</span><h2>최근 협업 로그</h2></div><a href="/agent/report-center">전체 보기</a></div><div class="activity-list" id="activityList"></div></section>
+      <section class="panel-section progress-section"><div class="section-heading"><div><span class="section-kicker">IN PROGRESS</span><h2>진행중 작업</h2></div><span class="task-count" id="taskCount">0</span></div><div class="progress-list" id="progressList"></div></section>
+    </aside>
+  </div>
+
+  <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+  <aside class="detail-drawer" id="detailDrawer" aria-hidden="true" aria-labelledby="drawerTitle"><div class="drawer-header"><div><span class="section-kicker">AGENT DETAIL</span><h2 id="drawerTitle">Agent 상세</h2></div><button class="icon-button" type="button" id="drawerClose" aria-label="상세 패널 닫기">×</button></div><div class="drawer-body" id="drawerBody"></div><div class="drawer-footer"><a class="secondary-button" href="/agent/report-center">전체 보고서</a><button class="primary-button" type="button" id="drawerFocusButton">이 Agent에 집중</button></div></aside>
+  <div class="modal-backdrop" id="chatModal" hidden><section class="chat-modal" role="dialog" aria-modal="true" aria-labelledby="chatTitle"><header class="drawer-header"><div><span class="section-kicker">GYUNEXUS ASSISTANT</span><h2 id="chatTitle">Agent Chat</h2></div><button class="icon-button" id="chatClose" type="button" aria-label="채팅 닫기">×</button></header><div class="quick-prompts"><button type="button" data-question="현재 전체 에이전트 상황을 요약해줘">전체 상황</button><button type="button" data-question="오늘 수집된 자료를 정리해줘">수집 자료</button><button type="button" data-question="진행 중인 작업을 알려줘">진행 작업</button></div><div class="chat-log" id="chatLog"><div class="chat-empty">Agent Office 데이터에 대해 질문해 보세요.</div></div><form class="chat-form" id="chatForm"><input id="chatInput" autocomplete="off" placeholder="예: 지금 진행 중인 작업을 알려줘"><button class="primary-button" type="submit">전송</button></form></section></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="/shared/agent-office.js" defer></script>
+</body>
+</html>

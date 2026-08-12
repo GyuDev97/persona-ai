@@ -96,6 +96,7 @@ GYUVIS_STANDBY_V3_PATH = GYUVIS_HUD_DIR / "standby-v3.html"
 AGENT_REPORT_CENTER_PATH = FRONTEND_DIR / "agent_report_center.html"
 AGENT_LIVE_ROOM_PATH = FRONTEND_DIR / "agent_live_room.html"
 AGENT_LIVE_OFFICE_PATH = FRONTEND_DIR / "agent_live_office.html"
+AGENT_LIVE_OFFICE_V2_PATH = FRONTEND_DIR / "agent_live_office_v2.html"
 AGENT_LIVE_OFFICE_SHORTS_PATH = FRONTEND_DIR / "agent_live_office_shorts.html"
 AGENT_HEADQURATER_PATH = FRONTEND_DIR / "agent_headqurater_chat.html"
 MONEY_CORE_PATH = FRONTEND_DIR / "money_core.html"
@@ -255,6 +256,14 @@ def agent_live_office_page() -> FileResponse:
         raise HTTPException(status_code=404, detail="Agent Live Office not found")
 
     return FileResponse(AGENT_LIVE_OFFICE_PATH)
+
+
+@router.get("/agent/live-office-v2", include_in_schema=False)
+def agent_live_office_v2_page() -> FileResponse:
+    if not AGENT_LIVE_OFFICE_V2_PATH.exists():
+        raise HTTPException(status_code=404, detail="Agent Live Office V2 not found")
+
+    return FileResponse(AGENT_LIVE_OFFICE_V2_PATH)
 
 
 @router.get("/agent/live-office-shorts", include_in_schema=False)
