@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GYUOS Agent Headquarters</title>
+  <title>GyuNexus Agent Headquarters</title>
+  <link rel="stylesheet" href="/shared/gyuos-shell.css" />
+  <script src="/shared/gyuos-shell.js" defer></script>
   <style>
     :root {
       --panel: #fffdf9;
@@ -44,7 +46,7 @@
       linear-gradient(30deg, rgba(136,100,58,.055) 12%, transparent 12.5%, transparent 87%, rgba(136,100,58,.055) 87.5%),
       linear-gradient(150deg, rgba(136,100,58,.055) 12%, transparent 12.5%, transparent 87%, rgba(136,100,58,.055) 87.5%),
       linear-gradient(135deg, #f4eadb, #eee2d1); background-size: 76px 44px; }
-    .office::before { content: "GYUOS"; position: absolute; left: 28px; top: 24px; z-index: 20; padding: 11px 14px; border: 1px solid rgba(249,115,22,.28); border-radius: 8px; background: rgba(255,247,234,.9); color: var(--orange); font-size: 22px; font-weight: 950; letter-spacing: .14em; }
+    .office::before { content: "GyuNexus"; position: absolute; left: 28px; top: 24px; z-index: 20; padding: 11px 14px; border: 1px solid rgba(249,115,22,.28); border-radius: 8px; background: rgba(255,247,234,.9); color: var(--orange); font-size: 22px; font-weight: 950; letter-spacing: .08em; }
     .room { position: absolute; border: 1px solid rgba(103,78,55,.13); border-radius: 18px; background: rgba(255,255,255,.42); box-shadow: inset 0 0 0 1px rgba(255,255,255,.38), 0 22px 46px rgba(90,64,40,.08); transform: skewY(-7deg); }
     .room.money { left: 5%; top: 14%; width: 26%; height: 22%; background: rgba(211,242,223,.38); }
     .room.news { right: 8%; top: 14%; width: 30%; height: 22%; background: rgba(216,235,255,.42); }
@@ -95,11 +97,11 @@
     @media (max-width: 760px) { .page { padding: 12px; } .topbar { display: grid; } .office { min-height: 620px; } .agent { transform: scale(.82); } .chat-form { grid-template-columns: 1fr; } }
   </style>
 </head>
-<body>
+<body data-gy-shell="overlay">
   <div class="page">
     <header class="topbar">
       <div>
-        <h1>GYUOS Agent Headquarters</h1>
+        <h1>GyuNexus Agent Headquarters</h1>
         <p>에이전트들이 일하는 상황실에 직접 질문하면 관련 부서가 대화 형태로 응답합니다.</p>
       </div>
       <div class="badge">Agent chat online</div>

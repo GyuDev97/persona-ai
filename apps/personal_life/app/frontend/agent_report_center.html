@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>GyuOS - Agent Report Center</title>
+<title>GyuNexus - Agent Report Center</title>
 <link rel="stylesheet" href="/shared/gyuos-shell.css" />
 <script src="/shared/gyuos-shell.js" defer></script>
 <style>
@@ -59,7 +59,7 @@ button,input,textarea,select{font:inherit}button{border:0;cursor:pointer}a{color
 </head>
 <body>
 <div class="app">
-  <gyuos-sidebar active="agent"></gyuos-sidebar>
+  <gyuos-sidebar active="reports"></gyuos-sidebar>
 
   <main class="main">
     <gyuos-header title="Agent Report Center" subtitle="AI agents are working quietly for you"></gyuos-header>
@@ -81,7 +81,7 @@ button,input,textarea,select{font:inherit}button{border:0;cursor:pointer}a{color
         <div class="daily-card"><span class="agent-icon orange">✎</span><div><small>생성된 초안</small><b id="dailyDraftCount">0건</b></div></div>
         <div class="daily-card"><span class="agent-icon blue">&lt;/&gt;</span><div><small>승인 대기</small><b id="dailyCodexCount">0건</b></div></div>
         <div class="daily-card"><span class="agent-icon purple">✦</span><div><small>아이디어 발굴</small><b id="dailyIdeaCount">0건</b></div></div>
-        <div class="daily-card"><div><b>GyuOS가 오늘도</b><small>당신의 시간을 아껴드렸어요.</small></div></div>
+        <div class="daily-card"><div><b>GyuNexus가 오늘도</b><small>당신의 시간을 아껴드렸어요.</small></div></div>
       </div>
     </section>
 
@@ -123,7 +123,7 @@ button,input,textarea,select{font:inherit}button{border:0;cursor:pointer}a{color
         <div class="panel-head">
           <div>
             <h3>AI 자율 제안함</h3>
-            <div class="notice">GyuOS가 관찰한 개선 후보를 승인 기반으로 모아둡니다.</div>
+            <div class="notice">GyuNexus가 관찰한 개선 후보를 승인 기반으로 모아둡니다.</div>
           </div>
           <span class="tag" id="autonomyCount">0건</span>
         </div>
@@ -539,11 +539,11 @@ function findCodexTask(taskId){
 function buildCodexPrompt(task){
   const parsed = parseCodexTask(task);
   const title = parsed.title || "Codex 작업";
-  const project = parsed.project || "GyuOS";
+  const project = parsed.project || "GyuNexus";
   const summary = parsed.summary || task.summary || "작업 큐 내용을 확인하고 필요한 수정안을 반영합니다.";
   const reason = parsed.reason || task.request || "작업 큐 원문을 기준으로 진행합니다.";
   const files = parsed.targetFiles || "작업 전 관련 파일을 확인해서 최소 범위로 수정";
-  return `GyuOS 프로젝트에서 작업 큐 #${task.id}을 처리해주세요.
+  return `GyuNexus 프로젝트에서 작업 큐 #${task.id}을 처리해주세요.
 
 프로젝트:
 ${project}
@@ -671,7 +671,7 @@ function renderProposalDetailLayout(proposal){
           <h2 class="proposal-detail-title">${escapeHtml(proposal.title || "제안 상세")}</h2>
         </div>
         <div class="proposal-detail-meta">
-          <span>${escapeHtml(proposal.project_name || "GyuOS")}</span>
+          <span>${escapeHtml(proposal.project_name || "GyuNexus")}</span>
           <span>·</span>
           <span>${escapeHtml(proposal.change_type || "modify")}</span>
           <span>·</span>
@@ -903,8 +903,8 @@ function agent3ProposalReviewLayout(proposal, card){
   return `<div class="agent3-review-shell">
     <div class="agent3-review-head">
       <div>
-        <div class="agent3-title-row"><span class="proposal-badge">제안 #${proposal.id}</span><h2>${escapeHtml(proposal.title || "GyuOS 개선 후보 점검")}</h2></div>
-        <div class="agent3-meta-line"><span>Agent 03</span><span>·</span><span>${escapeHtml(proposal.project_name || "GyuOS")}</span><span>·</span><span>${escapeHtml(proposal.change_type || "modify")}</span><span>·</span><span>${escapeHtml(proposal.status || "pending")}</span><span>·</span><span style="color:#ef4740">위험도 ${escapeHtml(risk)}</span></div>
+        <div class="agent3-title-row"><span class="proposal-badge">제안 #${proposal.id}</span><h2>${escapeHtml(proposal.title || "GyuNexus 개선 후보 점검")}</h2></div>
+        <div class="agent3-meta-line"><span>Agent 03</span><span>·</span><span>${escapeHtml(proposal.project_name || "GyuNexus")}</span><span>·</span><span>${escapeHtml(proposal.change_type || "modify")}</span><span>·</span><span>${escapeHtml(proposal.status || "pending")}</span><span>·</span><span style="color:#ef4740">위험도 ${escapeHtml(risk)}</span></div>
       </div>
       <div class="agent3-actions">${proposalActions(proposal).replace("승인", "승인 후 큐 등록")}</div>
     </div>
@@ -922,7 +922,7 @@ function agent3ProposalReviewLayout(proposal, card){
       <div class="agent3-card">
         <h4>진행 방식</h4>
         <div class="proposal-steps">${(steps.length ? steps : ["대상 파일을 읽고 현재 구조를 분석합니다.", "변경 후보를 텍스트와 diff 미리보기로 만듭니다.", "사용자가 코드 보기와 diff 보기를 확인합니다.", "승인 후 작업 큐에 넘기며 자동 적용은 하지 않습니다."]).map((line, index) => `<div class="proposal-step"><span class="proposal-step-num">${index + 1}</span><div class="proposal-step-text">${escapeHtml(line)}</div></div>`).join("")}</div>
-        <div class="agent3-safe-box"><div class="brief-icon orange">!</div><div><b>안전 원칙</b><p>GyuOS는 자동 코드 적용을 하지 않습니다. 항상 사용자 승인 후 작업 큐로 전달됩니다.</p></div></div>
+        <div class="agent3-safe-box"><div class="brief-icon orange">!</div><div><b>안전 원칙</b><p>GyuNexus는 자동 코드 적용을 하지 않습니다. 항상 사용자 승인 후 작업 큐로 전달됩니다.</p></div></div>
       </div>
       <div class="agent3-card">
         <h4>제안 내용</h4>
@@ -1190,7 +1190,7 @@ function priorityItems(data){
       tone: autonomyPending.risk_level === "high" ? "danger" : "info",
       label: "자율 제안",
       title: `Agent ${String(autonomyPending.agent_id || 0).padStart(2, "0")}`,
-      body: `${autonomyPending.title || "GyuOS 제안"} · 위험도 ${autonomyPending.risk_level || "low"}`,
+      body: `${autonomyPending.title || "GyuNexus 제안"} · 위험도 ${autonomyPending.risk_level || "low"}`,
       action: "검토하기",
       attr: `data-open-autonomy-detail="${autonomyPending.id}"`
     });
@@ -1236,7 +1236,7 @@ function priorityItems(data){
     items.push({
       tone: "info",
       label: "정상",
-      title: "GyuOS",
+      title: "GyuNexus",
       body: "지금 바로 처리할 긴급 항목은 없습니다.",
       action: "상태 보기",
       attr: `data-open-agent-detail="1"`
@@ -1258,7 +1258,7 @@ function renderPriority(data){
 
 function autonomyAgentLabel(proposal){
   const id = Number(proposal?.agent_id || 0);
-  return id ? `Agent ${String(id).padStart(2, "0")}` : "GyuOS Core";
+  return id ? `Agent ${String(id).padStart(2, "0")}` : "GyuNexus Core";
 }
 
 function autonomyStatusLabel(status){
@@ -1298,7 +1298,7 @@ function renderAutonomy(autonomy){
         <span class="status ${autonomyTone(proposal)}">${escapeHtml(autonomyStatusLabel(proposal.status))}</span>
       </div>
       <p class="autonomy-summary">${escapeHtml(proposal.summary || "제안 설명이 없습니다.")}</p>
-      <div class="autonomy-meta"><span>${escapeHtml(proposal.target_area || "GyuOS")}</span><span>·</span><span>위험도 ${escapeHtml(proposal.risk_level || "low")}</span><span>·</span><span>${escapeHtml(fmt(proposal.created_at, "time"))}</span></div>
+      <div class="autonomy-meta"><span>${escapeHtml(proposal.target_area || "GyuNexus")}</span><span>·</span><span>위험도 ${escapeHtml(proposal.risk_level || "low")}</span><span>·</span><span>${escapeHtml(fmt(proposal.created_at, "time"))}</span></div>
       <div class="autonomy-actions">${autonomyActions(proposal)}</div>
     </article>
   `).join("") : empty(autonomy?.error_message || "아직 자율 제안이 없습니다.");
@@ -1317,7 +1317,7 @@ function openAutonomyDetail(proposalId){
       <p>${escapeHtml(proposal.summary || "요약이 없습니다.")}</p>
     </div>
     <div class="autonomy-detail-grid">
-      <div class="autonomy-detail-box"><span>대상 영역</span><b>${escapeHtml(proposal.target_area || "GyuOS")}</b></div>
+      <div class="autonomy-detail-box"><span>대상 영역</span><b>${escapeHtml(proposal.target_area || "GyuNexus")}</b></div>
       <div class="autonomy-detail-box"><span>승인 방식</span><b>${proposal.approval_required ? "승인 후 작업 큐 등록" : "확인용"}</b></div>
       <div class="autonomy-detail-box"><span>작업 타입</span><b>${escapeHtml(proposal.suggested_task_type || "autonomy_review")}</b></div>
     </div>
