@@ -37,6 +37,10 @@ venv/
 .tmp_comtypes_gen/
 .tmp_stack_logs/
 
+# A laptop-only entrance camera enrollment and logs
+entrance_sensor/data/
+entrance_sensor/logs/
+
 # Browser caches inside temporary profiles
 Cache/
 Code Cache/
