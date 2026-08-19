@@ -34,6 +34,9 @@ CLAP_MIN_GAP_SECONDS = 0.10
 CLAP_MAX_WINDOW_SECONDS = 1.6
 CLAP_COUNT_TO_WAKE = int(os.getenv("GYUVIS_CLAP_COUNT", "2"))
 WAKE_RECORD_SECONDS = float(os.getenv("GYUVIS_WAKE_RECORD_SECONDS", "4.0"))
+WAKE_LISTEN_MAX_SECONDS = float(os.getenv("GYUVIS_WAKE_LISTEN_MAX_SECONDS", "6.0"))
+WAKE_VOICE_THRESHOLD = float(os.getenv("GYUVIS_WAKE_VOICE_THRESHOLD", "0.012"))
+WAKE_SILENCE_SECONDS = float(os.getenv("GYUVIS_WAKE_SILENCE_SECONDS", "0.70"))
 FOLLOWUP_RECORD_SECONDS = float(os.getenv("GYUVIS_FOLLOWUP_RECORD_SECONDS", "8.0"))
 FOLLOWUP_MAX_RECORD_SECONDS = float(os.getenv("GYUVIS_FOLLOWUP_MAX_RECORD_SECONDS", "14.0"))
 FOLLOWUP_SILENCE_SECONDS = float(os.getenv("GYUVIS_FOLLOWUP_SILENCE_SECONDS", "1.2"))
@@ -48,6 +51,10 @@ NCS_PLAYLIST_URL = os.getenv(
 SEND_FOLLOWUP_TO_SERVER = os.getenv("GYUVIS_SEND_FOLLOWUP", "1") == "1"
 AUTO_LISTEN_FOLLOWUP = os.getenv("GYUVIS_AUTO_LISTEN_FOLLOWUP", "1") == "1"
 DEBUG_AUDIO = os.getenv("GYUVIS_DEBUG_AUDIO", "0") == "1"
+# Prefer the Windows MME microphone-array device.  WDM-KS microphones on this
+# laptop intermittently fail with PaErrorCode -9999 while recording.
+# Keep an environment override for USB/headset microphones.
+INPUT_DEVICE_SETTING = os.getenv("GYUVIS_INPUT_DEVICE", "mme-default").strip()
 STAY_AWAKE_AFTER_WAKE = os.getenv("GYUVIS_STAY_AWAKE", "1") == "1"
 OPEN_JARVIS_HUD_ON_WAKE = os.getenv("GYUVIS_OPEN_JARVIS_HUD", "1") == "1"
 JARVIS_HUD_COOLDOWN_SECONDS = float(os.getenv("GYUVIS_JARVIS_HUD_COOLDOWN_SECONDS", "15"))
@@ -157,6 +164,7 @@ class GyuvisWakeListener:
         self._last_hud_launch_at = 0.0
         self._pending_briefing_period: str | None = None
         self._pending_followup_action: str | None = None
+        self._input_device = self._resolve_input_device()
 
     def run(self) -> None:
         self._log("웨이크 모드를 시작합니다. 박수 두 번 뒤에 '일어나'처럼 불러보세요.")
@@ -172,6 +180,8 @@ class GyuvisWakeListener:
         device_label = self._describe_input_device()
         if device_label:
             self._log(f"입력 장치: {device_label}")
+        if INPUT_DEVICE_SETTING:
+            self._log(f"입력 장치 지정값: {INPUT_DEVICE_SETTING}")
 
         if VOICE_ONLY_WAKE:
             self._log("Voice-only wake mode enabled. Say the wake phrase directly.")
@@ -184,6 +194,7 @@ class GyuvisWakeListener:
 
         blocksize = int(SAMPLE_RATE * BLOCK_SECONDS)
         with sd.InputStream(
+            device=self._input_device,
             samplerate=SAMPLE_RATE,
             channels=1,
             dtype="float32",
@@ -247,7 +258,7 @@ class GyuvisWakeListener:
             return
 
         self._log("Listening for wake phrase...")
-        wake_audio = self._record_audio(WAKE_RECORD_SECONDS)
+        wake_audio = self._record_wake_phrase()
         wake_text = self._transcribe(wake_audio)
 
         if not wake_text:
@@ -1083,12 +1094,79 @@ class GyuvisWakeListener:
     def _record_audio(self, seconds: float) -> np.ndarray:
         recording = sd.rec(
             int(seconds * SAMPLE_RATE),
+            device=self._input_device,
             samplerate=SAMPLE_RATE,
             channels=1,
             dtype="int16",
         )
         sd.wait()
-        return recording.reshape(-1)
+        samples = recording.reshape(-1)
+        if DEBUG_AUDIO and samples.size:
+            normalized = samples.astype(np.float32) / 32768.0
+            rms = float(np.sqrt(np.mean(np.square(normalized))))
+            peak = float(np.max(np.abs(normalized)))
+            self._log(f"[debug] wake mic rms={rms:.3f}, peak={peak:.3f}")
+        return samples
+
+    def _record_wake_phrase(self) -> np.ndarray:
+        """Wait for a spoken wake phrase, then stop shortly after it ends.
+
+        A fixed recording window can split a short word such as "일어나" across
+        two windows.  Starting the recording at voice onset makes each attempt
+        independent of the listener loop's timing.
+        """
+        block_seconds = 0.10
+        blocksize = int(SAMPLE_RATE * block_seconds)
+        max_blocks = max(1, int(WAKE_LISTEN_MAX_SECONDS / block_seconds))
+        silence_limit = max(1, int(WAKE_SILENCE_SECONDS / block_seconds))
+        preroll: deque[np.ndarray] = deque(maxlen=3)
+        chunks: list[np.ndarray] = []
+        heard_voice = False
+        silent_blocks = 0
+
+        with sd.InputStream(
+            device=self._input_device,
+            samplerate=SAMPLE_RATE,
+            channels=1,
+            dtype="int16",
+            blocksize=blocksize,
+        ) as stream:
+            for _ in range(max_blocks):
+                data, _overflowed = stream.read(blocksize)
+                flat = data.reshape(-1).copy()
+                normalized = flat.astype(np.float32) / 32768.0
+                rms = float(np.sqrt(np.mean(np.square(normalized))))
+                preroll.append(flat)
+
+                if not heard_voice:
+                    if rms < WAKE_VOICE_THRESHOLD:
+                        continue
+                    heard_voice = True
+                    chunks.extend(preroll)
+                    if DEBUG_AUDIO:
+                        self._log(f"[debug] wake voice detected rms={rms:.3f}")
+                    continue
+
+                chunks.append(flat)
+                if rms >= WAKE_VOICE_THRESHOLD:
+                    silent_blocks = 0
+                else:
+                    silent_blocks += 1
+                    if silent_blocks >= silence_limit:
+                        break
+
+        if not heard_voice or not chunks:
+            if DEBUG_AUDIO:
+                self._log("[debug] wake voice was not detected before timeout")
+            return np.array([], dtype=np.int16)
+
+        samples = np.concatenate(chunks).astype(np.int16)
+        if DEBUG_AUDIO:
+            normalized = samples.astype(np.float32) / 32768.0
+            rms = float(np.sqrt(np.mean(np.square(normalized))))
+            peak = float(np.max(np.abs(normalized)))
+            self._log(f"[debug] wake phrase rms={rms:.3f}, peak={peak:.3f}")
+        return samples
 
     def _record_followup_audio(self) -> np.ndarray:
         block_seconds = 0.20
@@ -1100,7 +1178,7 @@ class GyuvisWakeListener:
         silent_blocks = 0
         heard_voice = False
 
-        with sd.InputStream(samplerate=SAMPLE_RATE, channels=1, dtype="int16", blocksize=blocksize) as stream:
+        with sd.InputStream(device=self._input_device, samplerate=SAMPLE_RATE, channels=1, dtype="int16", blocksize=blocksize) as stream:
             while sum(chunk.size for chunk in chunks) < max_samples:
                 data, _overflowed = stream.read(blocksize)
                 flat = data.reshape(-1).copy()
@@ -1267,9 +1345,46 @@ class GyuvisWakeListener:
             compact = compact.replace(token, "")
         return compact
 
+    def _resolve_input_device(self) -> int | None:
+        try:
+            devices = sd.query_devices()
+            default_input = int(sd.default.device[0])
+        except Exception:
+            return None
+
+        if not INPUT_DEVICE_SETTING:
+            return default_input
+
+        if INPUT_DEVICE_SETTING.lower() in {"mme", "mme-default"}:
+            for host_api in sd.query_hostapis():
+                if str(host_api.get("name", "")).lower() != "mme":
+                    continue
+                device_index = int(host_api.get("default_input_device", -1))
+                if device_index >= 0 and int(devices[device_index].get("max_input_channels", 0)) > 0:
+                    return device_index
+            self._log("MME 기본 마이크를 찾지 못해 시스템 기본 마이크를 사용합니다.")
+            return default_input
+
+        try:
+            requested_index = int(INPUT_DEVICE_SETTING)
+            device = devices[requested_index]
+            if int(device.get("max_input_channels", 0)) > 0:
+                return requested_index
+        except (ValueError, IndexError, TypeError):
+            pass
+
+        wanted = INPUT_DEVICE_SETTING.lower()
+        for index, device in enumerate(devices):
+            name = str(device.get("name", "")).lower()
+            if wanted in name and int(device.get("max_input_channels", 0)) > 0:
+                return index
+
+        self._log(f"입력 장치 '{INPUT_DEVICE_SETTING}'를 찾지 못해 기본 마이크를 사용합니다.")
+        return default_input
+
     def _describe_input_device(self) -> str:
         try:
-            device = sd.query_devices(kind="input")
+            device = sd.query_devices(self._input_device, kind="input")
         except Exception:
             return ""
 

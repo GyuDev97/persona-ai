@@ -28,6 +28,9 @@ set "GYUVIS_FOLLOWUP_RECORD_SECONDS=8"
 set "GYUVIS_FOLLOWUP_MAX_RECORD_SECONDS=14"
 set "GYUVIS_FOLLOWUP_SILENCE_SECONDS=1.2"
 set "GYUVIS_FOLLOWUP_VOICE_THRESHOLD=0.018"
+set "GYUVIS_DEBUG_AUDIO=1"
+rem Use the stable MME microphone-array device, not the unreliable WDM-KS input.
+set "GYUVIS_INPUT_DEVICE=mme-default"
 
 echo ===============================
 echo GyuVIS Stack Launcher

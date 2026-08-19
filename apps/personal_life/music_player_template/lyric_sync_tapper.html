@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>가사 싱크 탭퍼</title>
+<style>
+  :root { color-scheme: dark; font-family: "Malgun Gothic", system-ui, sans-serif; background:#111; color:#f4f4f4; }
+  body { max-width:820px; margin:0 auto; padding:28px 18px 48px; }
+  h1 { font-size:26px; margin:0 0 8px; } p { color:#b7b7b7; line-height:1.6; }
+  .box { background:#1d1d1d; border:1px solid #333; border-radius:14px; padding:16px; margin:14px 0; }
+  label { display:block; font-size:14px; margin:0 0 8px; color:#c9c9c9; }
+  input[type=file], textarea { width:100%; box-sizing:border-box; background:#111; color:#f4f4f4; border:1px solid #444; border-radius:8px; padding:10px; }
+  textarea { height:180px; resize:vertical; font:15px/1.7 "Malgun Gothic", sans-serif; }
+  audio { width:100%; margin:10px 0 0; }
+  .controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  button { background:#2e74da; color:white; border:0; border-radius:8px; padding:10px 14px; cursor:pointer; font-weight:700; }
+  button.secondary { background:#333; } button:disabled { opacity:.45; cursor:not-allowed; }
+  .status { font-variant-numeric:tabular-nums; font-size:18px; font-weight:700; color:#fff; }
+  .hint { font-size:13px; color:#aaa; margin:8px 0 0; }
+  #rows { margin-top:12px; } .row { display:grid; grid-template-columns:68px 92px 1fr 74px; gap:8px; align-items:center; padding:9px 6px; border-bottom:1px solid #2d2d2d; }
+  .row.active { background:#263b5d; border-radius:7px; } .row.done { color:#c9d8ee; }
+  .time { font-variant-numeric:tabular-nums; color:#b6c9e7; } .lyric { line-height:1.45; }
+  .row button { padding:6px 8px; font-size:12px; background:#414141; }
+  .message { min-height:22px; color:#f4d77b; margin-top:8px; }
+  @media (max-width:540px) { .row { grid-template-columns:55px 80px 1fr; } .row button { grid-column:3; justify-self:start; } }
+</style>
+</head>
+<body>
+  <h1>가사 싱크 탭퍼</h1>
+  <p>음원을 재생하고 각 줄이 시작되는 순간 <b>Space</b>를 누르세요. 누를 때마다 다음 가사로 넘어가며, 완료 후 SRT 파일을 내려받을 수 있습니다.</p>
+
+  <section class="box">
+    <label for="audioFile">음원 (MP3 또는 WAV)</label>
+    <input id="audioFile" type="file" accept="audio/mpeg,audio/wav,audio/*">
+    <audio id="audio" controls></audio>
+  </section>
+
+  <section class="box">
+    <label for="lyricsInput">가사 — 한 줄에 한 문장</label>
+    <textarea id="lyricsInput">늦은 밤 시계 소리만 들리고
+식어 버린 커피만 남아 있어
+평소처럼 네 옆에 앉아 있는데
+오늘은 왜 이렇게 멀게 느껴져
+
+괜찮다는 말을 먼저 꺼내면
+정말 괜찮아질 줄 알았어
+하지만 떨리는 네 목소리에
+이미 끝이 와 있었나 봐
+
+어디부터 어긋난 건지
+이제 와 묻지는 않을게
+사랑했던 그 순간까지
+없던 일로 하진 말아 줘
+
+우리 여기까지만 하자
+더 아프기 전에 끝내자
+너를 붙잡고 싶은 이 마음도
+오늘까지만 참아 볼게
+
+사랑했다고 말하지 마
+그 말 들으면 또 무너질 테니
+돌아서서 문을 닫는 그때까지
+아무 말 없이 가 줘
+
+현관에 남은 너의 작은 신발
+냉장고에 붙어 있는 사진
+내일이면 하나씩 사라질 텐데
+왜 난 아무것도 못 버리겠어
+
+너 없이도 괜찮을 거라고
+몇 번이고 나를 속여 봐도
+익숙했던 네 이름 하나에
+가슴이 또 무너져 내려
+
+붙잡으면 더 아플 거란 걸
+나도 너무 잘 알고 있어
+그래도 오늘이 마지막이면
+조금만 더 있어 줘
+
+우리 여기까지만 하자
+더 아프기 전에 끝내자
+너를 붙잡고 싶은 이 마음도
+오늘까지만 참아 볼게
+
+사랑했다고 말하지 마
+그 말 들으면 또 무너질 테니
+돌아서서 문을 닫는 그때까지
+아무 말 없이 가 줘
+
+사실은 가지 말라고
+한 번쯤 붙잡고 싶었어
+아무 일도 없던 것처럼
+다시 시작하자고
+
+하지만 네가 행복하다면
+그게 내가 아니어도
+오늘까지만 아파하고
+내가 먼저 놓아줄게
+
+우리 여기까지만 하자
+그래 정말 여기서 끝내자
+평생 너만 사랑할 것 같던 내가
+이제 너를 보내야 하나 봐
+
+잘 지내란 말은 못 하겠어
+아직 그렇게 괜찮진 않아서
+네가 없는 내일이 두려워도
+이젠 혼자 견뎌야 하니까
+
+우리 여기까지만 하자
+마지막으로 안아도 될까
+다시는 돌아갈 수 없다 해도
+오늘만은 울어도 되잖아
+
+우리 여기까지만 하자
+오늘 여기까지만</textarea>
+    <div class="controls" style="margin-top:10px">
+      <button id="loadLyrics">가사 불러오기</button>
+      <button id="tap" class="secondary" disabled>현재 줄 기록 (Space)</button>
+      <button id="undo" class="secondary" disabled>마지막 기록 취소</button>
+      <button id="export" disabled>SRT 내려받기</button>
+    </div>
+    <div class="message" id="message"></div>
+  </section>
+
+  <section class="box">
+    <div class="status" id="status">가사를 불러오세요.</div>
+    <div class="hint">텍스트 입력칸을 클릭한 상태에서는 Space 기록이 꺼집니다. 가사 불러오기 후 재생 버튼을 누르고 화면 빈 곳을 클릭하세요.</div>
+    <div id="rows"></div>
+  </section>
+
+<script>
+(() => {
+  const audio = document.getElementById('audio');
+  const audioFile = document.getElementById('audioFile');
+  const lyricsInput = document.getElementById('lyricsInput');
+  const loadLyrics = document.getElementById('loadLyrics');
+  const tap = document.getElementById('tap');
+  const undo = document.getElementById('undo');
+  const exportButton = document.getElementById('export');
+  const rows = document.getElementById('rows');
+  const status = document.getElementById('status');
+  const message = document.getElementById('message');
+  let lines = [];
+  let starts = [];
+  let current = 0;
+
+  const format = seconds => {
+    const s = Math.max(0, seconds || 0);
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = Math.floor(s % 60);
+    const ms = Math.round((s - Math.floor(s)) * 1000);
+    return `${h ? String(h).padStart(2, '0') + ':' : ''}${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+  };
+  const srtTime = seconds => {
+    const s = Math.max(0, seconds || 0);
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = Math.floor(s % 60);
+    const ms = Math.round((s - Math.floor(s)) * 1000);
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')},${String(ms).padStart(3, '0')}`;
+  };
+  const setMessage = text => { message.textContent = text; };
+  const render = () => {
+    rows.replaceChildren();
+    lines.forEach((line, index) => {
+      const row = document.createElement('div');
+      row.className = `row${index === current ? ' active' : ''}${starts[index] !== undefined ? ' done' : ''}`;
+      const number = document.createElement('span'); number.textContent = String(index + 1).padStart(2, '0');
+      const time = document.createElement('span'); time.className = 'time'; time.textContent = starts[index] === undefined ? '--:--.---' : format(starts[index]);
+      const text = document.createElement('span'); text.className = 'lyric'; text.textContent = line;
+      const mark = document.createElement('button'); mark.type = 'button'; mark.textContent = '현재로';
+      mark.addEventListener('click', () => { starts[index] = audio.currentTime; current = Math.max(current, index + 1); setMessage(`${index + 1}번째 줄을 ${format(audio.currentTime)}에 수정했습니다.`); render(); });
+      row.append(number, time, text, mark); rows.append(row);
+    });
+    const done = starts.filter(v => v !== undefined).length;
+    status.textContent = lines.length ? (current < lines.length ? `${current + 1} / ${lines.length}  —  Space를 눌러 “${lines[current]}” 시작 기록` : `완료 — ${done}줄의 시작 시간이 기록되었습니다.`) : '가사를 불러오세요.';
+    tap.disabled = !lines.length || !audio.src || current >= lines.length;
+    undo.disabled = !starts.length;
+    exportButton.disabled = !lines.length || starts.filter(v => v !== undefined).length !== lines.length;
+    document.querySelector('.row.active')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  };
+  const record = () => {
+    if (!lines.length || !audio.src || current >= lines.length) return;
+    starts[current] = audio.currentTime;
+    setMessage(`${current + 1}번째 줄 기록: ${format(audio.currentTime)}`);
+    current += 1;
+    render();
+  };
+  audioFile.addEventListener('change', event => {
+    const file = event.target.files[0];
+    if (!file) return;
+    audio.src = URL.createObjectURL(file);
+    setMessage(`음원을 불러왔습니다: ${file.name}`);
+    render();
+  });
+  loadLyrics.addEventListener('click', () => {
+    lines = lyricsInput.value.split(/\r?\n/).map(v => v.trim()).filter(Boolean);
+    starts = []; current = 0;
+    setMessage(`${lines.length}줄을 준비했습니다. 음원 재생 후 첫 줄 시작에 Space를 누르세요.`);
+    render();
+  });
+  tap.addEventListener('click', record);
+  undo.addEventListener('click', () => {
+    if (!starts.length) return;
+    current = Math.max(0, current - 1); starts[current] = undefined;
+    setMessage(`${current + 1}번째 줄 기록을 취소했습니다.`); render();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.code !== 'Space' || event.target.matches('textarea,input,button')) return;
+    event.preventDefault(); record();
+  });
+  exportButton.addEventListener('click', () => {
+    const content = lines.map((line, index) => {
+      const start = starts[index];
+      const end = index + 1 < lines.length ? Math.max(start + 0.1, starts[index + 1] - 0.04) : Math.max(start + 0.5, audio.duration || start + 5);
+      return `${index + 1}\n${srtTime(start)} --> ${srtTime(end)}\n${line}`;
+    }).join('\n\n');
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([content], { type: 'text/plain;charset=utf-8' }));
+    link.download = '여기까지만_하자_lyrics.srt'; link.click(); URL.revokeObjectURL(link.href);
+    setMessage('SRT 파일을 내려받았습니다. 이 파일을 보내주면 AE에 적용할 수 있습니다.');
+  });
+  render();
+})();
+</script>
+</body>
+</html>

@@ -117,6 +117,19 @@ CREATE TABLE IF NOT EXISTS assistant_conversations (
     created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
+CREATE TABLE IF NOT EXISTS home_arrival_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source TEXT NOT NULL,
+    person TEXT NOT NULL,
+    confidence REAL NOT NULL,
+    sensor_timestamp TEXT NOT NULL,
+    processing_result TEXT NOT NULL,
+    wake_success INTEGER NOT NULL,
+    tts_success INTEGER NOT NULL,
+    payload_json TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
 CREATE TABLE IF NOT EXISTS agent_tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     source TEXT NOT NULL DEFAULT 'mobile',
@@ -454,6 +467,20 @@ MARIADB_SCHEMA = [
         message TEXT NOT NULL,
         interpreted_as VARCHAR(30) NULL,
         created_type VARCHAR(30) NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS home_arrival_events (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        source VARCHAR(100) NOT NULL,
+        person VARCHAR(100) NOT NULL,
+        confidence DOUBLE NOT NULL,
+        sensor_timestamp VARCHAR(64) NOT NULL,
+        processing_result VARCHAR(30) NOT NULL,
+        wake_success BOOLEAN NOT NULL DEFAULT FALSE,
+        tts_success BOOLEAN NOT NULL DEFAULT FALSE,
+        payload_json LONGTEXT NOT NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
     """,

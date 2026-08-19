@@ -160,6 +160,14 @@ class AssistantStatusResponse(BaseModel):
     model: str | None
 
 
+class HomeArrivalEventCreate(BaseModel):
+    source: str = Field(min_length=1, max_length=100)
+    event: Literal["home_arrival"]
+    person: Literal["owner"]
+    confidence: float = Field(ge=0, le=1)
+    timestamp: datetime
+
+
 class ProfileMemoryRecord(BaseModel):
     id: int
     category: str

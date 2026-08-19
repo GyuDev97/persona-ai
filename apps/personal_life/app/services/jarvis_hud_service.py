@@ -18,30 +18,36 @@ def get_jarvis_hud_path() -> Path:
     return APP_ROOT.parent / "javis-app" / "standby-v3.html"
 
 
-def get_jarvis_hud_url() -> str:
+def get_jarvis_hud_url(*, immediate: bool = False) -> str:
     configured = os.getenv("GYUVIS_JARVIS_HUD_URL", DEFAULT_HUD_URL).strip() or DEFAULT_HUD_URL
-    return _with_hud_boot_params(configured)
+    return _with_hud_boot_params(configured, immediate=immediate)
 
 
-def _with_hud_boot_params(url: str) -> str:
-    """Force the wake-launched HUD into the cinematic veil flow and bypass stale browser cache."""
+def _with_hud_boot_params(url: str, *, immediate: bool = False) -> str:
+    """Set the normal veil flow, or bypass it for a home-arrival event."""
     parsed = urlsplit(url)
     query = dict(parse_qsl(parsed.query, keep_blank_values=True))
-    query["boot"] = "veil"
-    query["veil"] = "1"
-    query["autoGesture"] = "1"
-    query["autoPresence"] = "1"
+    if immediate:
+        query["boot"] = "ready"
+        query["veil"] = "0"
+        query["autoGesture"] = "0"
+        query["autoPresence"] = "0"
+    else:
+        query["boot"] = "veil"
+        query["veil"] = "1"
+        query["autoGesture"] = "1"
+        query["autoPresence"] = "1"
     query["voiceWelcome"] = "0"
     query["cacheBust"] = str(int(time.time() * 1000))
     return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, urlencode(query), parsed.fragment))
 
 
-def launch_jarvis_hud() -> str:
+def launch_jarvis_hud(*, immediate: bool = False) -> str:
     target = get_jarvis_hud_path()
     if not target.exists():
         raise FileNotFoundError(f"GYUVIS HUD not found: {target}")
 
-    url = get_jarvis_hud_url()
+    url = get_jarvis_hud_url(immediate=immediate)
     if not _open_fullscreen(url):
         os.startfile(url)
     return url
