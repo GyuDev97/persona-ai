@@ -60,7 +60,10 @@ def handle_home_arrival(payload: dict) -> dict:
         )
 
     wake_success = _wake_gyuvis()
-    tts_success = speak_gyuvis_text(os.getenv("GYUVIS_HOME_ARRIVAL_GREETING", "어서 오세요."))
+    tts_success = speak_gyuvis_text(
+        os.getenv("GYUVIS_HOME_ARRIVAL_GREETING", "어서 오세요."),
+        backend_override_env="GYUVIS_HOME_ARRIVAL_TTS_BACKEND",
+    )
     processing_result = "completed" if wake_success and tts_success else "partial_failure"
     execute(
         "UPDATE home_arrival_events SET processing_result = ?, wake_success = ?, tts_success = ? WHERE id = ?",

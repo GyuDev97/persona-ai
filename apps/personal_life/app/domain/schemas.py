@@ -168,6 +168,13 @@ class HomeArrivalEventCreate(BaseModel):
     timestamp: datetime
 
 
+class PostureWarningEventCreate(BaseModel):
+    type: Literal["head_down", "forward_head"]
+    duration_seconds: float = Field(ge=0, le=3600)
+    score: float = Field(ge=0, le=1)
+    timestamp: datetime
+
+
 class ProfileMemoryRecord(BaseModel):
     id: int
     category: str

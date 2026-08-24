@@ -130,6 +130,18 @@ CREATE TABLE IF NOT EXISTS home_arrival_events (
     created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
+CREATE TABLE IF NOT EXISTS posture_warning_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    posture_type TEXT NOT NULL,
+    duration_seconds REAL NOT NULL,
+    score REAL NOT NULL,
+    sensor_timestamp TEXT NOT NULL,
+    processing_result TEXT NOT NULL,
+    tts_success INTEGER NOT NULL,
+    payload_json TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
 CREATE TABLE IF NOT EXISTS agent_tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     source TEXT NOT NULL DEFAULT 'mobile',
@@ -479,6 +491,19 @@ MARIADB_SCHEMA = [
         sensor_timestamp VARCHAR(64) NOT NULL,
         processing_result VARCHAR(30) NOT NULL,
         wake_success BOOLEAN NOT NULL DEFAULT FALSE,
+        tts_success BOOLEAN NOT NULL DEFAULT FALSE,
+        payload_json LONGTEXT NOT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS posture_warning_events (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        posture_type VARCHAR(30) NOT NULL,
+        duration_seconds DOUBLE NOT NULL,
+        score DOUBLE NOT NULL,
+        sensor_timestamp VARCHAR(64) NOT NULL,
+        processing_result VARCHAR(30) NOT NULL,
         tts_success BOOLEAN NOT NULL DEFAULT FALSE,
         payload_json LONGTEXT NOT NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP

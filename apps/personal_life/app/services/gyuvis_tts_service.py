@@ -14,14 +14,15 @@ import uuid
 logger = logging.getLogger("gyuos.tts")
 
 
-def speak_gyuvis_text(text: str) -> bool:
+def speak_gyuvis_text(text: str, *, backend_override_env: str | None = None) -> bool:
     """Speak text on this (Core) PC without requiring a microphone listener.
 
     The wake listener owns its interactive audio loop, so it cannot safely be
     imported by FastAPI.  This helper follows its existing PowerShell fallback
     policy and intentionally keeps speech local to the Core laptop.
     """
-    backend = os.getenv("GYUVIS_HOME_ARRIVAL_TTS_BACKEND", os.getenv("GYUVIS_TTS_BACKEND", "edge")).strip().lower()
+    override = os.getenv(backend_override_env, "").strip() if backend_override_env else ""
+    backend = (override or os.getenv("GYUVIS_TTS_BACKEND", "edge")).strip().lower()
     allow_fallback = os.getenv("GYUVIS_TTS_ALLOW_FALLBACK", "0") == "1"
     if backend in {"off", "none", "silent", "0"}:
         logger.info("TTS disabled; skipped speech: %s", text)

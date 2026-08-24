@@ -41,6 +41,10 @@ venv/
 entrance_sensor/data/
 entrance_sensor/logs/
 
+# Local webcam posture calibration and logs
+posture_monitor/data/
+posture_monitor/logs/
+
 # Browser caches inside temporary profiles
 Cache/
 Code Cache/
