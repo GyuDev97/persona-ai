@@ -142,6 +142,23 @@ CREATE TABLE IF NOT EXISTS posture_warning_events (
     created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
+CREATE TABLE IF NOT EXISTS riding_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type TEXT NOT NULL,
+    policy_key TEXT NOT NULL,
+    sensor_timestamp TEXT NOT NULL,
+    rule_result TEXT NOT NULL,
+    ai_called INTEGER NOT NULL DEFAULT 0,
+    ai_result TEXT NOT NULL DEFAULT '',
+    speak INTEGER NOT NULL DEFAULT 0,
+    message_text TEXT,
+    priority TEXT NOT NULL,
+    cooldown_sec INTEGER NOT NULL DEFAULT 0,
+    processing_ms INTEGER NOT NULL DEFAULT 0,
+    context_json TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
 CREATE TABLE IF NOT EXISTS agent_tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     source TEXT NOT NULL DEFAULT 'mobile',
@@ -507,6 +524,25 @@ MARIADB_SCHEMA = [
         tts_success BOOLEAN NOT NULL DEFAULT FALSE,
         payload_json LONGTEXT NOT NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS riding_events (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        event_type VARCHAR(40) NOT NULL,
+        policy_key VARCHAR(40) NOT NULL,
+        sensor_timestamp VARCHAR(64) NOT NULL,
+        rule_result VARCHAR(100) NOT NULL,
+        ai_called BOOLEAN NOT NULL DEFAULT FALSE,
+        ai_result VARCHAR(100) NOT NULL DEFAULT '',
+        speak BOOLEAN NOT NULL DEFAULT FALSE,
+        message_text TEXT NULL,
+        priority VARCHAR(20) NOT NULL,
+        cooldown_sec INT NOT NULL DEFAULT 0,
+        processing_ms INT NOT NULL DEFAULT 0,
+        context_json LONGTEXT NOT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_riding_events_cooldown (policy_key, speak, created_at)
     )
     """,
     """

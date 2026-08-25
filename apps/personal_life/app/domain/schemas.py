@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 CaptureType = Literal["note", "expense", "idea", "journal", "routine", "task"]
@@ -173,6 +173,49 @@ class PostureWarningEventCreate(BaseModel):
     duration_seconds: float = Field(ge=0, le=3600)
     score: float = Field(ge=0, le=1)
     timestamp: datetime
+
+
+RidingEventType = Literal[
+    "LONG_CLIMB_STARTED",
+    "PACE_DROPPED",
+    "FAST_DESCENT",
+    "DANGER_APPROACH",
+    "RIDE_MILESTONE",
+]
+RidingPriority = Literal["critical", "high", "normal", "low"]
+
+
+class RidingContext(BaseModel):
+    """TrailGo's extensible, unit-defined riding measurements.
+
+    Speed values are km/h, elevation gain and ride distance are meters, and
+    duration values are seconds. Future non-location fields are accepted so a
+    TrailGo release can add context without breaking this endpoint.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    current_speed: float | None = Field(default=None, ge=0, le=200)
+    avg_speed_1m: float | None = Field(default=None, ge=0, le=200)
+    avg_speed_5m: float | None = Field(default=None, ge=0, le=200)
+    avg_speed_10m: float | None = Field(default=None, ge=0, le=200)
+    climb_duration_sec: int | None = Field(default=None, ge=0, le=86_400)
+    elevation_gain: float | None = Field(default=None, ge=0, le=20_000)
+    ride_distance: float | None = Field(default=None, ge=0, le=2_000_000)
+    ride_duration_sec: int | None = Field(default=None, ge=0, le=172_800)
+
+
+class RidingEventCreate(BaseModel):
+    event_type: RidingEventType
+    timestamp: datetime
+    ride_context: RidingContext
+
+
+class RidingEventResponse(BaseModel):
+    speak: bool
+    message: str | None
+    priority: RidingPriority
+    cooldown_sec: int = Field(ge=0)
 
 
 class ProfileMemoryRecord(BaseModel):

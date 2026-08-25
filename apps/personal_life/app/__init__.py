@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from .api.routes import router
 from .config import load_env_file
 from .storage.database import initialize_database
 from pathlib import Path
@@ -12,6 +11,11 @@ FRONTEND_SHARED_DIR = Path(__file__).resolve().parent / "frontend" / "shared"
 
 
 def create_app() -> FastAPI:
+    # Import the full route registry only when the application is created.
+    # Event services can then be imported independently of optional dashboard
+    # dependencies, while the running FastAPI application is unchanged.
+    from .api.routes import router
+
     load_env_file()
 
     app = FastAPI(
