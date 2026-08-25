@@ -196,16 +196,27 @@ class RidingContext(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     current_speed: float | None = Field(default=None, ge=0, le=200)
+    current_altitude: float | None = Field(default=None, ge=-1_000, le=15_000)
     avg_speed_1m: float | None = Field(default=None, ge=0, le=200)
     avg_speed_5m: float | None = Field(default=None, ge=0, le=200)
     avg_speed_10m: float | None = Field(default=None, ge=0, le=200)
     climb_duration_sec: int | None = Field(default=None, ge=0, le=86_400)
+    descent_duration_sec: int | None = Field(default=None, ge=0, le=86_400)
     elevation_gain: float | None = Field(default=None, ge=0, le=20_000)
+    total_elevation_gain: float | None = Field(default=None, ge=0, le=50_000)
     ride_distance: float | None = Field(default=None, ge=0, le=2_000_000)
     ride_duration_sec: int | None = Field(default=None, ge=0, le=172_800)
+    ride_state: str | None = Field(default=None, min_length=1, max_length=64)
+    estimated_grade: float | None = Field(default=None, ge=-100, le=100)
+    nearest_danger_distance: float | None = Field(default=None, ge=0, le=100_000)
+    danger_id: str | None = Field(default=None, min_length=1, max_length=128)
 
 
 class RidingEventCreate(BaseModel):
+    # Optional during TrailGo's contract rollout. Requests without a ride_id
+    # retain the legacy shared cooldown scope until TrailGo starts sending it.
+    ride_id: str | None = Field(default=None, min_length=1, max_length=128)
+    event_id: str | None = Field(default=None, min_length=1, max_length=128)
     event_type: RidingEventType
     timestamp: datetime
     ride_context: RidingContext

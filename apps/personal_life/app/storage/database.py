@@ -144,6 +144,8 @@ CREATE TABLE IF NOT EXISTS posture_warning_events (
 
 CREATE TABLE IF NOT EXISTS riding_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ride_id TEXT NOT NULL DEFAULT '__legacy__',
+    event_id TEXT,
     event_type TEXT NOT NULL,
     policy_key TEXT NOT NULL,
     sensor_timestamp TEXT NOT NULL,
@@ -529,6 +531,8 @@ MARIADB_SCHEMA = [
     """
     CREATE TABLE IF NOT EXISTS riding_events (
         id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        ride_id VARCHAR(128) NOT NULL DEFAULT '__legacy__',
+        event_id VARCHAR(128) NULL,
         event_type VARCHAR(40) NOT NULL,
         policy_key VARCHAR(40) NOT NULL,
         sensor_timestamp VARCHAR(64) NOT NULL,
@@ -542,7 +546,7 @@ MARIADB_SCHEMA = [
         processing_ms INT NOT NULL DEFAULT 0,
         context_json LONGTEXT NOT NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_riding_events_cooldown (policy_key, speak, created_at)
+        INDEX idx_riding_events_cooldown (ride_id, policy_key, speak, created_at)
     )
     """,
     """
@@ -797,6 +801,7 @@ def initialize_sqlite() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(SQLITE_DB_PATH) as connection:
         connection.executescript(SQLITE_SCHEMA)
+        _ensure_sqlite_riding_event_columns(connection)
         _ensure_sqlite_dev_proposal_columns(connection)
         _ensure_sqlite_autonomy_tables(connection)
         connection.commit()
@@ -824,6 +829,7 @@ def initialize_mariadb() -> None:
             for statement in MARIADB_SCHEMA:
                 cursor.execute(statement)
             _ensure_mariadb_dev_proposal_columns(cursor)
+            _ensure_mariadb_riding_event_columns(cursor)
             _ensure_mariadb_autonomy_tables(cursor)
         connection.commit()
 
@@ -907,6 +913,20 @@ def _ensure_sqlite_dev_proposal_columns(connection: sqlite3.Connection) -> None:
             connection.execute(f"ALTER TABLE agent_dev_proposals ADD COLUMN {column} {definition}")
 
 
+def _ensure_sqlite_riding_event_columns(connection: sqlite3.Connection) -> None:
+    columns = {row[1] for row in connection.execute("PRAGMA table_info(riding_events)").fetchall()}
+    required = {
+        "ride_id": "TEXT NOT NULL DEFAULT '__legacy__'",
+        "event_id": "TEXT",
+    }
+    for column, definition in required.items():
+        if column not in columns:
+            connection.execute(f"ALTER TABLE riding_events ADD COLUMN {column} {definition}")
+    connection.execute(
+        "CREATE INDEX IF NOT EXISTS idx_riding_events_cooldown ON riding_events (ride_id, policy_key, speak, created_at)"
+    )
+
+
 def _ensure_mariadb_dev_proposal_columns(cursor: Any) -> None:
     cursor.execute("SHOW COLUMNS FROM agent_dev_proposals")
     columns = {row["Field"] if isinstance(row, dict) else row[0] for row in cursor.fetchall()}
@@ -919,6 +939,28 @@ def _ensure_mariadb_dev_proposal_columns(cursor: Any) -> None:
     for column, definition in required.items():
         if column not in columns:
             cursor.execute(f"ALTER TABLE agent_dev_proposals ADD COLUMN {column} {definition}")
+
+
+def _ensure_mariadb_riding_event_columns(cursor: Any) -> None:
+    cursor.execute("SHOW COLUMNS FROM riding_events")
+    columns = {row["Field"] if isinstance(row, dict) else row[0] for row in cursor.fetchall()}
+    required = {
+        "ride_id": "VARCHAR(128) NOT NULL DEFAULT '__legacy__'",
+        "event_id": "VARCHAR(128) NULL",
+    }
+    for column, definition in required.items():
+        if column not in columns:
+            cursor.execute(f"ALTER TABLE riding_events ADD COLUMN {column} {definition}")
+
+    cursor.execute("SHOW INDEX FROM riding_events WHERE Key_name = 'idx_riding_events_cooldown'")
+    index_rows = cursor.fetchall()
+    indexed_columns = [row["Column_name"] if isinstance(row, dict) else row[4] for row in index_rows]
+    if indexed_columns != ["ride_id", "policy_key", "speak", "created_at"]:
+        if index_rows:
+            cursor.execute("DROP INDEX idx_riding_events_cooldown ON riding_events")
+        cursor.execute(
+            "CREATE INDEX idx_riding_events_cooldown ON riding_events (ride_id, policy_key, speak, created_at)"
+        )
 
 
 def _ensure_sqlite_autonomy_tables(connection: sqlite3.Connection) -> None:
