@@ -29,7 +29,7 @@
 
   <rect class="bg" width="1800" height="1260"/>
 
-  <text x="70" y="75" class="title">GyuOS 전체 구조도</text>
+  <text x="70" y="75" class="title">GYUVIS 전체 구조도</text>
   <text x="72" y="108" class="subtitle">apps/personal_life 기준 FastAPI 라우트, 서비스, 에이전트 러너, 웨이크 리스너, 프론트엔드, DB, Money Core, Agent 03 개발 플래너 구조</text>
 
   <rect x="55" y="145" width="1690" height="1050" rx="24" fill="#ffffff" stroke="#d5ddea" stroke-width="2"/>

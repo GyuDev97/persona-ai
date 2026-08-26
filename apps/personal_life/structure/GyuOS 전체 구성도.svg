@@ -30,7 +30,7 @@
   </defs>
 
   <rect class="bg" width="1800" height="1200"/>
-  <text x="70" y="72" class="title">GyuOS 전체 구성도</text>
+  <text x="70" y="72" class="title">GYUVIS 전체 구성도</text>
   <text x="72" y="106" class="subtitle">D:/github/persona-ai 전체 프로젝트 관점에서 보는 개인 AI OS, PC HUD, 업무 보조 앱, 데이터 저장소, 에이전트 실행 흐름</text>
 
   <rect x="55" y="140" width="1690" height="1005" rx="24" class="frame"/>
