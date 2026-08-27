@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+data/*.db
+logs/*
+reports/*
+workspace/*
+sample_repo/
+!logs/.gitkeep
+!reports/.gitkeep
+!workspace/.gitkeep
