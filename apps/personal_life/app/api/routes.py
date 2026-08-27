@@ -95,6 +95,7 @@ MOBILE_FRONTEND_DIR = FRONTEND_DIR / "mobile"
 GYUVIS_HUD_DIR = Path(__file__).resolve().parents[3] / "javis-app"
 GYUVIS_STANDBY_V2_PATH = GYUVIS_HUD_DIR / "standby-v2.html"
 GYUVIS_STANDBY_V3_PATH = GYUVIS_HUD_DIR / "standby-v3.html"
+GYUVIS_COMMAND_CENTER_PATH = FRONTEND_DIR / "gyuvis_command_center.html"
 AGENT_REPORT_CENTER_PATH = FRONTEND_DIR / "agent_report_center.html"
 AGENT_LIVE_ROOM_PATH = FRONTEND_DIR / "agent_live_room.html"
 AGENT_LIVE_OFFICE_PATH = FRONTEND_DIR / "agent_live_office.html"
@@ -224,11 +225,11 @@ def gyuvis_standby_v2() -> FileResponse:
 
 @router.get("/gyuvis/standby-v3", include_in_schema=False)
 def gyuvis_standby_v3() -> FileResponse:
-    if not GYUVIS_STANDBY_V3_PATH.exists():
-        raise HTTPException(status_code=404, detail="GYUVIS standby V3 UI not found")
+    if not GYUVIS_COMMAND_CENTER_PATH.exists():
+        raise HTTPException(status_code=404, detail="GYUVIS command center UI not found")
 
     return FileResponse(
-        GYUVIS_STANDBY_V3_PATH,
+        GYUVIS_COMMAND_CENTER_PATH,
         headers={
             "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
             "Pragma": "no-cache",
