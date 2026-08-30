@@ -30,8 +30,32 @@ class TaskCreateRequest(BaseModel):
 class ProjectSummary(BaseModel):
     id: str
     name: str
+    description: str = ""
+    repo_path: str = ""
     stack: list[str]
     retry_limit: int
+    enabled: bool = True
+    updated_at: str = ""
+
+
+class ProjectProfileRequest(BaseModel):
+    id: str = Field(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_-]{1,99}$")
+    name: str = Field(min_length=1, max_length=200)
+    description: str = Field(default="", max_length=2000)
+    repo_path: str = Field(min_length=1, max_length=1000)
+    vcs: str = Field(default="git", pattern=r"^(git|svn|none)$")
+    default_branch: str = Field(default="main", max_length=200)
+    stack: list[str] = []
+    build_command: str = Field(default="", max_length=2000)
+    test_command: str = Field(default="", max_length=2000)
+    working_directory: str = Field(default="", max_length=1000)
+    retry_limit: int = Field(default=3, ge=1, le=3)
+    rules: list[str] = []
+    additional_instructions: str = Field(default="", max_length=10000)
+    protected_paths: list[str] = []
+    blocked_commands: list[str] = []
+    links: dict[str, str] = {}
+    enabled: bool = True
 
 
 class TaskSummary(BaseModel):

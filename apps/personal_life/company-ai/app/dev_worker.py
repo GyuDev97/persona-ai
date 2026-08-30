@@ -31,7 +31,9 @@ class DevWorker:
         self._lock = threading.Lock()
 
     def create_task(self, project_id: str, requirement: str) -> dict[str, Any]:
-        self.projects.load_profile(project_id)  # validate before storing
+        profile = self.projects.load_profile(project_id)
+        if not profile.enabled:
+            raise ProfileError("Disabled project cannot run tasks.")
         identifier = task_id()
         timestamp = now()
         self.db.execute("INSERT INTO tasks (id, project_id, requirement, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
@@ -82,6 +84,10 @@ class DevWorker:
         rows = self.db.fetchall("SELECT * FROM tasks ORDER BY created_at DESC, id DESC LIMIT ?", (limit,))
         return [self.db.decode_task(row) for row in rows]
 
+    def list_tasks_by_project(self, project_id: str, limit: int = 20) -> list[dict[str, Any]]:
+        rows = self.db.fetchall("SELECT * FROM tasks WHERE project_id = ? ORDER BY created_at DESC, id DESC LIMIT ?", (project_id, limit))
+        return [self.db.decode_task(row) for row in rows]
+
     def _run(self, identifier: str, cancel_event: threading.Event) -> None:
         workspace: Path | None = None
         profile = None
@@ -125,9 +131,18 @@ class DevWorker:
                         self._emit_event(identifier, attempt_no, "RETRY_STARTED", f"자동 수정 {attempt_no + 1}/{profile.retry_limit}회를 시작합니다.")
                         self._append_log(identifier, attempt_no, "system", "Codex failed; sending concise error context to the next attempt.")
                     continue
+                protected = protected_changes(workspace, profile.protected_paths)
+                if protected:
+                    error = f"Safety stop: protected path modified: {', '.join(protected)}"
+                    self._finish_attempt(identifier, attempt_no, codex_result, None, None, error, workspace)
+                    self._set_status(identifier, TaskStatus.FAILED_NEEDS_HUMAN, error, attempt_no, finished=True)
+                    self._emit_event(identifier, attempt_no, "POLICY_BLOCKED", "보호 경로 변경이 감지되어 작업을 중단했습니다.")
+                    break
+                command_directory = self.projects.command_directory(profile, workspace)
                 self._set_status(identifier, TaskStatus.BUILDING, attempt_no=attempt_no)
                 self._emit_event(identifier, attempt_no, "BUILD_STARTED", "빌드를 시작했습니다.")
-                build_result = self.builds.run(profile.build_command, workspace, self._callback(identifier, attempt_no), cancel_event)
+                self.projects.validate_command(profile, profile.build_command)
+                build_result = self.builds.run(profile.build_command, command_directory, self._callback(identifier, attempt_no), cancel_event)
                 if build_result.cancelled:
                     self._finish_attempt(identifier, attempt_no, codex_result, build_result, None, "Cancelled by user.", workspace)
                     self._set_status(identifier, TaskStatus.CANCELLED, "Cancelled by user.", finished=True)
@@ -136,7 +151,8 @@ class DevWorker:
                                  "빌드에 성공했습니다." if build_result.exit_code == 0 else "빌드에 실패했습니다. 오류 원인을 분석합니다.")
                 self._set_status(identifier, TaskStatus.TESTING, attempt_no=attempt_no)
                 self._emit_event(identifier, attempt_no, "TEST_STARTED", "테스트를 시작했습니다.")
-                test_result = self.builds.run(profile.test_command, workspace, self._callback(identifier, attempt_no), cancel_event)
+                self.projects.validate_command(profile, profile.test_command)
+                test_result = self.builds.run(profile.test_command, command_directory, self._callback(identifier, attempt_no), cancel_event)
                 self._emit_event(identifier, attempt_no, "TEST_SUCCESS" if test_result.exit_code == 0 else "TEST_FAILED",
                                  "테스트가 완료되었습니다." if test_result.exit_code == 0 else "테스트에 실패했습니다. 오류 원인을 분석합니다.")
                 error = self._error_summary(codex_result, build_result, test_result)

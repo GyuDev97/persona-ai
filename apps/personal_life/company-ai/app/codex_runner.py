@@ -27,7 +27,13 @@ def build_codex_prompt(profile: ProjectProfile, requirement: str, attempt: int, 
     rules = "\n".join(f"- {rule}" for rule in profile.rules) or "- Keep changes minimal and scoped."
     protected = "\n".join(f"- {path}" for path in profile.protected_paths) or "- (none)"
     error_section = previous_error or "None. This is the first attempt."
+    stack = " / ".join(profile.stack) or "(not specified)"
+    blocked = "\n".join(f"- {command}" for command in profile.blocked_commands) or "- (none)"
     return f"""You are the implementation worker for a company repository. Complete the task in the current Git worktree only.
+
+PROJECT INFORMATION:
+Name: {profile.name}
+Technology: {stack}
 
 PROJECT RULES:
 {rules}
@@ -37,6 +43,12 @@ PROJECT RULES:
 
 PROTECTED PATHS:
 {protected}
+
+PROHIBITED ACTIONS:
+{blocked}
+
+ADDITIONAL INSTRUCTIONS:
+{profile.additional_instructions or "(none)"}
 
 USER REQUIREMENT:
 {requirement}

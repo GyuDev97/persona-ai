@@ -1,4 +1,4 @@
-const state = { selectedId: null, eventSource: null, currentTask: null, projectsById: new Map(), receivedEventIds: new Set() };
+const state = { selectedId: null, eventSource: null, currentTask: null, projectsById: new Map(), receivedEventIds: new Set(), profiles:[], selectedProfileId:null, isNewProfile:false, profileLists:{ stack:[], rules:[], protected_paths:[], blocked_commands:[] } };
 const terminal = new Set(["SUCCESS", "FAILED", "FAILED_NEEDS_HUMAN", "CANCELLED"]);
 const STATUS_LABELS = { PENDING:"대기", PREPARING:"작업 준비 중", RUNNING_CODEX:"코드 분석/수정 중", BUILDING:"빌드 중", TESTING:"테스트 중", RETRYING:"자동 수정 중", SUCCESS:"완료", FAILED:"실패", FAILED_NEEDS_HUMAN:"확인 필요", CANCELLED:"취소됨" };
 const STEPS = ["프로젝트 준비", "코드 분석", "구현 / 수정", "빌드", "테스트", "결과 정리"];
@@ -60,3 +60,60 @@ document.querySelector("#cancel").addEventListener("click", async () => { if (st
 document.querySelector("#show-raw-log").addEventListener("click", () => { const raw = document.querySelector(".raw-log"); raw?.setAttribute("open", ""); raw?.scrollIntoView({ behavior:"smooth", block:"nearest" }); });
 async function refresh() { try { await loadTasks(); } catch (error) { console.error(error); } }
 updateClock(); setInterval(updateClock, 30000); loadProjects().then(refresh).catch(error => console.error(error)); setInterval(refresh, 2000);
+
+function showView(view) {
+  document.querySelector("#dashboard").hidden = view !== "dashboard";
+  document.querySelector("#projects").hidden = view !== "projects";
+  document.querySelectorAll(".side-nav a[data-view]").forEach(link => link.classList.toggle("active", link.dataset.view === view));
+  if (view === "projects") loadProfiles();
+}
+document.querySelectorAll(".side-nav a[data-view]").forEach(link => link.addEventListener("click", () => showView(link.dataset.view)));
+
+function profileForm() { return document.querySelector("#profile-form"); }
+function formValue(name) { return profileForm().elements.namedItem(name)?.value?.trim() || ""; }
+function setFormValue(name, value) { const field = profileForm().elements.namedItem(name); if (field) field.value = value ?? ""; }
+function renderEditableList(key, targetId) {
+  document.querySelector(targetId).innerHTML = state.profileLists[key].map((value, index) => "<span class=\"editable-item\">" + escapeHtml(value) + "<button type=\"button\" data-list=\"" + key + "\" data-index=\"" + index + "\" aria-label=\"삭제\">×</button></span>").join("") || "<span class=\"muted\">등록된 항목이 없습니다.</span>";
+  document.querySelectorAll(targetId + " button[data-list]").forEach(button => button.onclick = () => { state.profileLists[button.dataset.list].splice(Number(button.dataset.index), 1); renderProfileLists(); });
+}
+function renderProfileLists() {
+  renderEditableList("stack", "#stack-tags"); renderEditableList("rules", "#rule-tags"); renderEditableList("protected_paths", "#protected-tags"); renderEditableList("blocked_commands", "#blocked-tags");
+}
+function addListItem(key, inputId) { const input = document.querySelector(inputId); const value = input.value.trim(); if (value && !state.profileLists[key].includes(value)) state.profileLists[key].push(value); input.value = ""; renderProfileLists(); }
+document.querySelector("#add-stack").onclick = () => addListItem("stack", "#stack-input");
+document.querySelector("#add-rule").onclick = () => addListItem("rules", "#rule-input");
+document.querySelector("#add-protected").onclick = () => addListItem("protected_paths", "#protected-input");
+document.querySelector("#add-blocked").onclick = () => addListItem("blocked_commands", "#blocked-input");
+
+async function loadProfiles(selectId = state.selectedProfileId) {
+  state.profiles = await api("/api/project-profiles"); renderProfileCards();
+  const selected = state.profiles.find(profile => profile.id === selectId) || state.profiles[0];
+  if (selected && (!state.isNewProfile || selectId)) await selectProfile(selected.id);
+}
+function renderProfileCards() {
+  const query = document.querySelector("#project-search").value.toLowerCase(); const filter = document.querySelector("#project-filter").value;
+  const profiles = state.profiles.filter(profile => (filter === "all" || (filter === "enabled") === profile.enabled) && [profile.name, profile.description, profile.repo_path, ...(profile.stack || [])].join(" ").toLowerCase().includes(query));
+  document.querySelector("#project-count").textContent = state.profiles.length + "개";
+  document.querySelector("#profile-list").innerHTML = profiles.map(profile => "<button type=\"button\" class=\"profile-card " + (profile.id === state.selectedProfileId ? "active" : "") + "\" data-profile-id=\"" + escapeHtml(profile.id) + "\"><span class=\"profile-card-head\"><strong>" + escapeHtml(profile.name) + "</strong><em class=\"" + (profile.enabled ? "enabled" : "disabled") + "\">" + (profile.enabled ? "사용 중" : "비활성") + "</em></span><small>" + escapeHtml(profile.description || "설명 없음") + "</small><span class=\"mini-tags\">" + (profile.stack || []).slice(0,4).map(tag => "<i>" + escapeHtml(tag) + "</i>").join("") + "</span><code>" + escapeHtml(profile.repo_path) + "</code><time>수정 " + escapeHtml(profile.updated_at ? new Date(profile.updated_at).toLocaleString("ko-KR") : "-") + "</time></button>").join("") || "<p class=\"muted\">조건에 맞는 프로젝트가 없습니다.</p>";
+  document.querySelectorAll(".profile-card").forEach(card => card.onclick = () => selectProfile(card.dataset.profileId));
+}
+async function selectProfile(id) {
+  const profile = await api("/api/project-profiles/" + encodeURIComponent(id)); state.selectedProfileId = id; state.isNewProfile = false;
+  document.querySelector("#profile-empty").hidden = true; profileForm().hidden = false; document.querySelector("#delete-project").hidden = false;
+  for (const name of ["name","id","description","repo_path","vcs","default_branch","build_command","test_command","working_directory","retry_limit","additional_instructions"]) setFormValue(name, profile[name]);
+  profileForm().elements.enabled.checked = profile.enabled; setFormValue("link_git", profile.links?.git); setFormValue("link_issue", profile.links?.issue); setFormValue("link_wiki", profile.links?.wiki); setFormValue("link_api", profile.links?.api);
+  state.profileLists = { stack:[...(profile.stack || [])], rules:[...(profile.rules || [])], protected_paths:[...(profile.protected_paths || [])], blocked_commands:[...(profile.blocked_commands || [])] }; renderProfileLists(); renderProfileCards();
+  document.querySelector("#profile-title").textContent = profile.name; document.querySelector("#environment-result").innerHTML = "환경 확인 버튼을 눌러 실행 가능 여부를 점검하세요."; await loadProjectHistory(id);
+}
+document.querySelector("#add-project").onclick = () => {
+  state.selectedProfileId = null; state.isNewProfile = true; profileForm().reset(); document.querySelector("#profile-empty").hidden = true; profileForm().hidden = false; document.querySelector("#delete-project").hidden = true; document.querySelector("#profile-title").textContent = "새 프로젝트";
+  setFormValue("vcs", "git"); setFormValue("default_branch", "main"); setFormValue("retry_limit", 3); profileForm().elements.enabled.checked = true; state.profileLists = {stack:[], rules:[], protected_paths:[".env"], blocked_commands:["git push","git merge","svn commit","DROP","TRUNCATE","rm -rf"]}; renderProfileLists(); renderProfileCards();
+};
+function profilePayload() { return { id:formValue("id"), name:formValue("name"), description:formValue("description"), repo_path:formValue("repo_path"), vcs:formValue("vcs"), default_branch:formValue("default_branch"), stack:state.profileLists.stack, build_command:formValue("build_command"), test_command:formValue("test_command"), working_directory:formValue("working_directory"), retry_limit:Number(formValue("retry_limit") || 3), rules:state.profileLists.rules, additional_instructions:formValue("additional_instructions"), protected_paths:state.profileLists.protected_paths, blocked_commands:state.profileLists.blocked_commands, links:{git:formValue("link_git"),issue:formValue("link_issue"),wiki:formValue("link_wiki"),api:formValue("link_api")}, enabled:profileForm().elements.enabled.checked }; }
+profileForm().addEventListener("submit", async event => { event.preventDefault(); const message = document.querySelector("#profile-message"); message.textContent = "저장 중..."; try { const url = state.isNewProfile ? "/api/project-profiles" : "/api/project-profiles/" + encodeURIComponent(state.selectedProfileId); const saved = await api(url, {method:state.isNewProfile ? "POST" : "PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(profilePayload())}); state.selectedProfileId = saved.id; state.isNewProfile = false; message.textContent = "프로젝트 설정을 저장했습니다."; await Promise.all([loadProfiles(saved.id), loadProjects()]); } catch (error) { message.textContent = error.message; } });
+document.querySelector("#delete-project").onclick = async () => { if (!state.selectedProfileId || !confirm("프로젝트를 삭제하시겠습니까? 작업 이력이 있으면 비활성화를 사용하세요.")) return; try { await api("/api/project-profiles/" + encodeURIComponent(state.selectedProfileId), {method:"DELETE"}); state.selectedProfileId = null; profileForm().hidden = true; document.querySelector("#profile-empty").hidden = false; await Promise.all([loadProfiles(), loadProjects()]); } catch (error) { document.querySelector("#profile-message").textContent = error.message; } };
+document.querySelector("#check-environment").onclick = async () => { const target = document.querySelector("#environment-result"); if (state.isNewProfile) { target.textContent = "먼저 프로젝트를 저장하세요."; return; } target.textContent = "환경을 확인하고 있습니다..."; try { const result = await api("/api/project-profiles/" + encodeURIComponent(state.selectedProfileId) + "/check", {method:"POST"}); target.className = "check-result " + (result.available ? "available" : "unavailable"); target.innerHTML = "<strong>" + (result.available ? "✓ 프로젝트 사용 가능" : "! 환경 확인 필요") + "</strong>" + result.checks.map(check => "<span class=\"" + (check.ok ? "ok" : "fail") + "\">" + (check.ok ? "✓ " : "× ") + escapeHtml(check.label) + (check.detail ? " · " + escapeHtml(check.detail) : "") + "</span>").join(""); } catch (error) { target.textContent = error.message; } };
+async function loadProjectHistory(id) { const rows = await api("/api/project-profiles/" + encodeURIComponent(id) + "/history"); document.querySelector("#project-history").innerHTML = rows.length ? rows.map(task => "<button type=\"button\" data-task-id=\"" + task.id + "\"><time>" + escapeHtml(new Date(task.created_at).toLocaleDateString("ko-KR")) + "</time><strong>" + escapeHtml(firstRequirementLine(task.requirement)) + "</strong>" + statusBadge(task.status) + "</button>").join("") : "<p class=\"muted\">작업 이력이 없습니다.</p>"; document.querySelectorAll("#project-history [data-task-id]").forEach(button => button.onclick = async () => { showView("dashboard"); await selectTask(button.dataset.taskId); }); }
+document.querySelectorAll(".profile-tabs button").forEach(button => button.onclick = () => { document.querySelectorAll(".profile-tabs button").forEach(item => item.classList.toggle("active", item === button)); document.querySelectorAll(".profile-tab").forEach(panel => panel.classList.toggle("active", panel.dataset.panel === button.dataset.tab)); });
+document.querySelector("#project-search").addEventListener("input", renderProfileCards); document.querySelector("#project-filter").addEventListener("change", renderProfileCards);
+if (location.hash === "#projects") showView("projects");

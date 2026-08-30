@@ -9,6 +9,7 @@ from app.database import Database
 from app.dev_worker import DevWorker
 from app.models import TaskStatus
 from app.project_manager import ProjectManager
+from app.project_manager import ProfileError
 
 
 class FakeCodex:
@@ -32,6 +33,13 @@ class FailingCodex:
 class MustNotBuild:
     def run(self, *args, **kwargs):
         raise AssertionError("Build/Test must not execute when Codex failed")
+
+
+class ProtectedPathCodex:
+    def run(self, task_id, workspace, prompt, callback, cancel_event):
+        (workspace / "deploy").mkdir(exist_ok=True)
+        (workspace / "deploy" / "prod.yml").write_text("unsafe", encoding="utf-8")
+        return CommandResult(0, "modified protected path")
 
 
 class CoreTests(unittest.TestCase):
@@ -115,6 +123,42 @@ protected_paths:
         self.assertEqual(DevWorker._user_event_from_output("apply patch: completed"),
                          ("CODEX_EDITING", "코드 수정을 진행하고 있습니다."))
         self.assertIsNone(DevWorker._user_event_from_output("model reasoning token count: 99"))
+
+    def test_profile_crud_and_disabled_projects(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); profiles = root / "profiles"; profiles.mkdir()
+            manager = ProjectManager(profiles, root / "workspace")
+            payload = {"id":"demo", "name":"Demo", "description":"Managed profile", "repo_path":str(root / "repo"),
+                       "vcs":"git", "default_branch":"main", "stack":["Python"], "build_command":"python -m compileall .",
+                       "test_command":"python -m unittest", "retry_limit":2, "rules":["Keep scope small."],
+                       "protected_paths":[".env"], "blocked_commands":["git push"], "enabled":False}
+            saved = manager.save_profile(payload)
+            self.assertFalse(saved.enabled)
+            self.assertEqual(saved.description, "Managed profile")
+            with self.assertRaises(ProfileError):
+                manager.save_profile(payload)
+            payload["name"] = "Updated Demo"; payload["enabled"] = True
+            self.assertEqual(manager.save_profile(payload, "demo").name, "Updated Demo")
+
+    def test_blocked_command_is_rejected_before_execution(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); repo = self._make_repo(root); profiles = root / "profiles"; self._write_profile(profiles, repo)
+            path = profiles / "demo_profile.yaml"
+            path.write_text(path.read_text(encoding="utf-8") + "blocked_commands:\n  - git push\n", encoding="utf-8")
+            manager = ProjectManager(profiles, root / "workspace"); profile = manager.load_profile("demo")
+            with self.assertRaises(ProfileError):
+                manager.validate_command(profile, "git push origin main")
+
+    def test_protected_change_stops_before_build(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); repo = self._make_repo(root); profiles = root / "profiles"; self._write_profile(profiles, repo)
+            worker = DevWorker(Database(root / "data" / "tasks.db"), ProjectManager(profiles, root / "workspace"),
+                               ProtectedPathCodex(), MustNotBuild(), root / "reports")
+            task = worker.create_task("demo", "Attempt protected change")
+            worker._run(task["id"], threading.Event())
+            finished = worker.get_task(task["id"])
+            self.assertEqual(finished["status"], TaskStatus.FAILED_NEEDS_HUMAN.value)
+            self.assertIn("protected path modified", finished["error_summary"])
 
 
 if __name__ == "__main__":

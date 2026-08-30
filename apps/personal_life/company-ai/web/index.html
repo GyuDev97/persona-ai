@@ -3,15 +3,15 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Company AI · Dev Worker</title>
+    <title>Dev Worker</title>
     <link rel="stylesheet" href="/static/style.css">
   </head>
   <body>
     <div class="dashboard-shell">
       <aside class="sidebar" aria-label="주 메뉴">
-        <div class="brand"><p>COMPANY AI</p><strong>Dev Worker</strong><span>개발이 더 쉬워지는<br>AI 작업 파트너</span><em>v1.0.0</em></div>
+        <div class="brand"><strong>Dev Worker</strong><span>내 개인 개발팀<em>v1.0.0</em></div>
         <nav class="side-nav">
-          <a class="active" href="#dashboard">⌂ <span>대시보드</span></a><a href="#new-task">＋ <span>새 작업</span></a><a href="#recent-tasks">◷ <span>작업 이력</span></a><a href="#new-task">▣ <span>프로젝트 관리</span></a><a href="#task-summary">▤ <span>보고서</span></a><a href="#system-status">⚙ <span>설정</span></a>
+          <a class="active" data-view="dashboard" href="#dashboard">⌂ <span>대시보드</span></a><a data-view="dashboard" href="#new-task">＋ <span>새 작업</span></a><a data-view="dashboard" href="#recent-tasks">◷ <span>작업 이력</span></a><a data-view="projects" href="#projects">▣ <span>프로젝트 관리</span></a><a data-view="dashboard" href="#task-summary">▤ <span>보고서</span></a><a href="#system-status">⚙ <span>설정</span></a>
         </nav>
         <section id="system-status" class="system-status" aria-label="시스템 상태"><strong><i></i> 시스템 정상 작동 중</strong><span>API 서버 <b>정상</b></span><span>Codex 연결 <b>정상</b></span><span>Git 환경 <b>정상</b></span><span>빌드 도구 <b>정상</b></span></section>
       </aside>
@@ -32,6 +32,36 @@
           <section id="task-summary" class="card task-summary-card" aria-labelledby="summary-title"><div class="detail-heading"><div><p class="eyebrow">TASK SUMMARY</p><h2 id="summary-title">작업 요약</h2></div><button id="cancel" class="secondary" hidden>작업 취소</button></div><div id="detail-empty" class="empty-state">최근 작업을 선택하면 요구사항, 결과와 보고서를 표시합니다.</div><div id="task-detail" hidden></div></section>
           <section class="card activity-card" aria-labelledby="activity-title"><div class="card-heading"><div><p class="eyebrow">ACTIVITY</p><h2 id="activity-title">실시간 작업 로그</h2></div><button id="show-raw-log" class="secondary compact" type="button" hidden>전체 로그 보기</button></div><ol id="event-log" class="event-log"><li class="muted">작업을 선택하면 사용자용 진행 로그를 표시합니다.</li></ol></section>
         </section>
+      </main>
+      <main id="projects" class="projects-main" hidden>
+        <header class="topbar project-topbar"><div><p class="eyebrow">PROJECT PROFILE</p><h1>프로젝트 관리</h1><p>Dev Worker가 프로젝트를 다루는 환경과 안전 규칙을 관리합니다.</p></div><time class="project-clock"></time></header>
+        <div class="project-layout">
+          <aside class="project-list-panel card">
+            <div class="card-heading"><div><h2>프로젝트 목록</h2><small id="project-count">0개</small></div><button id="add-project" class="compact">＋ 프로젝트 추가</button></div>
+            <input id="project-search" class="profile-input" type="search" placeholder="프로젝트명, 기술스택, 설명 검색">
+            <select id="project-filter" class="profile-input"><option value="all">전체 상태</option><option value="enabled">사용 중</option><option value="disabled">비활성</option></select>
+            <div id="profile-list" class="profile-list"></div>
+          </aside>
+          <section class="project-detail-panel">
+            <div id="profile-empty" class="card empty-state">프로젝트를 선택하거나 새 프로젝트를 추가하세요.</div>
+            <form id="profile-form" hidden>
+              <section class="card profile-toolbar"><div><p class="eyebrow">PROJECT SETTINGS</p><h2 id="profile-title">프로젝트 상세 설정</h2></div><div><button id="check-environment" type="button" class="secondary">환경 확인</button><button type="submit">저장</button><button id="delete-project" type="button" class="danger-button">삭제</button></div></section>
+              <nav class="profile-tabs" aria-label="프로젝트 설정"><button type="button" data-tab="basic" class="active">기본 정보</button><button type="button" data-tab="environment">개발 환경</button><button type="button" data-tab="rules">작업 규칙</button><button type="button" data-tab="protection">보호 설정</button><button type="button" data-tab="links">연동 정보</button><button type="button" data-tab="history">히스토리</button></nav>
+              <div class="profile-content">
+                <section class="profile-tab active" data-panel="basic">
+                  <article class="card settings-card"><h3>기본 정보</h3><div class="settings-grid"><label>프로젝트명 *<input name="name" required></label><label>프로젝트 ID *<input name="id" required pattern="[A-Za-z0-9][A-Za-z0-9_-]{1,99}"></label><label class="wide">프로젝트 설명<textarea name="description" rows="3"></textarea></label><label class="wide">Repository 경로 *<input name="repo_path" required></label><label>버전 관리<select name="vcs"><option value="git">Git</option><option value="svn">SVN</option><option value="none">없음</option></select></label><label>기본 Branch<input name="default_branch" value="main"></label><label class="toggle-label"><input name="enabled" type="checkbox" checked> 프로젝트 사용 중</label></div></article>
+                  <article class="card settings-card"><h3>기술 스택</h3><div id="stack-tags" class="editable-tags"></div><div class="inline-add"><input id="stack-input" placeholder="예: Java"><button id="add-stack" type="button" class="secondary">＋ 기술 추가</button></div></article>
+                </section>
+                <section class="profile-tab" data-panel="environment"><article class="card settings-card"><h3>빌드 / 테스트 설정</h3><div class="settings-grid"><label class="wide">Build Command<input name="build_command"></label><label class="wide">Test Command<input name="test_command"></label><label class="wide">Working Directory<input name="working_directory" placeholder="비워두면 Repository 루트"></label><label>최대 재시도 횟수<input name="retry_limit" type="number" min="1" max="3" value="3"></label></div></article><article class="card settings-card"><h3>환경 확인 결과</h3><div id="environment-result" class="check-result muted">환경 확인 버튼을 눌러 실행 가능 여부를 점검하세요.</div></article></section>
+                <section class="profile-tab" data-panel="rules"><article class="card settings-card"><h3>프로젝트 작업 규칙</h3><div id="rule-tags" class="editable-list"></div><div class="inline-add"><input id="rule-input" placeholder="규칙 입력"><button id="add-rule" type="button" class="secondary">＋ 규칙 추가</button></div><label>추가 지침<textarea name="additional_instructions" rows="8"></textarea></label></article></section>
+                <section class="profile-tab" data-panel="protection"><div class="settings-columns"><article class="card settings-card"><h3>보호 경로</h3><div id="protected-tags" class="editable-list"></div><div class="inline-add"><input id="protected-input" placeholder="config/prod/**"><button id="add-protected" type="button" class="secondary">＋ 경로 추가</button></div></article><article class="card settings-card"><h3>금지 명령</h3><div id="blocked-tags" class="editable-list danger-list"></div><div class="inline-add"><input id="blocked-input" placeholder="git push"><button id="add-blocked" type="button" class="secondary">＋ 명령 추가</button></div></article></div></section>
+                <section class="profile-tab" data-panel="links"><article class="card settings-card"><h3>관련 링크</h3><div class="settings-grid"><label>Git Repository<input name="link_git"></label><label>Issue Tracker<input name="link_issue"></label><label>Project Wiki<input name="link_wiki"></label><label>API 문서<input name="link_api"></label></div></article></section>
+                <section class="profile-tab" data-panel="history"><article class="card settings-card"><h3>최근 Dev Worker 작업</h3><div id="project-history" class="project-history muted">저장된 프로젝트의 작업 이력이 표시됩니다.</div></article></section>
+              </div>
+              <p id="profile-message" class="message" aria-live="polite"></p>
+            </form>
+          </section>
+        </div>
       </main>
     </div>
     <script src="/static/app.js"></script>

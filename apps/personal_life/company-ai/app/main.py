@@ -4,7 +4,7 @@ import asyncio
 import json
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -12,7 +12,7 @@ from .build_runner import BuildRunner
 from .codex_runner import CodexRunner
 from .database import Database
 from .dev_worker import DevWorker
-from .models import ProjectSummary, TaskCreateRequest, TaskDetail, TaskSummary
+from .models import ProjectProfileRequest, ProjectSummary, TaskCreateRequest, TaskDetail, TaskSummary
 from .project_manager import ProfileError, ProjectManager
 
 
@@ -37,7 +37,66 @@ def health() -> dict[str, str]:
 
 @app.get("/api/projects", response_model=list[ProjectSummary])
 def list_projects():
-    return [ProjectSummary(id=p.id, name=p.name, stack=p.stack, retry_limit=p.retry_limit) for p in projects.list_profiles()]
+    return [ProjectSummary(id=p.id, name=p.name, description=p.description, repo_path=str(p.repo_path), stack=p.stack,
+                           retry_limit=p.retry_limit, enabled=p.enabled, updated_at=p.updated_at) for p in projects.list_profiles() if p.enabled]
+
+
+def profile_payload(profile):
+    return {key: (str(value) if isinstance(value, Path) else value) for key, value in profile.__dict__.items()}
+
+
+@app.get("/api/project-profiles")
+def list_project_profiles():
+    return [profile_payload(profile) for profile in projects.list_profiles()]
+
+
+@app.get("/api/project-profiles/{project_id}")
+def get_project_profile(project_id: str):
+    try:
+        return profile_payload(projects.load_profile(project_id))
+    except ProfileError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/api/project-profiles", status_code=201)
+def create_project_profile(request: ProjectProfileRequest):
+    try:
+        return profile_payload(projects.save_profile(request.model_dump()))
+    except ProfileError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@app.put("/api/project-profiles/{project_id}")
+def update_project_profile(project_id: str, request: ProjectProfileRequest):
+    try:
+        projects.load_profile(project_id)
+        return profile_payload(projects.save_profile(request.model_dump(), project_id))
+    except ProfileError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.delete("/api/project-profiles/{project_id}", status_code=204)
+def delete_project_profile(project_id: str):
+    if db.fetchone("SELECT 1 FROM tasks WHERE project_id = ? LIMIT 1", (project_id,)):
+        raise HTTPException(status_code=409, detail="작업 이력이 있는 프로젝트는 삭제할 수 없습니다. 비활성화하세요.")
+    try:
+        projects.delete_profile(project_id)
+    except ProfileError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return Response(status_code=204)
+
+
+@app.post("/api/project-profiles/{project_id}/check")
+def check_project_environment(project_id: str):
+    try:
+        return projects.check_environment(project_id)
+    except ProfileError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.get("/api/project-profiles/{project_id}/history")
+def project_history(project_id: str):
+    return worker.list_tasks_by_project(project_id)
 
 
 @app.post("/api/tasks", response_model=TaskSummary, status_code=202)

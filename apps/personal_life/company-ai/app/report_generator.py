@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import subprocess
 from datetime import datetime
+from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
@@ -22,8 +23,11 @@ def diff_summary(workspace: Path) -> str:
 
 
 def protected_changes(workspace: Path, protected_paths: list[str]) -> list[str]:
-    names = _git_output(workspace, "diff", "--name-only").splitlines()
-    return [name for name in names if any(name == path or name.startswith(f"{path}/") for path in protected_paths)]
+    names = [line[3:].replace("\\", "/") for line in _git_output(workspace, "status", "--short", "--untracked-files=all").splitlines() if len(line) > 3]
+    def matches(name: str, pattern: str) -> bool:
+        normalized = pattern.replace("\\", "/").strip("/")
+        return name == normalized or name.startswith(f"{normalized}/") or fnmatch(name, normalized)
+    return [name for name in names if any(matches(name, path) for path in protected_paths)]
 
 
 def generate_report(task: dict[str, Any], profile_name: str, attempts: list[dict[str, Any]], workspace: Path | None,
