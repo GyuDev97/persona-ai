@@ -10,6 +10,7 @@ import uuid
 import urllib.error
 import urllib.parse
 import urllib.request
+
 import webbrowser
 from collections import deque
 from datetime import datetime
@@ -44,6 +45,7 @@ FOLLOWUP_VOICE_THRESHOLD = float(os.getenv("GYUVIS_FOLLOWUP_VOICE_THRESHOLD", "0
 COOLDOWN_SECONDS = float(os.getenv("GYUVIS_WAKE_COOLDOWN_SECONDS", "2.2"))
 VOICE_ONLY_WAKE = os.getenv("GYUVIS_VOICE_ONLY_WAKE", "1") == "1"
 SERVER_URL = os.getenv("GYUVIS_SERVER_URL", "http://127.0.0.1:8000").rstrip("/")
+CONTEXT_OVERLAY_URL = os.getenv("GYUVIS_CONTEXT_OVERLAY_URL", "http://127.0.0.1:8766/context-card")
 NCS_PLAYLIST_URL = os.getenv(
     "GYUVIS_NCS_PLAYLIST_URL",
     "https://www.youtube.com/watch?v=K4DyBUG242c&list=PLRBp0Fe2Gpgn8Y9qI-p0aTxVtw8onBSFj",
@@ -56,7 +58,7 @@ DEBUG_AUDIO = os.getenv("GYUVIS_DEBUG_AUDIO", "0") == "1"
 # Keep an environment override for USB/headset microphones.
 INPUT_DEVICE_SETTING = os.getenv("GYUVIS_INPUT_DEVICE", "mme-default").strip()
 STAY_AWAKE_AFTER_WAKE = os.getenv("GYUVIS_STAY_AWAKE", "1") == "1"
-OPEN_JARVIS_HUD_ON_WAKE = os.getenv("GYUVIS_OPEN_JARVIS_HUD", "1") == "1"
+OPEN_JARVIS_HUD_ON_WAKE = os.getenv("GYUVIS_OPEN_JARVIS_HUD", "0") == "1"
 JARVIS_HUD_COOLDOWN_SECONDS = float(os.getenv("GYUVIS_JARVIS_HUD_COOLDOWN_SECONDS", "15"))
 VOICE_WAKE_TARGET = os.getenv("GYUVIS_VOICE_WAKE_TARGET", "일어나")
 WAKE_PHRASES = tuple(
@@ -270,7 +272,7 @@ class GyuvisWakeListener:
             return
 
         self._cooldown_until = time.monotonic() + COOLDOWN_SECONDS
-        self._launch_hud_if_needed()
+        self._publish_context_overlay("listening", transcript=wake_text)
         self._speak(self._build_wake_greeting())
         if STAY_AWAKE_AFTER_WAKE:
             self._stay_awake = True
@@ -297,7 +299,7 @@ class GyuvisWakeListener:
             self._speak("호출어가 맞지 않습니다.")
             return
 
-        self._launch_hud_if_needed()
+        self._publish_context_overlay("listening", transcript=wake_text)
         self._speak(self._build_wake_greeting())
         if STAY_AWAKE_AFTER_WAKE:
             self._stay_awake = True
@@ -319,6 +321,7 @@ class GyuvisWakeListener:
 
         self._log(f"추가 명령: {command_text}")
         self._publish_subtitle(input_text=command_text)
+        self._publish_context_overlay("analyzing", transcript=command_text)
         if self._looks_like_sleep_phrase(command_text):
             self._stay_awake = False
             self._pending_briefing_period = None
@@ -356,6 +359,7 @@ class GyuvisWakeListener:
             self._pending_briefing_period = None
 
         if SEND_FOLLOWUP_TO_SERVER:
+            self._speak(self._build_followup_acknowledgement(command_text))
             response_text = self._send_followup_to_server(command_text)
             if response_text:
                 self._speak(response_text)
@@ -371,7 +375,29 @@ class GyuvisWakeListener:
 
         if current_hour < 12:
             self._pending_briefing_period = "morning"
-            return MORNING_GREETING
+        return MORNING_GREETING
+
+    def _build_followup_acknowledgement(self, text: str) -> str:
+        """Give immediate voice feedback before a server-backed investigation.
+
+        Explicit local commands already speak their own acknowledgements before
+        this fallback path, so this method only covers the natural-language
+        follow-up that is about to be sent to the API.
+        """
+        normalized = " ".join(str(text or "").split()).strip(" ?!.~")
+        if "은하수" in normalized:
+            return "네 보스. 오늘 은하수 촬영 조건을 알아보겠습니다."
+        if "날씨" in normalized:
+            return "네 보스. 날씨 정보를 알아보겠습니다."
+        if not normalized:
+            return "네 보스. 알아보겠습니다."
+        for ending in ("알려줘", "알려 주", "해줘", "해 주", "어때", "봐줘", "봐 주"):
+            if normalized.endswith(ending):
+                normalized = normalized[:-len(ending)].strip()
+                break
+        if len(normalized) > 42:
+            normalized = normalized[:42].rstrip()
+        return f"네 보스. {normalized} 알아보겠습니다."
         if current_hour < EVENING_START_HOUR:
             self._pending_briefing_period = "afternoon"
             return AFTERNOON_GREETING
@@ -1262,6 +1288,30 @@ class GyuvisWakeListener:
                 return str(detail.get("error_message") or "작업 처리 중 오류가 발생했습니다.")
 
         return summary or "작업을 시작했습니다. 결과 확인에 조금 더 시간이 필요합니다."
+
+    def _publish_context_overlay(self, state: str, *, transcript: str = "") -> None:
+        """Emit transient UI state locally; a missing overlay never delays voice flow."""
+        try:
+            payload = json.dumps(
+                {
+                    "type": "ambient_state",
+                    "state": state,
+                    "title": "듣고 있어요..." if state == "listening" else "조사 중입니다...",
+                    "transcript": transcript,
+                    "steps": ["날씨 정보 확인", "천문 데이터 조회", "촬영 조건 분석", "결과 정리"],
+                },
+                ensure_ascii=False,
+            ).encode("utf-8")
+            request = urllib.request.Request(
+                CONTEXT_OVERLAY_URL,
+                data=payload,
+                headers={"Content-Type": "application/json; charset=utf-8"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=0.35):
+                pass
+        except (urllib.error.URLError, TimeoutError, OSError):
+            return
 
     def _remember_followup_action(self, task_type: str, result_summary: str) -> None:
         if task_type == "agent2_it_blog_draft" and "글쓰기 화면" in result_summary and "입력" in result_summary:

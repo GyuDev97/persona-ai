@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "spots": [
+    {
+      "id": "cheongoksan-yukbaekmajigi",
+      "name": "청옥산 육백마지기",
+      "region": "강원특별자치도 평창군 미탄면",
+      "latitude": 37.3746488547,
+      "longitude": 128.4905563972,
+      "timezone": "Asia/Seoul",
+      "coordinate_status": "public_source"
+    },
+    {
+      "id": "yeongwol-jeopsan-paragliding",
+      "name": "영월 접산활공장",
+      "region": "강원특별자치도 영월군",
+      "latitude": 37.2657382,
+      "longitude": 128.4891374,
+      "timezone": "Asia/Seoul",
+      "coordinate_status": "coordinate_confirmation_required",
+      "coordinate_note": "실제 활공장 촬영 포인트 좌표 확인 필요. 임의 산 좌표는 사용하지 않습니다."
+    },
+    {
+      "id": "bakdalgogae-observatory",
+      "name": "박달고치전망대",
+      "region": "강원특별자치도 인제군 인제읍 원대리 산75-34",
+      "latitude": 38.0278664,
+      "longitude": 128.2017636,
+      "timezone": "Asia/Seoul",
+      "coordinate_status": "address_verified_coordinate_required"
+    },
+    {
+      "id": "dorongi-pond",
+      "name": "도롱이연못",
+      "region": "강원특별자치도 정선군 사북읍",
+      "latitude": 37.197326,
+      "longitude": 128.81451,
+      "timezone": "Asia/Seoul",
+      "coordinate_status": "public_source"
+    },
+    {
+      "id": "manhangjae",
+      "name": "만항재",
+      "region": "강원특별자치도 정선군",
+      "latitude": 37.1486104591,
+      "longitude": 128.8990321114,
+      "timezone": "Asia/Seoul",
+      "coordinate_status": "public_source"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "weather_weight": 0.55,
+  "astronomy_weight": 0.45,
+  "minimum_galactic_center_altitude_degrees": 10,
+  "good_galactic_center_altitude_degrees": 20,
+  "maximum_recommended_cloud_percent": 50,
+  "maximum_recommended_rain_percent": 20,
+  "allow_medium_moon_impact": true,
+  "moon_low_illumination_percent": 25,
+  "moon_medium_illumination_percent": 55,
+  "moon_low_altitude_degrees": 8,
+  "moon_high_altitude_degrees": 25,
+  "astronomy_score": {
+    "darkness_points": 25,
+    "good_galactic_center_points": 30,
+    "minimum_galactic_center_points": 20,
+    "two_hour_visibility_points": 20,
+    "one_hour_visibility_points": 12,
+    "short_visibility_points": 4,
+    "low_moon_impact_points": 25,
+    "medium_moon_impact_points": 15,
+    "high_moon_impact_points": 0
+  }
+}

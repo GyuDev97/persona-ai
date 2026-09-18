@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -147,11 +147,80 @@ class NaturalCommandCreate(BaseModel):
 
 class NaturalCommandResponse(BaseModel):
     text: str
-    interpreted_as: Literal["task", "schedule", "capture", "answer", "desktop_action", "briefing"]
+    interpreted_as: Literal["task", "schedule", "capture", "answer", "desktop_action", "briefing", "night_sky", "night_sky_comparison"]
     summary: str
     created_id: int
     created_type: str
     reminder_id: int | None = None
+    context_data: dict[str, Any] | None = None
+
+
+class NightSkyCheckRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=500)
+    location: str | None = Field(default=None, max_length=200)
+
+
+class NightSkyBriefingData(BaseModel):
+    title: str
+    summary: str
+    score: int | None = Field(default=None, ge=0, le=100)
+    grade: Literal["good", "fair", "poor", "unknown"]
+    best_time: str | None = None
+    location: dict[str, Any]
+    weather: dict[str, Any]
+    moon: dict[str, Any]
+    astronomy: dict[str, Any] = Field(default_factory=dict)
+    hourly: list[dict[str, Any]] = []
+    # Scores are deliberately separated: a forecast-derived weather score is
+    # useful immediately, while an overall suitability score is only valid
+    # after the required astronomy inputs have been calculated.
+    score_breakdown: dict[str, Any] = Field(default_factory=dict)
+    scoring_confidence: dict[str, Any] = Field(default_factory=dict)
+    reasons: list[str]
+    warnings: list[str]
+    actions: list[dict[str, str]]
+    source_errors: list[str] = []
+
+
+class NightSkyCheckResponse(BaseModel):
+    success: bool
+    type: Literal["night_sky_briefing"] = "night_sky_briefing"
+    data: NightSkyBriefingData
+    speech: str
+
+
+class NightSkyComparisonRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=500)
+
+
+class FavoriteObservationSpotResponse(BaseModel):
+    id: str
+    name: str
+    region: str
+    latitude: float | None = None
+    longitude: float | None = None
+    timezone: str = "Asia/Seoul"
+    coordinate_status: Literal["ready", "requires_confirmation"]
+    coordinate_note: str | None = None
+
+
+class NightSkyComparisonSpotResponse(BaseModel):
+    spot: FavoriteObservationSpotResponse
+    available: bool
+    recommended: bool = False
+    data: NightSkyBriefingData | None = None
+    error_message: str | None = None
+
+
+class NightSkySpotComparisonResponse(BaseModel):
+    success: bool
+    type: Literal["night_sky_spot_comparison"] = "night_sky_spot_comparison"
+    checked_at: datetime
+    query: str
+    summary: str
+    good_count: int
+    available_count: int
+    spots: list[NightSkyComparisonSpotResponse]
 
 
 class AssistantStatusResponse(BaseModel):

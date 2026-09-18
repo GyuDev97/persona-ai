@@ -20,6 +20,9 @@ from .conversation_service import log_conversation
 from .desktop_action_service import maybe_run_desktop_action
 from .finance_service import build_finance_briefing
 from .memory_service import list_memory_highlights
+from .context_overlay_service import check_night_sky_comparison_with_overlay, check_night_sky_with_overlay
+from .favorite_observation_spot_service import find_favorite_observation_spot
+from .night_sky_service import is_night_sky_comparison_query, is_night_sky_query
 from .reminder_service import create_reminder
 from .schedule_service import create_schedule
 from .task_service import create_task
@@ -49,6 +52,39 @@ def process_natural_command(payload: NaturalCommandCreate) -> NaturalCommandResp
     log_conversation("user", stripped)
     intent = classify_natural_intent(stripped)
     print(f"[natural] text={stripped!r} intent={intent}")
+
+    favorite_spot = find_favorite_observation_spot(stripped) if is_night_sky_query(stripped) else None
+    if favorite_spot is not None:
+        briefing = check_night_sky_with_overlay(
+            query=stripped,
+            location=favorite_spot.name,
+            favorite_spot=favorite_spot,
+        )
+        response = NaturalCommandResponse(
+            text=payload.text,
+            interpreted_as="night_sky",
+            summary=briefing.speech,
+            created_id=0,
+            created_type="night_sky_briefing",
+            reminder_id=None,
+            context_data=briefing.model_dump(mode="json"),
+        )
+        log_conversation("assistant", response.summary)
+        return response
+
+    if is_night_sky_comparison_query(stripped):
+        comparison = check_night_sky_comparison_with_overlay(query=stripped)
+        response = NaturalCommandResponse(
+            text=payload.text,
+            interpreted_as="night_sky_comparison",
+            summary=comparison.summary,
+            created_id=0,
+            created_type="night_sky_spot_comparison",
+            reminder_id=None,
+            context_data=comparison.model_dump(mode="json"),
+        )
+        log_conversation("assistant", response.summary)
+        return response
 
     if _looks_like_intro_request(stripped):
         response = NaturalCommandResponse(

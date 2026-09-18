@@ -19,7 +19,7 @@ def create_agent_task(
         INSERT INTO agent_tasks (source, command_text, task_type, search_query, status, result_payload)
         VALUES (?, ?, ?, ?, 'pending', ?)
         """,
-        (source, command_text, task_type, search_query, json.dumps(payload or {}, ensure_ascii=False)),
+        (source, command_text, task_type, search_query, _serialize_payload(payload)),
     )
     return get_agent_task(task_id)
 
@@ -95,7 +95,7 @@ def complete_agent_task(task_id: int, summary: str, payload: dict | None = None)
             error_message = NULL
         WHERE id = ?
         """,
-        (_timestamp_now(), summary, json.dumps(payload or {}, ensure_ascii=False), task_id),
+        (_timestamp_now(), summary, _serialize_payload(payload), task_id),
     )
     return get_agent_task(task_id)
 
@@ -141,3 +141,8 @@ def _adapt(query: str) -> str:
 
 def _timestamp_now() -> str:
     return datetime.now().replace(microsecond=0).isoformat(sep=" ")
+
+
+def _serialize_payload(payload: dict | None) -> str:
+    """Task results may contain DB-driver datetime instances on MariaDB."""
+    return json.dumps(payload or {}, ensure_ascii=False, default=str)

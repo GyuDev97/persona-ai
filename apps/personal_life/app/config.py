@@ -11,6 +11,9 @@ ENV_PATH = APP_ROOT / ".env"
 class Settings:
     openai_api_key: str | None
     openai_model: str
+    default_observation_location: str
+    night_sky_http_timeout_seconds: float
+    night_sky_use_llm_summary: bool
     db_backend: str
     db_host: str
     db_port: int
@@ -42,6 +45,9 @@ def get_settings() -> Settings:
     return Settings(
         openai_api_key=os.getenv("OPENAI_API_KEY"),
         openai_model=os.getenv("OPENAI_MODEL", "gpt-5-mini"),
+        default_observation_location=os.getenv("DEFAULT_OBSERVATION_LOCATION", "Seoul, South Korea"),
+        night_sky_http_timeout_seconds=float(os.getenv("NIGHT_SKY_HTTP_TIMEOUT_SECONDS", "8")),
+        night_sky_use_llm_summary=os.getenv("NIGHT_SKY_USE_LLM_SUMMARY", "0") == "1",
         db_backend=os.getenv("DB_BACKEND", "sqlite").lower(),
         db_host=os.getenv("DB_HOST", "127.0.0.1"),
         db_port=int(os.getenv("DB_PORT", "3306")),

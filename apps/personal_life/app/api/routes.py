@@ -20,6 +20,10 @@ from ..domain.schemas import (
     MobileAssistantCommandResponse,
     NaturalCommandCreate,
     NaturalCommandResponse,
+    NightSkyComparisonRequest,
+    NightSkyCheckRequest,
+    NightSkyCheckResponse,
+    NightSkySpotComparisonResponse,
     ProfileMemoryImportRequest,
     ProfileMemoryImportResponse,
     ProfileMemoryRecord,
@@ -79,6 +83,12 @@ from ..services.dev_planner_service import (
 from ..services.memory_service import import_profile_yaml, list_profile_memories
 from ..services.mobile_assistant_service import process_mobile_assistant_command
 from ..services.natural_language_service import process_natural_command
+from ..services.context_overlay_service import (
+    check_night_sky_comparison_with_overlay,
+    check_night_sky_with_overlay,
+    publish_test_night_sky_comparison_overlay,
+    publish_test_night_sky_overlay,
+)
 from ..services.reminder_service import list_reminders
 from ..services.routine_service import create_routine, create_routine_checkin, list_routines
 from ..services.schedule_service import create_schedule, list_schedules
@@ -319,6 +329,30 @@ def get_evening_briefing() -> BriefingDigestResponse:
 @router.post("/commands/natural", response_model=NaturalCommandResponse)
 def post_natural_command(payload: NaturalCommandCreate) -> NaturalCommandResponse:
     return process_natural_command(payload)
+
+
+@router.post("/assistant/night-sky/check", response_model=NightSkyCheckResponse)
+def post_night_sky_check(payload: NightSkyCheckRequest) -> NightSkyCheckResponse:
+    return check_night_sky_with_overlay(query=payload.query, location=payload.location)
+
+
+@router.post("/assistant/night-sky/compare", response_model=NightSkySpotComparisonResponse)
+def post_night_sky_compare(payload: NightSkyComparisonRequest) -> NightSkySpotComparisonResponse:
+    return check_night_sky_comparison_with_overlay(query=payload.query)
+
+
+@router.post("/assistant/context-overlay/test")
+def post_context_overlay_test() -> dict[str, bool]:
+    """Send a fixed Night Sky card to a running local desktop overlay."""
+    delivered = publish_test_night_sky_overlay()
+    return {"delivered": delivered, "overlay_running": delivered}
+
+
+@router.post("/assistant/context-overlay/test-comparison")
+def post_context_overlay_comparison_test() -> dict[str, bool | str]:
+    """Send fixed UI-only rows to a running local overlay."""
+    delivered = publish_test_night_sky_comparison_overlay()
+    return {"delivered": delivered, "overlay_running": delivered, "data_source": "mock"}
 
 
 @router.post("/mobile/assistant/command", response_model=MobileAssistantCommandResponse)

@@ -6,9 +6,21 @@ from .agent_task_service import create_agent_task
 from .conversation_service import log_conversation
 from .intent_router_service import RoutedIntent, route_intent
 from .natural_language_service import classify_natural_intent, process_natural_command
+from .night_sky_service import is_night_sky_query
 
 
 def process_mobile_assistant_command(payload: MobileAssistantCommandCreate) -> MobileAssistantCommandResponse:
+    # Keep sky-photography questions on the data-backed natural-language path
+    # before general mobile routing can consume a broad phrase such as "오늘 밤".
+    if is_night_sky_query(payload.text):
+        response = process_natural_command(NaturalCommandCreate(text=payload.text))
+        return MobileAssistantCommandResponse(
+            mode="assistant_reply",
+            spoken_text=payload.text,
+            summary=response.summary,
+            task=None,
+        )
+
     routed = route_intent(payload.text)
     routed_response = _process_routed_intent(payload, routed)
     if routed_response is not None:

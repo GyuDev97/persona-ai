@@ -70,6 +70,11 @@ def _build_agent_card(agent: dict[str, Any], latest_task: dict[str, Any] | None)
             latest_summary = _build_agent1_card_summary(news_stats)
             highlights = [str(title) for title in (news_stats.get("latest_titles") or [])[:5]]
             updated_at = news_stats.get("last_collected_at") or updated_at
+            # Older Agent 01 task rows can retain the pre-fix JSON datetime
+            # failure even while the live news source is healthy. Do not present
+            # that historical serialization error as current operational state.
+            if error_message == "Object of type datetime is not JSON serializable":
+                error_message = None
         except Exception as error:
             error_message = str(error)
 

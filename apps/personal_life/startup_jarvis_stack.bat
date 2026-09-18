@@ -20,6 +20,7 @@ set "GYUVIS_EDGE_TTS_VOICE=ko-KR-InJoonNeural"
 set "GYUVIS_EDGE_TTS_RATE=+12%%"
 set "GYUVIS_EDGE_TTS_PITCH=-8Hz"
 set "GYUVIS_JARVIS_HUD_URL=http://127.0.0.1:%PORT%/gyuvis/standby-v3?boot=veil^&veil=1^&autoGesture=1^&autoPresence=1^&voiceWelcome=0"
+set "GYUVIS_OPEN_JARVIS_HUD=0"
 set "GYUVIS_HUD_AUTO_ALLOW_CAMERA=1"
 set "GYUVIS_AGENT1_START_TIME=06:00"
 set "GYUVIS_AGENT1_END_TIME=23:00"
@@ -29,8 +30,9 @@ set "GYUVIS_FOLLOWUP_MAX_RECORD_SECONDS=14"
 set "GYUVIS_FOLLOWUP_SILENCE_SECONDS=1.2"
 set "GYUVIS_FOLLOWUP_VOICE_THRESHOLD=0.018"
 set "GYUVIS_DEBUG_AUDIO=1"
-rem Use the stable MME microphone-array device, not the unreliable WDM-KS input.
-set "GYUVIS_INPUT_DEVICE=mme-default"
+rem Device 2 is the current MME microphone array.  MME's default input is a
+rem different Realtek microphone on this PC, so select the verified array explicitly.
+set "GYUVIS_INPUT_DEVICE=2"
 
 echo ===============================
 echo GyuVIS Stack Launcher
@@ -68,10 +70,13 @@ if errorlevel 1 (
 echo [2/4] Starting API server window...
 start "GyuVIS API Server" cmd /k "cd /d ""%APP_DIR%"" && %PYTHON_BOOT%python -m uvicorn main:app --reload --host 0.0.0.0 --port %PORT%"
 
-echo [3/4] Starting PC agent runner window...
+echo [3/4] Starting independent Context Overlay window...
+start "GyuVIS Context Overlay" cmd /k "cd /d ""%APP_DIR%"" && %PYTHON_BOOT%python desktop_context_overlay.py --position right --port 8766"
+
+echo [4/4] Starting PC agent runner window...
 start "GyuVIS PC Agent Runner" cmd /k "cd /d ""%APP_DIR%"" && %PYTHON_BOOT%python pc_agent_runner.py"
 
-echo [4/4] Starting PC wake listener window...
+echo [5/5] Starting PC wake listener window...
 start "GyuVIS PC Wake Listener" cmd /k "cd /d ""%APP_DIR%"" && %PYTHON_BOOT%python pc_wake_listener.py"
 
 echo.
