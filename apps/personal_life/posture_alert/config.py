@@ -63,6 +63,11 @@ class PostureSettings:
     screen_alert_pulses: int
     screen_alert_opacity: float
     screen_alert_interval_ms: int
+    session_source: str
+    session_start_detection_seconds: float
+    session_end_absence_seconds: float
+    state_debounce_seconds: float
+    analytics_timeout_seconds: float
     baseline_path: Path
 
 
@@ -91,5 +96,10 @@ def get_settings() -> PostureSettings:
         screen_alert_pulses=_int("POSTURE_SCREEN_ALERT_PULSES", 3, minimum=1),
         screen_alert_opacity=min(0.9, _float("POSTURE_SCREEN_ALERT_OPACITY", 0.55, minimum=0.1)),
         screen_alert_interval_ms=_int("POSTURE_SCREEN_ALERT_INTERVAL_MS", 170, minimum=50),
+        session_source=os.getenv("POSTURE_SESSION_SOURCE", "posture_alert").strip() or "posture_alert",
+        session_start_detection_seconds=_float("POSTURE_SESSION_START_DETECTION_SECONDS", 10.0, minimum=1.0),
+        session_end_absence_seconds=_float("POSTURE_SESSION_END_ABSENCE_SECONDS", 300.0, minimum=10.0),
+        state_debounce_seconds=_float("POSTURE_STATE_DEBOUNCE_SECONDS", 1.5, minimum=0.0),
+        analytics_timeout_seconds=_float("POSTURE_ANALYTICS_TIMEOUT_SECONDS", 3.0, minimum=1.0),
         baseline_path=BASE_DIR / "data" / "posture_baseline.json",
     )

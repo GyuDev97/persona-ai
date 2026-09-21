@@ -242,6 +242,32 @@ class PostureWarningEventCreate(BaseModel):
     duration_seconds: float = Field(ge=0, le=3600)
     score: float = Field(ge=0, le=1)
     timestamp: datetime
+    session_id: str | None = Field(default=None, min_length=8, max_length=64)
+
+
+PostureState = Literal["NORMAL", "WARNING", "BAD", "NOT_DETECTED"]
+
+
+class PostureSessionStartCreate(BaseModel):
+    session_id: str = Field(min_length=8, max_length=64)
+    source: str = Field(min_length=1, max_length=100)
+    initial_state: PostureState
+    timestamp: datetime
+
+
+class PostureStateChangeCreate(BaseModel):
+    session_id: str = Field(min_length=8, max_length=64)
+    previous_state: PostureState
+    current_state: PostureState
+    score: float = Field(ge=0, le=1)
+    timestamp: datetime
+    trigger_type: str = Field(default="state_change", min_length=1, max_length=50)
+
+
+class PostureSessionEndCreate(BaseModel):
+    session_id: str = Field(min_length=8, max_length=64)
+    timestamp: datetime
+    reason: Literal["absence", "monitor_stopped", "interrupted"] = "monitor_stopped"
 
 
 RidingEventType = Literal[

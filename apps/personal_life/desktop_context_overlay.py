@@ -11,10 +11,12 @@ import argparse
 import ctypes
 import json
 import queue
+import re
 import sys
 import threading
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import Any
 
 import tkinter as tk
@@ -36,9 +38,17 @@ BAD = "#C97979"
 DIM = "#455361"
 FONT_FAMILY = "Malgun Gothic"
 MARGIN = 34
-RESULT_TIMEOUT_MS = 12_000
-LISTENING_TIMEOUT_MS = 7_500
-ANALYZING_TIMEOUT_MS = 8_000
+
+
+def _load_ui_thresholds() -> tuple[float, float]:
+    try:
+        payload = json.loads((Path(__file__).with_name("config") / "night_sky_scoring.json").read_text(encoding="utf-8"))
+        return float(payload.get("humidity_dew_warning_percent", 85)), float(payload.get("humidity_dew_risk_percent", 90))
+    except (OSError, ValueError, TypeError):
+        return 85, 90
+
+
+HUMIDITY_WARNING_PERCENT, HUMIDITY_RISK_PERCENT = _load_ui_thresholds()
 
 
 def _grade_color(grade: str) -> str:
@@ -105,6 +115,59 @@ def _weather_icon(weather: dict[str, Any]) -> str:
     return "☁"
 
 
+def _moon_phase_display(moon: dict[str, Any], *, compact: bool = False) -> str:
+    """Render a real moon phase from the measured elongation/illumination."""
+    phase = _as_number(moon.get("phase_degrees"))
+    illumination = _as_number(moon.get("illumination_percent"))
+    if phase is None and illumination is None:
+        return "달 정보 확인 불가"
+    phase = (phase or 0) % 360
+    if phase < 22.5 or phase >= 337.5:
+        icon, label = "🌑", "신월"
+    elif phase < 67.5:
+        icon, label = "🌒", "초승"
+    elif phase < 112.5:
+        icon, label = "🌓", "상현"
+    elif phase < 157.5:
+        icon, label = "🌔", "상현 이후"
+    elif phase < 202.5:
+        icon, label = "🌕", "보름"
+    elif phase < 247.5:
+        icon, label = "🌖", "하현 이전"
+    elif phase < 292.5:
+        icon, label = "🌗", "하현"
+    else:
+        icon, label = "🌘", "그믐"
+    percent = "—" if illumination is None else f"{illumination:g}%"
+    return f"{icon} {percent}" if compact else f"{icon} {label} {percent}"
+
+
+def _as_number(value: Any) -> float | None:
+    try:
+        return float(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _humidity_note(value: Any) -> tuple[str, str]:
+    humidity = _as_number(value)
+    if humidity is None:
+        return "", TEXT_SECONDARY
+    if humidity >= HUMIDITY_RISK_PERCENT:
+        return "결로 위험 높음", BAD
+    if humidity >= HUMIDITY_WARNING_PERCENT:
+        return "결로 주의", WARNING
+    return "", TEXT_SECONDARY
+
+
+def _recommended_hours(best_time: Any) -> set[int]:
+    hours = [int(value) for value in re.findall(r"\b(\d{1,2}):\d{2}", str(best_time or ""))]
+    if len(hours) < 2:
+        return set()
+    start, end = hours[0], hours[1]
+    return set(range(start, end + 1)) if start <= end else set(range(start, 24)) | set(range(0, end + 1))
+
+
 def _wrap_overlay_text(text: Any, max_chars: int) -> list[str]:
     """Wrap Korean-friendly UI copy without letting a long token overflow."""
     words = str(text or "").split()
@@ -168,12 +231,9 @@ class ContextOverlayApp:
         self.canvas.pack()
         self.current_payload: dict[str, Any] = {}
         self.state = "idle"
-        self._hide_job: str | None = None
         self._fade_job: str | None = None
         self._analysis_job: str | None = None
         self._analysis_step = 0
-        self._remaining_ms: int | None = None
-        self._hovered = False
         self._minimized_to_taskbar = False
         self._manual_position: tuple[int, int] | None = None
         self._drag_origin: tuple[int, int, int, int] | None = None
@@ -182,8 +242,6 @@ class ContextOverlayApp:
         # available behind it.
         self._spot_detail_window: tk.Toplevel | None = None
         self._draw_idle()
-        self.canvas.bind("<Enter>", self._pause_auto_hide)
-        self.canvas.bind("<Leave>", self._resume_auto_hide)
         self.canvas.bind("<ButtonPress-1>", self._begin_drag, add="+")
         self.canvas.bind("<B1-Motion>", self._drag_overlay, add="+")
         self.canvas.bind("<ButtonRelease-1>", self._finish_drag, add="+")
@@ -228,7 +286,9 @@ class ContextOverlayApp:
 
     def hide(self) -> None:
         self._close_spot_detail()
-        self._cancel_timers()
+        if self._analysis_job:
+            self.root.after_cancel(self._analysis_job)
+            self._analysis_job = None
         self.state = "idle"
         self._draw_idle()
         self._fade_to(0.0, on_complete=self._minimize_to_taskbar)
@@ -252,7 +312,7 @@ class ContextOverlayApp:
         if payload.get("type") == "night_sky_spot_comparison":
             return "comparison_detail"
         state = str(payload.get("state") or "")
-        if state in {"listening", "analyzing", "result_good", "result_bad", "detail", "result_comparison", "comparison_detail", "comparison_spot_detail"}:
+        if state in {"listening", "analyzing", "result_good", "result_bad", "detail", "comparison_detail", "comparison_spot_detail"}:
             return state
         if payload.get("type") == "night_sky":
             return "result_good" if payload.get("grade") == "good" else "result_bad"
@@ -265,8 +325,6 @@ class ContextOverlayApp:
             self._draw_analyzing()
         elif self.state == "detail":
             self._draw_detail()
-        elif self.state == "result_comparison":
-            self._draw_comparison_result()
         elif self.state == "comparison_detail":
             self._draw_comparison_detail()
         elif self.state == "comparison_spot_detail":
@@ -339,164 +397,139 @@ class ContextOverlayApp:
         self._button(416, 286, 84, "닫기", "close")
 
     def _draw_detail(self) -> None:
-        width, height = 720, 570
+        width, height = 1_120, 760
         self._prepare_canvas(width, height)
         self._glass_card(width, height, radius=22)
         grade = str(self.current_payload.get("grade") or "unknown")
         accent = _grade_color(grade)
         weather = self.current_payload.get("weather") or {}
         moon = self.current_payload.get("moon") or {}
-        self._core(35, 31, 8, accent)
-        self._text(52, 31, "GYUVIS", size=8, color=TEXT_SECONDARY, bold=True)
-        self._text(360, 31, "은하수 촬영 조건 상세 정보", size=9, bold=True, anchor="center")
-        self._button(665, 18, 30, "×", "close")
-        self._text(30, 78, str(self.current_payload.get("title") or "오늘 밤 촬영 조건"), size=17, bold=True)
-        self._text(30, 107, f"{self.current_payload.get('best_time') or '추천 시간 확인 불가'} 사이가 가장 좋습니다.", size=10, color=TEXT_SECONDARY)
         score_breakdown = self.current_payload.get("score_breakdown") or {}
         overall_score = score_breakdown.get("overall_score")
-        displayed_score = overall_score if overall_score is not None else _weather_score(self.current_payload)
-        self._score_ring(401, 87, displayed_score, accent, label="/100" if overall_score is not None else "기상")
-        self._text(464, 70, "천문 정보", size=10, bold=True)
-        astronomy = [
-            ("일몰", _format_time(weather.get("sunset"))),
-            ("천문박명 종료", _format_time(weather.get("astronomical_twilight_end"))),
-            ("천문박명 시작", _format_time(weather.get("astronomical_twilight_start"))),
-            ("월출", _format_time(moon.get("moonrise"))),
-            ("월몰", _format_time(moon.get("moonset"))),
-            ("달 모양", self._moon_detail(moon)),
-        ]
-        for index, (label, value) in enumerate(astronomy):
-            y = 70 + index * 16
-            self._text(464, y, label, size=9, color=TEXT_SECONDARY)
-            self._text(678, y, value, size=9, anchor="e")
-        self.canvas.create_line(30, 165, 690, 165, fill="#40505F")
-        self._text(30, 191, "시간대별 예상", size=10, bold=True)
-        self._draw_timeline(30, 212, self.current_payload.get("hourly") or [], accent)
-        self._text(30, 341, "추가 정보", size=10, bold=True)
-        location = self.current_payload.get("location") or {}
+        weather_score = _weather_score(self.current_payload)
         astronomy_score = score_breakdown.get("astronomy_score")
-        confidence = score_breakdown.get("data_confidence_percent")
-        gc = (self.current_payload.get("astronomy") or {}).get("galactic_center") or {}
-        facts = [
-            ("촬영지", str(location.get("name") or "—")),
-            ("지역", str(location.get("region") or "—")),
-            ("출사 적합도", "확인 중" if overall_score is None else f"{overall_score}점"),
-            ("기상 조건", "확인 중" if _weather_score(self.current_payload) is None else f"{_weather_score(self.current_payload)}점"),
-            ("천문 조건", "확인 중" if astronomy_score is None else f"{astronomy_score}점"),
-            ("데이터 신뢰도", "확인 중" if confidence is None else f"{confidence}%"),
-            ("구름량", self._percent(weather.get("cloud_cover_percent"))),
-            ("강수확률", self._percent(weather.get("precipitation_probability_percent"))),
-            ("달 영향", self._moon_short(moon)),
-            ("달 고도", "—" if moon.get("altitude_degrees") is None else f"{moon.get('altitude_degrees')}°"),
-            ("GC 가시", f"{_format_time(gc.get('best_start'))} ~ {_format_time(gc.get('best_end'))}"),
-            ("GC 최고 고도", "—" if gc.get("max_altitude_degrees") is None else f"{gc.get('max_altitude_degrees')}°"),
+        location = self.current_payload.get("location") or {}
+        hourly = self.current_payload.get("hourly") or []
+        best_time = str(self.current_payload.get("best_time") or "추천 시간 확인 불가")
+
+        self._core(35, 31, 8, accent)
+        self._text(52, 31, "GYUVIS", size=8, color=TEXT_SECONDARY, bold=True)
+        self._text(560, 31, "촬영지 상세 정보", size=11, bold=True, anchor="center")
+        self._button(1_060, 18, 30, "×", "close")
+        self._text(30, 82, str(location.get("name") or self.current_payload.get("title") or "촬영지"), size=22, bold=True)
+        self._text(30, 111, f"⌖  {location.get('region') or '지역 정보 확인 불가'}", size=10, color=TEXT_SECONDARY)
+        self._score_ring(430, 94, overall_score if overall_score is not None else weather_score, accent, label="/100" if overall_score is not None else "기상")
+        status, status_color = _condition_status(self.current_payload)
+        self._text(485, 80, status, size=14, bold=True, color=status_color)
+        self._text(485, 104, f"기상 {weather_score if weather_score is not None else '—'} · 천문 {astronomy_score if astronomy_score is not None else '—'}", size=10, color=TEXT_SECONDARY)
+        self._rounded_rect(760, 58, 1_060, 132, 12, fill="#1C2B37", outline="#365367")
+        self._text(784, 79, _moon_phase_display(moon), size=13, bold=True)
+        self._text(784, 105, f"달 영향 {self._moon_short(moon)} · 월출 {_format_time(moon.get('moonrise'))} · 월몰 {_format_time(moon.get('moonset'))}", size=9, color=TEXT_SECONDARY)
+
+        self._rounded_rect(30, 151, 1_060, 198, 10, fill="#173241", outline="#39647B")
+        self._text(52, 174, "◷  추천 촬영 시간", size=11, bold=True)
+        self._text(240, 174, best_time, size=16, bold=True, color=TEXT_PRIMARY)
+        self._text(720, 174, "달빛·구름·은하수 중심 고도를 함께 반영", size=9, color=TEXT_SECONDARY)
+
+        tiles = [
+            ("온도", self._temperature(weather), "🌡", TEXT_PRIMARY),
+            ("습도", self._percent(weather.get("humidity_percent")), "💧", WARNING if _as_number(weather.get("humidity_percent")) and _as_number(weather.get("humidity_percent")) >= HUMIDITY_WARNING_PERCENT else TEXT_PRIMARY),
+            ("구름량", self._percent(weather.get("cloud_cover_percent")), "☁", TEXT_PRIMARY),
+            ("강수확률", self._percent(weather.get("precipitation_probability_percent")), "🌧", TEXT_PRIMARY),
+            ("기상 점수", "—" if weather_score is None else f"{weather_score}", "★", GOOD),
+            ("천문 점수", "—" if astronomy_score is None else f"{astronomy_score}", "✦", WARNING),
         ]
-        for index, (label, value) in enumerate(facts):
-            column = index % 2
-            row = index // 2
-            x, y = 30 + column * 220, 363 + row * 27
-            self._text(x, y, label, size=9, color=TEXT_SECONDARY)
-            self._text(x + 175, y, value, size=9, anchor="e")
-        self._text(490, 341, "판단", size=10, bold=True)
+        for index, (label, value, icon, color) in enumerate(tiles):
+            self._info_tile(30 + index * 128, 216, 116, label, value, icon, color)
+        humidity_note, humidity_color = _humidity_note(weather.get("humidity_percent"))
+        if humidity_note:
+            self._text(158, 307, humidity_note, size=8, color=humidity_color, anchor="center")
+
+        self._text(30, 335, "시간대별 예보 및 천문 정보", size=12, bold=True)
+        self._draw_hourly_table(30, 354, 1_030, hourly, best_time)
+
+        self._rounded_rect(30, 618, 530, 724, 12, fill="#1B2935", outline="#344F61")
+        self._text(50, 642, "추가 정보", size=11, bold=True)
+        extra = [
+            ("일몰 · 일출", f"{_format_time(weather.get('sunset'))} · {_format_time(weather.get('sunrise'))}"),
+            ("천문박명", f"{_format_time(weather.get('astronomical_twilight_end'))} · {_format_time(weather.get('astronomical_twilight_start'))}"),
+            ("월출 · 월몰", f"{_format_time(moon.get('moonrise'))} · {_format_time(moon.get('moonset'))}"),
+        ]
+        for index, (label, value) in enumerate(extra):
+            y = 667 + index * 18
+            self._text(50, y, label, size=9, color=TEXT_SECONDARY)
+            self._text(334, y, value, size=9, anchor="e")
+
+        self._rounded_rect(550, 618, 1_060, 724, 12, fill="#1B2935", outline="#344F61")
+        self._text(570, 642, "판단 요약", size=11, bold=True)
         lines = list(self.current_payload.get("reasons") or []) + list(self.current_payload.get("warnings") or [])
         if not lines:
             lines = [str(self.current_payload.get("summary") or "판단 정보를 확인 중입니다.")]
-        judgement_lines: list[str] = []
-        for line in lines[:4]:
-            wrapped = _wrap_overlay_text(line, 20)
-            judgement_lines.extend(
-                [f"• {wrapped[0]}", *[f"  {continuation}" for continuation in wrapped[1:]]]
-            )
-        for index, line in enumerate(judgement_lines[:8]):
-            self._text(490, 363 + index * 18, line, size=8, color=TEXT_SECONDARY)
+        for index, line in enumerate(lines[:4]):
+            self._text(570, 667 + index * 18, f"• {_wrap_overlay_text(line, 55)[0]}", size=9, color=TEXT_SECONDARY)
         if self.state == "comparison_spot_detail":
-            self._button(526, 530, 169, "5곳 비교로 돌아가기", "comparison-back")
+            self._button(892, 731, 168, "5곳 비교로 돌아가기", "comparison-back")
         else:
-            self._button(558, 530, 137, "카드로 돌아가기", "collapse")
-
-    def _draw_comparison_result(self) -> None:
-        width, height = 560, 330
-        self._prepare_canvas(width, height)
-        self._glass_card(width, height, radius=22)
-        rows = self.current_payload.get("spots") or []
-        good_count = self.current_payload.get("good_count") or 0
-        available_count = self.current_payload.get("available_count") or 0
-        best = next((row for row in rows if isinstance(row, dict) and row.get("recommended")), None)
-        title = "오늘 밤 출사 조건"
-        self._core(39, 35, 10, BLUE)
-        self._text(58, 35, "GYUVIS", size=8, color=TEXT_SECONDARY, bold=True)
-        source = "데모" if self.current_payload.get("mock_data") else "실제 데이터"
-        self._text(530, 35, source, anchor="e", size=8, color=WARNING if source == "데모" else TEXT_MUTED)
-        self._text(30, 82, title, size=17, bold=True)
-        if available_count:
-            self._text(30, 111, f"5곳 중 {good_count}곳이 현재 조건에서 비교 가능합니다.", size=10, color=TEXT_SECONDARY)
-        else:
-            self._text(30, 111, "촬영 지점 좌표를 확인하면 실제 조건을 비교합니다.", size=10, color=TEXT_SECONDARY)
-        self._score_ring(491, 91, _weather_score(best) if isinstance(best, dict) else None, GOOD if best else DIM, label="기상")
-        self.canvas.create_line(30, 140, 530, 140, fill="#40505F")
-        if isinstance(best, dict):
-            candidates = [row for row in rows if isinstance(row, dict) and row.get("available")][:3]
-            self._text(30, 164, "추천 후보", size=9, color=TEXT_SECONDARY)
-            for index, candidate in enumerate(candidates):
-                score = _weather_score(candidate)
-                self._text(30, 188 + index * 23, str(candidate.get("name") or "—"), size=10, bold=index == 0)
-                self._text(250, 188 + index * 23, "—" if score is None else str(score), size=11, bold=True, color=_condition_status(candidate)[1], anchor="e")
-                self._text(270, 188 + index * 23, str(candidate.get("best_time") or "시간 확인 중"), size=8, color=TEXT_SECONDARY)
-        else:
-            self._text(30, 184, "아직 확정된 촬영 좌표가 없습니다.", size=13, bold=True)
-            self._text(30, 211, "config/favorite_observation_spots.json에서 각 촬영 지점을 입력하세요.", size=8, color=TEXT_SECONDARY)
-        self._button(290, 282, 150, "5곳 비교하기", "comparison-detail")
-        self._button(450, 282, 80, "닫기", "close")
+            self._button(923, 731, 137, "카드로 돌아가기", "collapse")
 
     def _draw_comparison_detail(self) -> None:
-        width, height = 900, 555
+        width, height = 1_180, 710
         self._prepare_canvas(width, height)
         self._glass_card(width, height, radius=22)
         rows = self.current_payload.get("spots") or []
         self._core(35, 31, 8, BLUE)
         self._text(52, 31, "GYUVIS", size=8, color=TEXT_SECONDARY, bold=True)
-        self._text(450, 31, "자주 가는 5곳 촬영지 비교", size=10, bold=True, anchor="center")
+        self._text(590, 31, "오늘의 5곳 촬영지 비교", size=12, bold=True, anchor="center")
         source = "데모 데이터" if self.current_payload.get("mock_data") else "실제 API 데이터"
-        self._text(830, 31, source, size=8, color=WARNING if self.current_payload.get("mock_data") else TEXT_MUTED, anchor="e")
-        self._button(845, 18, 30, "×", "close")
-        self._text(30, 73, str(self.current_payload.get("summary") or "촬영 조건을 비교합니다."), size=10, color=TEXT_SECONDARY)
-        headers = ((30, "현재"), (75, "촬영지"), (305, "상태"), (402, "추천 촬영 시간"), (540, "구름"), (598, "강수"), (655, "달 영향"), (734, "출사"))
-        for x, label in headers:
-            self._text(x, 112, label, size=8, color=TEXT_MUTED, bold=True)
-        self.canvas.create_line(30, 126, 870, 126, fill="#40505F")
+        self._text(1_110, 31, source, size=9, color=WARNING if self.current_payload.get("mock_data") else TEXT_MUTED, anchor="e")
+        self._button(1_130, 18, 30, "×", "close")
+        self._text(30, 87, "오늘 밤 출사 판단", size=22, bold=True)
+        summary_lines = _wrap_overlay_text(self.current_payload.get("summary") or "촬영 조건을 비교합니다.", 120)[:2]
+        for index, line in enumerate(summary_lines):
+            self._text(30, 121 + index * 19, line, size=10, color=TEXT_SECONDARY)
         for index, raw in enumerate(rows[:5]):
             if not isinstance(raw, dict):
                 continue
-            y = 146 + index * 67
+            y = 183 + index * 94
             available = bool(raw.get("available"))
             weather_score = _weather_score(raw)
             score = _overall_score(raw)
-            fill = "#233542" if raw.get("recommended") else SURFACE_MUTED
-            self._rounded_rect(24, y - 19, 876, y + 36, 10, fill=fill, outline="#3A4C5D")
+            fill = "#203542" if raw.get("recommended") else SURFACE_MUTED
+            self._rounded_rect(24, y - 14, 1_156, y + 70, 12, fill=fill, outline="#3A596B" if raw.get("recommended") else "#344859")
             prefix = "추천  " if raw.get("recommended") else f"{index + 1}.  "
             weather = raw.get("weather") or {}
-            self._text(43, y + 1, _weather_icon(weather), size=15, color=BLUE, anchor="center")
-            self._text(75, y - 5, prefix + str(raw.get("name") or "촬영지"), size=10, bold=True)
-            self._text(75, y + 15, str(raw.get("region") or ""), size=8, color=TEXT_SECONDARY)
+            moon = raw.get("moon") or {}
+            self._weather_symbol(49, y + 27, weather)
+            self._text(78, y + 6, prefix + str(raw.get("name") or "촬영지"), size=13, bold=True)
+            self._text(78, y + 30, str(raw.get("region") or "")[:37], size=9, color=TEXT_SECONDARY)
             if available:
                 status, status_color = _condition_status(raw)
                 rain = weather.get("precipitation_probability_percent")
-                self._text(305, y - 5, status, size=10, bold=True, color=status_color)
                 breakdown = raw.get("score_breakdown") or {}
                 astronomy_score = breakdown.get("astronomy_score")
-                score_caption = f"기상 {weather_score if weather_score is not None else '—'} · 천문 {astronomy_score if astronomy_score is not None else '확인 중'}"
-                self._text(305, y + 15, score_caption, size=7, color=TEXT_SECONDARY)
-                self._text(402, y, str(raw.get("best_time") or "확인 중"), size=9)
-                self._text(540, y, self._percent(weather.get("cloud_cover_percent")), size=9)
+                best_time = str(raw.get("best_time") or "확인 중").split(" ·", 1)[0]
+                self._text(330, y + 6, "—" if score is None else str(score), size=25, bold=True, color=status_color, anchor="center")
+                self._text(330, y + 30, status, size=9, bold=True, color=status_color, anchor="center")
+                self._text(407, y + 7, "추천 시간", size=8, color=TEXT_MUTED)
+                self._text(407, y + 29, best_time, size=11, bold=True)
+                self._text(564, y + 7, f"🌡 {self._temperature(weather)}", size=10, bold=True)
+                humidity = weather.get("humidity_percent")
+                self._text(564, y + 30, f"💧 {self._percent(humidity)}", size=10, color=WARNING if _as_number(humidity) and _as_number(humidity) >= HUMIDITY_WARNING_PERCENT else TEXT_PRIMARY)
+                self._text(678, y + 7, f"☁ {self._percent(weather.get('cloud_cover_percent'))}", size=10)
                 rain_text = (f"⚠ {self._percent(rain)}" if rain is not None and float(rain) >= 30 else self._percent(rain))
-                self._text(598, y, rain_text, size=9, color=BAD if rain is not None and float(rain) >= 30 else TEXT_PRIMARY)
-                self._text(655, y, self._moon_short(raw.get("moon") or {}), size=9)
-                self._text(748, y, "—" if score is None else str(score), size=11, bold=True, color=status_color, anchor="center")
-                self._button(785, y - 1, 70, "상세", f"comparison-spot-{index}")
+                self._text(678, y + 30, f"🌧 {rain_text}", size=10, color=BAD if rain is not None and float(rain) >= 30 else TEXT_PRIMARY)
+                self._text(784, y + 7, _moon_phase_display(moon, compact=True), size=10, bold=True)
+                self._text(784, y + 30, f"달 영향 {self._moon_short(moon)}", size=9, color=TEXT_SECONDARY)
+                self._text(934, y + 7, f"기상 {weather_score if weather_score is not None else '—'}", size=9, color=TEXT_SECONDARY)
+                self._text(934, y + 30, f"천문 {astronomy_score if astronomy_score is not None else '—'}", size=9, color=TEXT_SECONDARY)
+                humidity_note, humidity_color = _humidity_note(humidity)
+                if humidity_note:
+                    self._text(564, y + 50, humidity_note, size=8, color=humidity_color)
+                self._button(1_056, y + 17, 72, "상세", f"comparison-spot-{index}")
             else:
-                self._text(305, y, str(raw.get("error_message") or "데이터 확인 중"), size=9, color=WARNING)
-                self._text(540, y, "좌표 입력 후 조회", size=9, color=TEXT_MUTED)
-        self._text(30, 503, "출사 적합도는 기상 55% + 천문 45%입니다. 계산 누락 시 종합 적합도는 표시하지 않습니다.", size=8, color=TEXT_MUTED)
+                self._text(330, y + 22, str(raw.get("error_message") or "데이터 확인 중"), size=11, color=WARNING)
+                self._text(564, y + 22, "좌표 입력 후 실제 데이터를 조회합니다.", size=10, color=TEXT_MUTED)
+        self._text(30, 672, "종합 적합도 = 기상 55% + 천문 45%. 달빛 제한은 추천 시간과 달 영향에 별도로 표시합니다.", size=9, color=TEXT_MUTED)
 
     def _draw_comparison_spot_detail(self) -> None:
         rows = self.current_payload.get("spots") or []
@@ -524,6 +557,30 @@ class ContextOverlayApp:
         self.canvas.create_oval(x - radius, y - radius, x + radius, y + radius, fill="#17324A", outline="#36698B")
         self.canvas.create_oval(x - radius // 2, y - radius // 2, x + radius // 2, y + radius // 2, fill=color, outline="")
 
+    def _weather_symbol(self, x: int, y: int, weather: dict[str, Any]) -> None:
+        """Draw a small consistent line icon instead of platform emoji glyphs."""
+        symbol = _weather_icon(weather)
+        canvas = self.canvas
+        color = BLUE if symbol in {"☀", "◐"} else TEXT_SECONDARY
+        if symbol == "☀":
+            canvas.create_oval(x - 6, y - 6, x + 6, y + 6, outline=color, width=2)
+            for dx, dy in ((0, -11), (8, -8), (11, 0), (8, 8), (0, 11), (-8, 8), (-11, 0), (-8, -8)):
+                length = 3
+                canvas.create_line(x + dx, y + dy, x + dx + (dx / 11 * length), y + dy + (dy / 11 * length), fill=color, width=2)
+            return
+
+        # Cloud base is deliberately geometric so it matches the card border
+        # language and remains legible in the Windows system font fallback.
+        canvas.create_oval(x - 10, y - 2, x, y + 8, outline=color, width=2)
+        canvas.create_oval(x - 3, y - 7, x + 8, y + 8, outline=color, width=2)
+        canvas.create_line(x - 11, y + 8, x + 11, y + 8, fill=color, width=2)
+        if symbol == "☂":
+            for drop_x in (x - 6, x, x + 6):
+                canvas.create_line(drop_x, y + 12, drop_x - 2, y + 16, fill=BLUE, width=2)
+        elif symbol == "❄":
+            canvas.create_line(x, y + 11, x, y + 17, fill=BLUE, width=2)
+            canvas.create_line(x - 3, y + 14, x + 3, y + 14, fill=BLUE, width=2)
+
     def _waveform(self, x: int, y: int, color: str) -> None:
         for index, height in enumerate((7, 13, 21, 13, 7)):
             offset = index * 8
@@ -541,6 +598,58 @@ class ContextOverlayApp:
         self.canvas.create_oval(x, y - 5, x + 11, y + 6, outline=color, width=1)
         self._text(x + 19, y - 4, label, size=8, color=TEXT_SECONDARY)
         self._text(x + 19, y + 13, value, size=11, bold=True, color=TEXT_PRIMARY)
+
+    def _temperature(self, weather: dict[str, Any]) -> str:
+        value = weather.get("temperature_celsius")
+        return "—" if value is None else f"{value:g}°C"
+
+    def _info_tile(self, x: int, y: int, width: int, label: str, value: str, icon: str, color: str) -> None:
+        self._rounded_rect(x, y, x + width, y + 84, 10, fill="#1D2B37", outline="#354E60")
+        self._text(x + 16, y + 18, icon, size=12, color=color)
+        self._text(x + 36, y + 18, label, size=8, color=TEXT_SECONDARY)
+        self._text(x + width / 2, y + 53, value, size=16, bold=True, color=color, anchor="center")
+
+    def _draw_hourly_table(self, x: int, y: int, width: int, hourly: list[Any], best_time: str) -> None:
+        data = [item for item in hourly[:7] if isinstance(item, dict)]
+        while len(data) < 7:
+            data.append({"time": "—"})
+        label_width = 118
+        column_width = (width - label_width) / 7
+        row_height = 28
+        self._rounded_rect(x, y, x + width, y + row_height * 8, 10, fill="#182630", outline="#385366")
+        recommended = _recommended_hours(best_time)
+        for index, item in enumerate(data):
+            column_x = x + label_width + index * column_width
+            hour_match = re.search(r"\d{1,2}", str(item.get("time") or ""))
+            hour = int(hour_match.group()) if hour_match else None
+            if hour in recommended:
+                self._rounded_rect(column_x + 2, y + 2, column_x + column_width - 2, y + row_height * 8 - 2, 7, fill="#1C3B3D", outline="#3B8F79")
+            self._text(column_x + column_width / 2, y + 14, str(item.get("time") or "—"), size=10, bold=True, anchor="center")
+
+        row_labels = ("하늘 상태", "온도 (°C)", "습도 (%)", "구름량 (%)", "강수확률 (%)", "달 고도 (°)", "GC 고도 (°)")
+        for row, label in enumerate(row_labels, start=1):
+            row_y = y + row * row_height
+            self.canvas.create_line(x, row_y, x + width, row_y, fill="#2D4353")
+            self._text(x + 14, row_y + row_height / 2, label, size=9, color=TEXT_SECONDARY)
+
+        for column, item in enumerate(data):
+            center_x = x + label_width + column * column_width + column_width / 2
+            values = (
+                _weather_icon(item),
+                "—" if item.get("temperature_celsius") is None else f"{item.get('temperature_celsius'):g}",
+                self._percent(item.get("humidity_percent")),
+                self._percent(item.get("cloud_cover_percent")),
+                self._percent(item.get("precipitation_probability_percent")),
+                "—" if item.get("moon_altitude_degrees") is None else f"{item.get('moon_altitude_degrees'):g}",
+                "—" if item.get("galactic_center_altitude_degrees") is None else f"{item.get('galactic_center_altitude_degrees'):g}",
+            )
+            for row, value in enumerate(values, start=1):
+                color = TEXT_PRIMARY
+                if row == 3 and _as_number(item.get("humidity_percent")) and _as_number(item.get("humidity_percent")) >= HUMIDITY_WARNING_PERCENT:
+                    color = WARNING
+                if row == 5 and _as_number(item.get("precipitation_probability_percent")) and _as_number(item.get("precipitation_probability_percent")) >= 30:
+                    color = BAD
+                self._text(center_x, y + row * row_height + row_height / 2, value, size=10 if row == 1 else 9, color=color, anchor="center")
 
     def _draw_timeline(self, x: int, y: int, hourly: list[Any], accent: str) -> None:
         data = hourly[:7] or [{"time": "—", "cloud_cover_percent": None}] * 6
@@ -577,11 +686,6 @@ class ContextOverlayApp:
             self.hide()
         elif "detail" in tags:
             self.state = "detail"
-            self._cancel_auto_hide()
-            self._present_current()
-        elif "comparison-detail" in tags:
-            self.state = "comparison_detail"
-            self._cancel_auto_hide()
             self._present_current()
         elif "comparison-back" in tags:
             self.state = "comparison_detail"
@@ -641,36 +745,6 @@ class ContextOverlayApp:
         if detail is not None and detail.winfo_exists():
             detail.destroy()
 
-    def _pause_auto_hide(self, _event) -> None:
-        self._hovered = True
-        if self.state.startswith("result"):
-            self._remaining_ms = RESULT_TIMEOUT_MS
-            self._cancel_auto_hide()
-
-    def _resume_auto_hide(self, _event) -> None:
-        self._hovered = False
-        if self.state.startswith("result"):
-            self._schedule_auto_hide(self._remaining_ms or RESULT_TIMEOUT_MS)
-
-    def _schedule_auto_hide(self, duration: int | None = None) -> None:
-        # Overlay cards are user-owned.  They stay visible across listening,
-        # analysis, results, comparison, and detail until the close button is
-        # pressed; no timer is allowed to dismiss them.
-        self._cancel_auto_hide()
-        self._remaining_ms = None
-        return
-
-    def _cancel_auto_hide(self) -> None:
-        if self._hide_job:
-            self.root.after_cancel(self._hide_job)
-            self._hide_job = None
-
-    def _cancel_timers(self) -> None:
-        self._cancel_auto_hide()
-        if self._analysis_job:
-            self.root.after_cancel(self._analysis_job)
-            self._analysis_job = None
-
     def _animate_analysis(self) -> None:
         if self.state != "analyzing":
             return
@@ -702,7 +776,7 @@ class ContextOverlayApp:
     def _begin_drag(self, event) -> None:
         """Move from any card surface that is not an interactive button."""
         tags = self.canvas.gettags("current")
-        if any(tag in {"close", "detail", "comparison-detail", "comparison-back", "collapse"} or tag.startswith("comparison-spot-") for tag in tags):
+        if any(tag in {"close", "detail", "comparison-back", "collapse"} or tag.startswith("comparison-spot-") for tag in tags):
             self._drag_origin = None
             return
         self._drag_origin = (event.x_root, event.y_root, self.root.winfo_x(), self.root.winfo_y())

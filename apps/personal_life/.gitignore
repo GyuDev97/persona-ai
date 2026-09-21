@@ -44,6 +44,9 @@ entrance_sensor/logs/
 # Local webcam posture calibration and logs
 posture_monitor/data/
 posture_monitor/logs/
+# Current local posture-alert calibration and logs
+posture_alert/data/
+posture_alert/logs/
 
 # Browser caches inside temporary profiles
 Cache/

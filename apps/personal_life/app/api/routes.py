@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from .routers.finance_routes import router as finance_router
 from .routers.events_routes import router as events_router
+from .routers.posture_routes import router as posture_router
 from .routers.system_routes import router as system_router
 
 from ..domain.schemas import (
@@ -99,6 +100,7 @@ router = APIRouter()
 router.include_router(system_router)
 router.include_router(finance_router)
 router.include_router(events_router)
+router.include_router(posture_router)
 FRONTEND_PATH = Path(__file__).resolve().parents[1] / "frontend" / "index.html"
 FRONTEND_DIR = Path(__file__).resolve().parents[1] / "frontend"
 MOBILE_FRONTEND_DIR = FRONTEND_DIR / "mobile"

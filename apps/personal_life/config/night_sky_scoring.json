@@ -6,6 +6,8 @@
   "maximum_recommended_cloud_percent": 50,
   "maximum_recommended_rain_percent": 20,
   "allow_medium_moon_impact": true,
+  "humidity_dew_warning_percent": 85,
+  "humidity_dew_risk_percent": 90,
   "moon_low_illumination_percent": 25,
   "moon_medium_illumination_percent": 55,
   "moon_low_altitude_degrees": 8,

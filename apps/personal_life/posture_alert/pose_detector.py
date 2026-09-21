@@ -15,7 +15,7 @@ class PoseDetector:
         try:
             import mediapipe as mp
         except ImportError as error:
-            raise RuntimeError("필수 라이브러리가 없습니다. posture_monitor/requirements.txt를 설치하세요.") from error
+            raise RuntimeError("필수 라이브러리가 없습니다. posture_alert/requirements.txt를 설치하세요.") from error
         self._mp_pose = mp.solutions.pose
         self._pose = self._mp_pose.Pose(
             static_image_mode=False,

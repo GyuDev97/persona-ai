@@ -24,7 +24,7 @@ class FaceVerifier:
         try:
             from insightface.app import FaceAnalysis
         except ImportError as error:
-            raise RuntimeError("Install entrance_sensor/requirements.txt before running the sensor.") from error
+            raise RuntimeError("Install home_arrival_sensor/requirements.txt before running the sensor.") from error
 
         if not settings.owner_embedding_path.exists():
             raise RuntimeError(f"Owner embedding not found: {settings.owner_embedding_path}. Run enroll.py first.")
@@ -62,7 +62,7 @@ def create_embedding_from_images(image_paths: list[Path], settings: SensorSettin
         import cv2
         from insightface.app import FaceAnalysis
     except ImportError as error:
-        raise RuntimeError("Install entrance_sensor/requirements.txt before enrollment.") from error
+        raise RuntimeError("Install home_arrival_sensor/requirements.txt before enrollment.") from error
 
     providers = ["CPUExecutionProvider"]
     if settings.face_provider == "gpu":

@@ -4,9 +4,9 @@ setlocal EnableExtensions
 cd /d "%~dp0.."
 
 if exist "D:\python\venv\Scripts\python.exe" (
-    "D:\python\venv\Scripts\python.exe" -m entrance_sensor.main
+    "D:\python\venv\Scripts\python.exe" -m home_arrival_sensor.main
 ) else (
-    python -m entrance_sensor.main
+    python -m home_arrival_sensor.main
 )
 
 pause

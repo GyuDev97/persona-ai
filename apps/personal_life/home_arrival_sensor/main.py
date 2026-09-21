@@ -15,7 +15,7 @@ def configure_logging() -> None:
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        handlers=[logging.StreamHandler(), logging.FileHandler(log_dir / "entrance_sensor.log", encoding="utf-8")],
+        handlers=[logging.StreamHandler(), logging.FileHandler(log_dir / "home_arrival_sensor.log", encoding="utf-8")],
     )
 
 

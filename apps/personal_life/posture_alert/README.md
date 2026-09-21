@@ -1,4 +1,4 @@
-# GYUVIS Webcam Posture Monitor
+# GYUVIS 자세 알림
 
 This is a rule-based posture reminder, not a medical assessment. It runs
 MediaPipe Pose locally against the webcam feed and never stores or transmits
@@ -11,13 +11,13 @@ frames. Only a warning event is sent to the local GyuNexus Core API.
 2. Install the isolated dependencies:
 
    ```powershell
-   & 'D:\python\venv\Scripts\python.exe' -m pip install -r posture_monitor\requirements.txt
+   & 'D:\python\venv\Scripts\python.exe' -m pip install -r posture_alert\requirements.txt
    ```
 
 3. Sit naturally in your normal screen-facing posture and run
    `run_calibration.bat`. It records only normalized landmark metrics for five
    seconds in `data/posture_baseline.json`.
-4. Run `run_posture_monitor.bat`.
+4. Run `run_posture_alert.bat`.
 
 When `BAD` persists for `POSTURE_BAD_DURATION_SECONDS` (12 seconds by default),
 the local Core API speaks `GYUVIS_POSTURE_WARNING_MESSAGE` through the existing

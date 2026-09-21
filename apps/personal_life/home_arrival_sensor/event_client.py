@@ -24,7 +24,7 @@ class EventSendResult:
 class HomeArrivalEventClient:
     def __init__(self, settings: SensorSettings) -> None:
         if not settings.api_url or not settings.api_token:
-            raise RuntimeError("API_URL and API_TOKEN must be set in entrance_sensor/.env.")
+            raise RuntimeError("API_URL and API_TOKEN must be set in home_arrival_sensor/.env.")
         self._url = settings.api_url
         self._token = settings.api_token
         self._timeout_seconds = settings.api_timeout_seconds

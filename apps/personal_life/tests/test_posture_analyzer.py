@@ -1,9 +1,9 @@
 from dataclasses import replace
 import unittest
 
-from posture_monitor.config import get_settings
-from posture_monitor.models import PoseMetrics
-from posture_monitor.posture_analyzer import PostureAnalyzer, PostureBaseline
+from posture_alert.config import get_settings
+from posture_alert.models import PoseMetrics
+from posture_alert.posture_analyzer import PostureAnalyzer, PostureBaseline
 
 
 class PostureAnalyzerTest(unittest.TestCase):

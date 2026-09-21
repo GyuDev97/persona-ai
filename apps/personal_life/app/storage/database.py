@@ -161,6 +161,63 @@ CREATE TABLE IF NOT EXISTS riding_events (
     created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
+CREATE TABLE IF NOT EXISTS posture_sessions (
+    session_id TEXT PRIMARY KEY,
+    source TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active',
+    started_at TEXT NOT NULL,
+    ended_at TEXT,
+    last_observed_at TEXT NOT NULL,
+    current_state TEXT NOT NULL DEFAULT 'NORMAL',
+    current_state_started_at TEXT NOT NULL,
+    first_warning_at TEXT,
+    first_bad_at TEXT,
+    time_to_first_warning_seconds REAL,
+    time_to_first_bad_seconds REAL,
+    normal_duration_seconds REAL NOT NULL DEFAULT 0,
+    warning_duration_seconds REAL NOT NULL DEFAULT 0,
+    bad_duration_seconds REAL NOT NULL DEFAULT 0,
+    valid_duration_seconds REAL NOT NULL DEFAULT 0,
+    warning_count INTEGER NOT NULL DEFAULT 0,
+    bad_event_count INTEGER NOT NULL DEFAULT 0,
+    recovery_count INTEGER NOT NULL DEFAULT 0,
+    longest_bad_duration_seconds REAL NOT NULL DEFAULT 0,
+    recovery_total_seconds REAL NOT NULL DEFAULT 0,
+    avg_recovery_seconds REAL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
+CREATE TABLE IF NOT EXISTS posture_state_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL,
+    occurred_at TEXT NOT NULL,
+    previous_state TEXT NOT NULL,
+    current_state TEXT NOT NULL,
+    previous_state_duration_seconds REAL NOT NULL DEFAULT 0,
+    posture_score REAL NOT NULL DEFAULT 0,
+    trigger_type TEXT NOT NULL DEFAULT 'state_change',
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    FOREIGN KEY (session_id) REFERENCES posture_sessions(session_id)
+);
+CREATE INDEX IF NOT EXISTS idx_posture_state_events_session_time ON posture_state_events(session_id, occurred_at);
+
+CREATE TABLE IF NOT EXISTS posture_warning_recoveries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL,
+    warning_event_id INTEGER NOT NULL,
+    warning_at TEXT NOT NULL,
+    recovery_at TEXT,
+    recovery_seconds REAL,
+    recovery_success INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    UNIQUE (warning_event_id),
+    FOREIGN KEY (session_id) REFERENCES posture_sessions(session_id),
+    FOREIGN KEY (warning_event_id) REFERENCES posture_warning_events(id)
+);
+
 CREATE TABLE IF NOT EXISTS agent_tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     source TEXT NOT NULL DEFAULT 'mobile',
@@ -526,6 +583,62 @@ MARIADB_SCHEMA = [
         tts_success BOOLEAN NOT NULL DEFAULT FALSE,
         payload_json LONGTEXT NOT NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS posture_sessions (
+        session_id VARCHAR(64) PRIMARY KEY,
+        source VARCHAR(100) NOT NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'active',
+        started_at VARCHAR(64) NOT NULL,
+        ended_at VARCHAR(64) NULL,
+        last_observed_at VARCHAR(64) NOT NULL,
+        current_state VARCHAR(30) NOT NULL DEFAULT 'NORMAL',
+        current_state_started_at VARCHAR(64) NOT NULL,
+        first_warning_at VARCHAR(64) NULL,
+        first_bad_at VARCHAR(64) NULL,
+        time_to_first_warning_seconds DOUBLE NULL,
+        time_to_first_bad_seconds DOUBLE NULL,
+        normal_duration_seconds DOUBLE NOT NULL DEFAULT 0,
+        warning_duration_seconds DOUBLE NOT NULL DEFAULT 0,
+        bad_duration_seconds DOUBLE NOT NULL DEFAULT 0,
+        valid_duration_seconds DOUBLE NOT NULL DEFAULT 0,
+        warning_count INT NOT NULL DEFAULT 0,
+        bad_event_count INT NOT NULL DEFAULT 0,
+        recovery_count INT NOT NULL DEFAULT 0,
+        longest_bad_duration_seconds DOUBLE NOT NULL DEFAULT 0,
+        recovery_total_seconds DOUBLE NOT NULL DEFAULT 0,
+        avg_recovery_seconds DOUBLE NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS posture_state_events (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        session_id VARCHAR(64) NOT NULL,
+        occurred_at VARCHAR(64) NOT NULL,
+        previous_state VARCHAR(30) NOT NULL,
+        current_state VARCHAR(30) NOT NULL,
+        previous_state_duration_seconds DOUBLE NOT NULL DEFAULT 0,
+        posture_score DOUBLE NOT NULL DEFAULT 0,
+        trigger_type VARCHAR(50) NOT NULL DEFAULT 'state_change',
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_posture_state_events_session_time (session_id, occurred_at)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS posture_warning_recoveries (
+        id BIGINT PRIMARY KEY AUTO_INCREMENT,
+        session_id VARCHAR(64) NOT NULL,
+        warning_event_id BIGINT NOT NULL UNIQUE,
+        warning_at VARCHAR(64) NOT NULL,
+        recovery_at VARCHAR(64) NULL,
+        recovery_seconds DOUBLE NULL,
+        recovery_success BOOLEAN NOT NULL DEFAULT FALSE,
+        status VARCHAR(30) NOT NULL DEFAULT 'pending',
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )
     """,
     """

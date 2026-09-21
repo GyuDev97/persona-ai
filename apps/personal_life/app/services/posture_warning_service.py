@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from ..storage.database import execute, fetch_one
 from .event_bus_service import publish_event
 from .gyuvis_tts_service import speak_gyuvis_text
+from .posture_session_service import record_posture_warning
 
 
 logger = logging.getLogger("gyuos.posture_warning")
@@ -55,6 +56,11 @@ def handle_posture_warning(payload: dict) -> dict:
                 json.dumps(payload, ensure_ascii=False, default=str),
             ),
         )
+        try:
+            record_posture_warning(payload.get("session_id"), event_id, payload["timestamp"])
+        except Exception:
+            # Analytics must never suppress the existing posture warning/TTS path.
+            logger.exception("Failed to associate posture warning with an analytics session")
 
     message = os.getenv("GYUVIS_POSTURE_WARNING_MESSAGE", "보스, 자세 고치세요.")
     tts_success = speak_gyuvis_text(message, backend_override_env="GYUVIS_POSTURE_TTS_BACKEND")

@@ -9,7 +9,7 @@ import threading
 from .config import PostureSettings
 
 
-logger = logging.getLogger("posture_monitor.screen_alert")
+logger = logging.getLogger("posture_alert.screen_alert")
 
 
 class ScreenAlert:
