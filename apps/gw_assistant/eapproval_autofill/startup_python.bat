@@ -7,7 +7,7 @@ set "APP_DIR=%ROOT_DIR%\apps\gw_assistant\eapproval_autofill"
 set "PROJECT_VENV=%APP_DIR%\venv\Scripts\activate.bat"
 set "DEFAULT_VENV=D:\python\venv\Scripts\activate.bat"
 set "HOST=127.0.0.1"
-set "PORT=8003"
+set "PORT=8810"
 
 echo ===============================
 echo GW Assistant Python Server Start

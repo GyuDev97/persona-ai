@@ -1,0 +1,23 @@
+{
+  "formId": "business_card",
+  "formName": "명함 신청서",
+  "description": "임직원 명함 제작을 신청하는 양식",
+  "documentHints": ["명함", "사원정보", "연락처", "직급"],
+  "fields": [
+    {"id": "nameKo", "label": "이름(국문)", "type": "text", "required": false, "aliases": ["이름(국문)", "성명", "이름"]},
+    {"id": "nameEn", "label": "이름(영문)", "type": "text", "required": false, "aliases": ["이름(영문)", "영문명", "English Name"]},
+    {"id": "positionKo", "label": "직급(국문)", "type": "text", "required": false, "aliases": ["직급(국문)", "직급", "직책"]},
+    {"id": "positionEn", "label": "직급(영문)", "type": "text", "required": false, "aliases": ["직급(영문)", "영문직급", "Title"]},
+    {"id": "departmentKo", "label": "부서(국문)", "type": "text", "required": false, "aliases": ["부서(국문)", "부서", "소속"]},
+    {"id": "departmentEn", "label": "부서(영문)", "type": "text", "required": false, "aliases": ["부서(영문)", "영문부서", "Department"]},
+    {"id": "email", "label": "이메일", "type": "text", "required": false, "aliases": ["이메일", "Email", "E-mail"]},
+    {"id": "mobile", "label": "휴대폰번호", "type": "text", "required": false, "aliases": ["휴대폰번호", "휴대폰", "Mobile"]},
+    {"id": "phone", "label": "전화번호", "type": "text", "required": false, "aliases": ["전화번호", "전화", "Tel"]},
+    {"id": "fax", "label": "FAX번호", "type": "text", "required": false, "aliases": ["FAX번호", "팩스", "Fax"]},
+    {"id": "quantity", "label": "수량", "type": "number", "required": false, "aliases": ["수량", "매수"]},
+    {"id": "postalCode", "label": "우편번호", "type": "text", "required": false, "aliases": ["우편번호"]},
+    {"id": "address", "label": "주소", "type": "text", "required": false, "aliases": ["주소", "배송주소"]},
+    {"id": "remarks", "label": "비고", "type": "textarea", "required": false, "aliases": ["비고", "참고", "특이사항"]}
+  ],
+  "tables": []
+}

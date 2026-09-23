@@ -1,0 +1,12 @@
+{
+  "formId": "book_purchase",
+  "formName": "도서구입 신청서",
+  "description": "도서 및 학습자료 구매를 신청하는 양식",
+  "documentHints": ["도서 견적서", "도서 목록", "출판사", "저자"],
+  "fields": [
+    {"id": "requestDepartment", "label": "신청부서", "type": "text", "required": false, "aliases": ["신청부서", "요청부서", "부서"]},
+    {"id": "desiredDate", "label": "수령희망일", "type": "date", "required": false, "aliases": ["수령희망일", "수령일", "희망일"]},
+    {"id": "purchaseReason", "label": "구입사유", "type": "textarea", "required": false, "aliases": ["구입사유", "구매사유", "신청사유"]}
+  ],
+  "tables": [{"id": "books", "label": "도서 목록", "columns": [{"id": "title", "label": "도서명"}, {"id": "publisher", "label": "출판사"}, {"id": "author", "label": "저자"}, {"id": "quantity", "label": "수량", "type": "number"}, {"id": "amount", "label": "금액", "type": "number"}]}]
+}

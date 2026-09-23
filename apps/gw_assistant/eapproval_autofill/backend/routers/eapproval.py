@@ -9,6 +9,7 @@ import xml.etree.ElementTree as ET
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
+from backend.services.pdf_extraction import extract_pdf
 
 
 router = APIRouter()
@@ -273,6 +274,12 @@ def parse_xlsx(payload: bytes) -> str:
 
 
 def parse_pdf(payload: bytes) -> str:
+    extracted = extract_pdf(payload)
+    if extracted.kind == "text":
+        return extracted.text
+    raise HTTPException(status_code=400, detail="스캔 PDF입니다. Vision 분석 경로를 사용해야 합니다.")
+
+def legacy_parse_pdf_stream(payload: bytes) -> str:
     candidates: list[str] = []
 
     for stream_match in re.finditer(rb"stream\r?\n(.*?)\r?\nendstream", payload, flags=re.DOTALL):

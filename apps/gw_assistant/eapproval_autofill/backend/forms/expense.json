@@ -1,0 +1,15 @@
+{
+  "formId": "expense",
+  "formName": "지출결의서",
+  "description": "비용 지출과 지급을 결재받는 양식",
+  "documentHints": ["영수증", "세금계산서", "거래명세서", "지출 내역"],
+  "fields": [
+    {"id": "requestDepartment", "label": "요청부서", "type": "text", "required": false, "aliases": ["요청부서", "신청부서", "부서명", "부서"]},
+    {"id": "paymentDate", "label": "결제예정일", "type": "date", "required": false, "aliases": ["결제예정일", "지급예정일", "지급일"]},
+    {"id": "specialNotes", "label": "특이사항", "type": "textarea", "required": false, "aliases": ["특이사항", "비고", "참고"]},
+    {"id": "bankName", "label": "은행명", "type": "text", "required": false, "aliases": ["은행명", "은행"]},
+    {"id": "accountNumber", "label": "계좌번호", "type": "text", "required": false, "aliases": ["계좌번호", "계좌"]},
+    {"id": "accountHolder", "label": "예금주명", "type": "text", "required": false, "aliases": ["예금주명", "예금주"]}
+  ],
+  "tables": [{"id": "expenses", "label": "지출 내역", "columns": [{"id": "date", "label": "월/일"}, {"id": "name", "label": "품목"}, {"id": "supplyAmount", "label": "공급가액", "type": "number"}, {"id": "tax", "label": "세액", "type": "number"}, {"id": "amount", "label": "합계", "type": "number"}, {"id": "remarks", "label": "비고"}, {"id": "evidence", "label": "증빙"}]}]
+}
