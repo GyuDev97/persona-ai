@@ -37,6 +37,86 @@ GyuOS는 이를 분리하지 않고,
 
 라는 관점으로 설계되었습니다.
 
+## Windows 및 macOS 실행
+
+Core 서버와 센서 런타임은 하나의 Python 코드베이스를 사용합니다. Windows 전용
+`.bat` 파일은 호환성을 위해 유지하지만, 새 설치에서는 아래의 공통 launcher를
+사용합니다. launcher는 현재 활성화된 가상환경의 `sys.executable`을 사용하므로
+`python.exe`나 `venv\\Scripts` 경로를 코드에 고정하지 않습니다.
+
+### Windows 11 (x86_64)
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python scripts\start.py
+```
+
+### macOS Apple Silicon
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python3 scripts/start.py
+```
+
+The server listens on `http://127.0.0.1:8000`; use `--host`, `--port`,
+`--reload`, or `--background` when needed. These commands work on either OS:
+
+```bash
+python scripts/status.py
+python scripts/stop.py
+python scripts/stop.py --force-port  # explicitly stop the listener on 8000
+```
+
+`GET /system/environment` provides the startup self-check: OS, architecture,
+Python version, database reachability, and optional feature capabilities. A
+missing camera/TTS/HUD integration is reported as unavailable or limited and
+does not prevent the Core API from starting.
+
+### Posture monitor
+
+Install its isolated dependencies after activating the same environment:
+
+```bash
+python -m pip install -r posture_alert/requirements.txt
+python -m posture_alert.calibration
+python -m posture_alert.main
+```
+
+`POSTURE_CAMERA_INDEX` selects the webcam (default `0`). On macOS, allow your
+terminal or Python IDE under **System Settings → Privacy & Security → Camera**.
+The Windows click-through, multi-monitor flash is retained; macOS presents a
+single-screen non-click-through flash when Tk permits it, so the API and
+posture detection remain independent of this limited overlay feature.
+
+### Entrance sensor
+
+```bash
+python -m pip install -r home_arrival_sensor/requirements.txt
+python -m home_arrival_sensor.enroll
+python -m home_arrival_sensor.main
+```
+
+`CAMERA_INDEX` selects the camera. On macOS grant the same Camera permission.
+Use `FACE_PROVIDER=cpu` on Apple Silicon; GPU provider selection is optional
+and is not required for sensor startup. OpenCV uses AVFoundation on macOS and
+DirectShow on Windows through the shared adapter.
+
+### Platform limits and dependencies
+
+OpenCV, MediaPipe, ONNX Runtime, and InsightFace are installed as normal Python
+dependencies; their wheel availability should be checked against the selected
+Python version before deployment. MediaPipe 0.10.18 ships a macOS universal2
+wheel, and current OpenCV/ONNX Runtime releases publish ARM64 macOS wheels.
+`pywinauto`, direct Windows window movement, click-through overlays, and Excel
+COM automation remain Windows-only optional features. On macOS, browser/file
+launch falls back to the system default handler, HUD launches in a browser, and
+TTS uses Edge TTS first then the built-in `say` command when fallback is
+enabled. No Rosetta requirement is introduced.
+
 ---
 
 # Main Features
@@ -173,6 +253,5 @@ GyuOS/
 │   └── database.py
 │
 └── config.py
-
 
 

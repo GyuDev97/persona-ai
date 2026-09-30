@@ -1,10 +1,10 @@
 import os
-import subprocess
 import time
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from ..config import APP_ROOT
+from .platform_service import browser_candidates, launch_program, open_url
 
 
 DEFAULT_HUD_URL = "http://127.0.0.1:8000/gyuvis/standby-v3?boot=veil&veil=1&autoGesture=1&autoPresence=1&voiceWelcome=0"
@@ -49,7 +49,8 @@ def launch_jarvis_hud(*, immediate: bool = False) -> str:
 
     url = get_jarvis_hud_url(immediate=immediate)
     if not _open_fullscreen(url):
-        os.startfile(url)
+        if not open_url(url):
+            raise RuntimeError("기본 브라우저로 GYUVIS HUD를 열 수 없습니다.")
     return url
 
 
@@ -73,28 +74,12 @@ def _open_fullscreen(url: str) -> bool:
         browser_args.append("--use-fake-ui-for-media-stream")
 
     try:
-        subprocess.Popen(
-            browser_args,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        return True
+        return launch_program(browser_args, quiet=True)
     except Exception:
         return False
 
 
 def _find_browser() -> Path | None:
     configured = os.getenv("GYUVIS_HUD_BROWSER_PATH", "").strip()
-    candidates = [
-        Path(configured).expanduser() if configured else None,
-        Path(os.environ.get("PROGRAMFILES", "")) / "Google" / "Chrome" / "Application" / "chrome.exe",
-        Path(os.environ.get("PROGRAMFILES(X86)", "")) / "Google" / "Chrome" / "Application" / "chrome.exe",
-        Path(os.environ.get("LOCALAPPDATA", "")) / "Google" / "Chrome" / "Application" / "chrome.exe",
-        Path(os.environ.get("PROGRAMFILES", "")) / "Microsoft" / "Edge" / "Application" / "msedge.exe",
-        Path(os.environ.get("PROGRAMFILES(X86)", "")) / "Microsoft" / "Edge" / "Application" / "msedge.exe",
-    ]
-
-    for candidate in candidates:
-        if candidate and candidate.exists():
-            return candidate
-    return None
+    candidates = browser_candidates(configured)
+    return candidates[0] if candidates else None

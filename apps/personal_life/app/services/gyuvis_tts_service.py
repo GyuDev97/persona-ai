@@ -9,9 +9,43 @@ import subprocess
 import sys
 import time
 import uuid
+from typing import Protocol
+
+from ..config import APP_ROOT
+from .platform_service import is_macos, is_windows
 
 
 logger = logging.getLogger("gyuos.tts")
+
+
+class TTSProvider(Protocol):
+    """A local speech provider. Failures are reported as False, never raised."""
+
+    def speak(self, text: str) -> bool: ...
+
+
+class EdgeTTSProvider:
+    def speak(self, text: str) -> bool:
+        return _speak_with_edge_tts(text)
+
+
+class MacOSTTSProvider:
+    def speak(self, text: str) -> bool:
+        if not is_macos():
+            return False
+        try:
+            subprocess.run(["say", text], check=True, capture_output=True, text=True, timeout=30)
+            return True
+        except Exception:
+            logger.exception("macOS 'say' TTS failed")
+            return False
+
+
+class WindowsPowerShellTTSProvider:
+    def speak(self, text: str) -> bool:
+        if not is_windows():
+            return False
+        return _speak_with_powershell(text)
 
 
 def speak_gyuvis_text(text: str, *, backend_override_env: str | None = None) -> bool:
@@ -29,16 +63,20 @@ def speak_gyuvis_text(text: str, *, backend_override_env: str | None = None) -> 
         return False
 
     if backend in {"auto", "edge", "edge-tts"}:
-        if _speak_with_edge_tts(text):
+        if EdgeTTSProvider().speak(text):
             return True
         if not allow_fallback and backend in {"edge", "edge-tts"}:
             return False
 
-    # PowerShell is the existing wake listener's fallback engine.
+    # Native fallback stays behind a provider so macOS never tries PowerShell.
     if backend in {"powershell", "ps"} or (
         backend in {"auto", "edge", "edge-tts"} and allow_fallback
     ):
-        return _speak_with_powershell(text)
+        provider: TTSProvider = WindowsPowerShellTTSProvider() if is_windows() else MacOSTTSProvider()
+        return provider.speak(text)
+
+    if backend in {"macos", "say"}:
+        return MacOSTTSProvider().speak(text)
 
     logger.warning("Server-side TTS backend '%s' is not available for arrival events.", backend)
     return False
@@ -51,7 +89,7 @@ def _speak_with_edge_tts(text: str) -> bool:
         logger.exception("pygame is unavailable for Edge TTS playback")
         return False
 
-    temp_dir = pathlib.Path(os.getenv("GYUVIS_TEMP_AUDIO_DIR", ".tmp_tts"))
+    temp_dir = pathlib.Path(os.getenv("GYUVIS_TEMP_AUDIO_DIR", str(APP_ROOT / ".tmp_tts"))).expanduser()
     temp_dir.mkdir(parents=True, exist_ok=True)
     media_path = temp_dir / f"gyuvis_arrival_{uuid.uuid4().hex}.mp3"
     normalized_text = " ".join(text.replace("\r", " ").replace("\n", " ").split())
@@ -100,6 +138,8 @@ def _normalize_edge_rate(value: str) -> str:
 
 
 def _speak_with_powershell(text: str) -> bool:
+    if not is_windows():
+        return False
     escaped = text.replace("'", "''")
     command = (
         "Add-Type -AssemblyName System.Speech; "

@@ -36,6 +36,7 @@ venv/
 .tmp_naver_blog_profile/
 .tmp_comtypes_gen/
 .tmp_stack_logs/
+.runtime/
 
 # A laptop-only entrance camera enrollment and logs
 entrance_sensor/data/

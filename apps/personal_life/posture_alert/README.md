@@ -8,16 +8,16 @@ frames. Only a warning event is sent to the local GyuNexus Core API.
 
 1. Copy `.env.example` to `.env` and set `POSTURE_API_TOKEN` to the same value
    as Core's `GYUVIS_POSTURE_API_TOKEN`.
-2. Install the isolated dependencies:
+2. Install the isolated dependencies with the active virtual-environment Python:
 
-   ```powershell
-   & 'D:\python\venv\Scripts\python.exe' -m pip install -r posture_alert\requirements.txt
+   ```bash
+   python -m pip install -r posture_alert/requirements.txt
    ```
 
 3. Sit naturally in your normal screen-facing posture and run
-   `run_calibration.bat`. It records only normalized landmark metrics for five
+   `python -m posture_alert.calibration`. It records only normalized landmark metrics for five
    seconds in `data/posture_baseline.json`.
-4. Run `run_posture_alert.bat`.
+4. Run `python -m posture_alert.main`.
 
 When `BAD` persists for `POSTURE_BAD_DURATION_SECONDS` (12 seconds by default),
 the local Core API speaks `GYUVIS_POSTURE_WARNING_MESSAGE` through the existing
@@ -26,7 +26,11 @@ landmarks resets the bad-posture timer.
 
 At the same confirmed-warning point, every connected Windows screen flashes
 red four times by default. It is click-through, so it does not block mouse or
-keyboard input. Set `POSTURE_SCREEN_ALERT_ENABLED=0` to disable it.
+keyboard input. macOS supports a best-effort single-display flash but cannot
+offer the same click-through/multi-display behavior through Tk; a failure is
+logged and does not stop posture detection. Set `POSTURE_SCREEN_ALERT_ENABLED=0`
+to disable it. On macOS, grant Camera access to the terminal/Python app in
+System Settings → Privacy & Security → Camera.
 
 ## Tuning for an angled/side webcam
 

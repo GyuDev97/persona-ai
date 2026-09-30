@@ -13,5 +13,7 @@ pyttsx3>=2.99
 edge-tts>=7.2.3
 pygame>=2.6.1
 playwright>=1.52.0
-pywinauto>=0.6.9
+# Desktop window / COM automation is an optional Windows-only feature.
+pywinauto>=0.6.9; sys_platform == "win32"
+psutil>=6.0.0
 ephem>=4.1.5

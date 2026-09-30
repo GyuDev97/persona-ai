@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from ...config import get_settings
 from ...domain.schemas import AssistantStatusResponse
 from ...services.system_status_service import build_system_status
+from ...services.environment_check_service import build_environment_check
 
 
 router = APIRouter()
@@ -18,6 +19,12 @@ def health_check() -> dict[str, str]:
 @router.get("/system/status")
 def get_system_status() -> dict:
     return build_system_status()
+
+
+@router.get("/system/environment")
+def get_system_environment() -> dict:
+    """Report optional OS integrations without making them startup requirements."""
+    return build_environment_check()
 
 
 @router.get("/assistant/status", response_model=AssistantStatusResponse)

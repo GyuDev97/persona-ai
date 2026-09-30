@@ -27,7 +27,7 @@ def main() -> None:
     logger = logging.getLogger(__name__)
     settings = get_settings()
     if not settings.baseline_path.exists():
-        raise SystemExit(f"정상 자세 기준 파일이 없습니다: {settings.baseline_path}. 먼저 run_calibration.bat을 실행하세요.")
+        raise SystemExit(f"정상 자세 기준 파일이 없습니다: {settings.baseline_path}. 먼저 `python -m posture_alert.calibration`을 실행하세요.")
     analyzer = PostureAnalyzer(load_baseline(settings.baseline_path), settings)
     camera = PostureCamera(settings)
     detector = PoseDetector(settings)

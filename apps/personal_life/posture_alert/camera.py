@@ -5,13 +5,14 @@ import logging
 import cv2
 
 from .config import PostureSettings
+from app.services.platform_service import opencv_camera_backend
 
 
 logger = logging.getLogger(__name__)
 
 
 class PostureCamera:
-    """Small OpenCV camera wrapper with Windows reconnect handling."""
+    """Small OpenCV camera wrapper with native backend selection."""
 
     def __init__(self, settings: PostureSettings) -> None:
         self._settings = settings
@@ -19,7 +20,7 @@ class PostureCamera:
 
     def open(self) -> bool:
         self.close()
-        backend = cv2.CAP_DSHOW if hasattr(cv2, "CAP_DSHOW") else cv2.CAP_ANY
+        backend = opencv_camera_backend(cv2)
         capture = cv2.VideoCapture(self._settings.camera_index, backend)
         if not capture.isOpened() and backend != cv2.CAP_ANY:
             capture.release()

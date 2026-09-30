@@ -17,13 +17,18 @@ from datetime import datetime
 from typing import Any
 
 import numpy as np
-import pyttsx3
 import sounddevice as sd
 import speech_recognition as sr
 
 from app.config import load_env_file
 from app.core.intent_router import parse_intent
 from app.services.jarvis_hud_service import launch_jarvis_hud
+from app.services.platform_service import is_macos, is_windows
+
+try:
+    import pyttsx3
+except ImportError:  # Edge TTS remains usable when an optional local engine is absent.
+    pyttsx3 = None
 
 
 load_env_file()
@@ -149,7 +154,7 @@ class GyuvisWakeListener:
         self.recognizer.non_speaking_duration = 0.45
 
         self.tts = None
-        if TTS_BACKEND == "pyttsx3" or TTS_ALLOW_FALLBACK:
+        if pyttsx3 is not None and (TTS_BACKEND == "pyttsx3" or TTS_ALLOW_FALLBACK):
             try:
                 self.tts = pyttsx3.init()
                 self.tts.setProperty("rate", 185)
@@ -1358,19 +1363,21 @@ class GyuvisWakeListener:
             if self._speak_with_edge_tts(text):
                 return
             if not TTS_ALLOW_FALLBACK and TTS_BACKEND in ("edge", "edge-tts"):
-                self._log("edge-tts playback failed. Windows TTS fallback is disabled.")
+                self._log("edge-tts playback failed. Native TTS fallback is disabled.")
                 return
             self._log("edge-tts 재생에 실패해 다음 엔진으로 넘어갑니다.")
+            if TTS_ALLOW_FALLBACK and self._speak_with_native_tts(text):
+                return
 
-        if TTS_BACKEND in ("powershell", "ps"):
-            if self._speak_with_powershell(text):
+        if TTS_BACKEND in ("powershell", "ps", "macos", "say"):
+            if self._speak_with_native_tts(text):
                 return
             if not TTS_ALLOW_FALLBACK:
-                self._log("PowerShell TTS failed. fallback is disabled.")
+                self._log("Native TTS failed. fallback is disabled.")
                 return
-            self._log("PowerShell TTS 재생에 실패해 pyttsx3로 fallback합니다.")
+            self._log("Native TTS 재생에 실패해 pyttsx3로 fallback합니다.")
 
-        if TTS_BACKEND not in ("auto", "pyttsx3", "powershell", "ps") and not TTS_ALLOW_FALLBACK:
+        if TTS_BACKEND not in ("auto", "pyttsx3", "powershell", "ps", "macos", "say") and not TTS_ALLOW_FALLBACK:
             return
 
         try:
@@ -1385,9 +1392,9 @@ class GyuvisWakeListener:
                 return
             if not TTS_ALLOW_FALLBACK:
                 return
-            if self._speak_with_powershell(text):
+            if self._speak_with_native_tts(text):
                 return
-            self._log("PowerShell TTS fallback도 실패했습니다.")
+            self._log("Native TTS fallback도 실패했습니다.")
 
     def _normalize_text(self, text: str) -> str:
         compact = text.lower().replace(" ", "")
@@ -1447,7 +1454,16 @@ class GyuvisWakeListener:
         details = [part for part in (name, f"{channels}ch" if channels else "", f"{int(samplerate)}Hz" if samplerate else "") if part]
         return " / ".join(details)
 
-    def _speak_with_powershell(self, text: str) -> bool:
+    def _speak_with_native_tts(self, text: str) -> bool:
+        if is_macos():
+            try:
+                subprocess.run(["say", text], check=True, capture_output=True, text=True, timeout=30)
+                return True
+            except Exception as error:
+                self._log(f"macOS say TTS 실패: {error}")
+                return False
+        if not is_windows():
+            return False
         escaped = text.replace("'", "''")
         command = (
             "Add-Type -AssemblyName System.Speech; "
