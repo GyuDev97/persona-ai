@@ -35,6 +35,25 @@ def build_agent_report_center() -> dict[str, Any]:
     }
 
 
+def build_creator_ideas_data() -> dict[str, Any]:
+    """Return only the data needed for Creator Studio's ideas-first view.
+
+    The full report center combines every agent's data and is intentionally
+    comprehensive.  Creator Studio is reached from the Ideas navigation item,
+    so making that complete report on its initial load delays the first useful
+    content unnecessarily.
+    """
+    panel = _build_agent4_panel()
+    tasks = panel.get("tasks") or []
+    updated_at = tasks[0].get("updated_at") if tasks else None
+    return {
+        "date": date.today().isoformat(),
+        "updated_at": updated_at,
+        "agent4": panel,
+        "tasks": tasks,
+    }
+
+
 def create_naver_blog_fill_task(draft_id: int) -> dict[str, Any]:
     draft = get_blog_draft(draft_id)
     task = create_agent_task(

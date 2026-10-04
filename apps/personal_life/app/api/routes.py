@@ -62,7 +62,7 @@ from ..services.agent_definition_service import (
     list_agent_definitions,
     update_agent_definition,
 )
-from ..services.agent_report_center_service import build_agent_report_center, create_naver_blog_fill_task
+from ..services.agent_report_center_service import build_agent_report_center, build_creator_ideas_data, create_naver_blog_fill_task
 from ..services.agent_room_chat_flexible_service import get_agent_room_messages, run_agent_room_chat
 from ..services.agent_standby_service import focus_agent, get_agent_standby_status, open_agent_detail, recover_agent
 from ..services.agent3_dev_planner_ai_service import generate_ai_dev_proposal
@@ -398,6 +398,11 @@ def get_agent_standby_status_route() -> dict:
 @router.get("/agent/report-center/data")
 def get_agent_report_center_data() -> dict:
     return build_agent_report_center()
+
+
+@router.get("/creator/ideas/data")
+def get_creator_ideas_data() -> dict:
+    return build_creator_ideas_data()
 
 
 @router.get("/agent/dialogue/messages")

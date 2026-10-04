@@ -220,7 +220,7 @@ button,input,textarea,select{font:inherit}button{border:0;cursor:pointer}a{color
 
 <script>
 const $ = (id) => document.getElementById(id);
-const state = { tab:"news", data:null, tasks:[], selectedDraft:null, visibleCount:5 };
+const state = { tab:"ideas", data:null, tasks:[], selectedDraft:null, visibleCount:5, fullDataLoaded:false };
 
 function escapeHtml(value){
   return String(value ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");
@@ -475,6 +475,7 @@ async function load(){
     ]);
     state.data = report;
     state.tasks = tasks;
+    state.fullDataLoaded = true;
     renderAll();
   }catch(error){
     toast(error.message);
@@ -483,10 +484,24 @@ async function load(){
     $("refreshButton").removeAttribute("disabled");
   }
 }
+async function loadIdeas(){
+  $("refreshButton").setAttribute("disabled", "disabled");
+  try{
+    const data = await request("/creator/ideas/data");
+    state.data = data;
+    state.tasks = data.tasks || data.agent4?.tasks || [];
+    renderAll();
+  }catch(error){
+    toast(error.message);
+    $("contentList").innerHTML = empty("유튜브 아이디어를 불러오지 못했습니다.");
+  }finally{
+    $("refreshButton").removeAttribute("disabled");
+  }
+}
 async function createTask(text){
   const result = await request("/mobile/assistant/command", { method:"POST", body:JSON.stringify({ text, source:"creator-studio" }) });
   toast(result.summary || "작업을 등록했습니다.");
-  await load();
+  await (state.fullDataLoaded ? load() : loadIdeas());
 }
 async function fillDraft(draftId, button){
   if(!draftId){toast("먼저 블로그 초안을 선택해주세요.");return}
@@ -501,16 +516,21 @@ async function fillDraft(draftId, button){
     button?.removeAttribute("disabled");
   }
 }
-function setTab(tab, button){
+async function setTab(tab, button){
   state.tab = tab;
   document.querySelectorAll("[data-tab]").forEach((item) => item.classList.toggle("active", item === button));
+  if(tab !== "ideas" && !state.fullDataLoaded){
+    $("contentList").innerHTML = empty("콘텐츠 데이터를 불러오는 중입니다.");
+    await load();
+    return;
+  }
   renderContent();
 }
 document.addEventListener("click", async (event) => {
   const target = event.target;
   if(!(target instanceof HTMLElement)) return;
   const tab = target.getAttribute("data-tab");
-  if(tab){setTab(tab, target);return}
+  if(tab){await setTab(tab, target);return}
   const action = target.getAttribute("data-action");
   if(action === "collect-news") createTask("1번 에이전트 최신 IT 뉴스 가져와봐");
   if(action === "create-draft") createTask("에이전트 2번 블로그 초안 작성해 줘");
@@ -528,8 +548,9 @@ document.addEventListener("click", async (event) => {
     await fillDraft(fillDraftId, target);
   }
 });
-$("refreshButton").addEventListener("click", load);
-$("refreshIconButton").addEventListener("click", load);
+const refreshCurrentData = () => state.fullDataLoaded ? load() : loadIdeas();
+$("refreshButton").addEventListener("click", refreshCurrentData);
+$("refreshIconButton").addEventListener("click", refreshCurrentData);
 $("collectNewsButton").addEventListener("click", () => createTask("1번 에이전트 최신 IT 뉴스 가져와봐"));
 $("createDraftButton").addEventListener("click", () => createTask("에이전트 2번 블로그 초안 작성해 줘"));
 $("findIdeasButton").addEventListener("click", () => createTask("4번 에이전트 유튜브 아이디어 찾아줘"));
@@ -539,8 +560,8 @@ $("previewSelectedButton").addEventListener("click", () => {
   if(id) previewDraft(id);
   else toast("미리볼 초안이 아직 없습니다.");
 });
-window.addEventListener("gyuos:refresh", load);
-load();
+window.addEventListener("gyuos:refresh", refreshCurrentData);
+loadIdeas();
 </script>
 </body>
 </html>
