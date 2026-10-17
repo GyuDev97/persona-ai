@@ -1,0 +1,24 @@
+{
+ "topic": "asst2",
+ "method": "B",
+ "draft_scores": {
+  "accuracy": 5,
+  "specificity": 3,
+  "feasibility": 4,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 3
+ },
+ "final_scores": {
+  "accuracy": 5,
+  "specificity": 5,
+  "feasibility": 4,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 5
+ },
+ "verdict": "improved",
+ "weakened_points": [],
+ "note": "글 2는 글 1보다 구체성 및 위험 검토에서 우수하며 동일한 핵심 내용을 더 명확히 다룸.",
+ "final_first": false
+}

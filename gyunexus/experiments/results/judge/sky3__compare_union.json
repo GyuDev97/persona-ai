@@ -1,0 +1,96 @@
+{
+ "topic": "sky3",
+ "orders": [
+  {
+   "order": [
+    "B",
+    "C",
+    "A"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "모든 제안이 증거와 일치하며 구체적. 위험 요소와 활동 내용 명확히 기술됨."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 2.0
+     },
+     "note": "아이디어는 흥미롭고 일부 새로우나 은하수 촬영이 어렵다는 사실 반복되고 위험 검토가 부족함."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "증거에 충실하고 구체적, 실행 가능하며 위험과 대체 활동 구체적이나 참신성은 다소 평범."
+    }
+   }
+  },
+  {
+   "order": [
+    "A",
+    "C",
+    "B"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "모든 주장과 대체 활동이 명확하며, 구체적 다음 단계 제안과 위험 인지 포함."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "대체 활동 일부 구체적이며 창의적(디지털 아트), 다만 위험 검토는 형식적, 증거와 일부 충돌 표현이 혼재됨."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "주장·위험 구체적이며 여러 대체 활동 제시, 하지만 별자리 관찰 시 구름 영향 고려 부족, 대체 활동 일부 일반적."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "union",
+ "model": "gpt-4.1-mini"
+}

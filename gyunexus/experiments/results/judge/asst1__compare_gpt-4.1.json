@@ -1,0 +1,54 @@
+{
+ "topic": "asst1",
+ "orders": [
+  {
+   "order": [
+    "C",
+    "A",
+    "B"
+   ],
+   "result": {
+    "C": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "수동/자동 집중모드, 빈도 조절 등 현실적이지만 기능구조·실제 구현 흐름이 구체적이지 않고, 'Frequency' 등 미확인 이름이 존재하며, 위험·한계 지적이 일부 모호함."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 5.0
+     },
+     "note": "현 시스템의 맥락 저장/알림 커스텀 활용 제안. 구체적 단계∙구현 가능성이 높고 맥락인식·상황설정 등 실현 가능하며, 위험과 다음 단계/열린 질문 분리가 충실."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 5.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "구체적 판단기준(앱/입력), 대화 기록 분석 등 현실적 접근과 세부 분류. 대화 기록 분석 등 기능 구현 방법이 구체적되고, 위험 및 한계 분석 과정도 실제 설계에 도움이 됨."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4.1"
+}

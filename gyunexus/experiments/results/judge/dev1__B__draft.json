@@ -1,0 +1,24 @@
+{
+ "topic": "dev1",
+ "method": "B",
+ "draft_scores": {
+  "accuracy": 4,
+  "specificity": 3,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 2
+ },
+ "final_scores": {
+  "accuracy": 4,
+  "specificity": 5,
+  "feasibility": 5,
+  "novelty": 4,
+  "value": 5,
+  "risk_review": 5
+ },
+ "verdict": "improved",
+ "weakened_points": [],
+ "note": "글 2가 구체적이고 위험 요소와 다음 단계를 명확히 다뤘으며, 활용 가치와 차별성이 향상됨.",
+ "final_first": false
+}

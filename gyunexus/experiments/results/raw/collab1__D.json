@@ -1,0 +1,488 @@
+{
+ "topic": "collab1",
+ "method": "D",
+ "ok": true,
+ "error": null,
+ "raw": {
+  "debate": {
+   "status": "completed",
+   "stop_reason": "stagnation",
+   "rounds": 2,
+   "error": null,
+   "participants": [
+    "idea",
+    "developer"
+   ],
+   "importance": 4,
+   "plan": {
+    "reasons": {
+     "research": {
+      "selected": false,
+      "reason": "외부 사실·수치·최신 정보가 필요한 표현이 없어 제외",
+      "by": "rule"
+     },
+     "idea": {
+      "selected": true,
+      "reason": "아이디어·방안 도출이 목적이므로 참여",
+      "by": "rule+llm"
+     },
+     "developer": {
+      "selected": true,
+      "reason": "소프트웨어 구현 검토가 필요한 표현 'LLM'",
+      "by": "rule"
+     },
+     "critic": {
+      "selected": false,
+      "reason": "[절제 실험] Critic 제거",
+      "by": "ablation"
+     }
+    },
+    "needs_facts": false,
+    "llm_reason": "이 주제는 아이디어 창출과 비판적 검토가 필요하기 때문에 두 에이전트를 선정했습니다."
+   },
+   "progress": [
+    {
+     "round": 1,
+     "new_evidence": 0,
+     "new_verified": 0,
+     "valid_rebuttals": 0,
+     "rejected_rebuttals": 0,
+     "duplicate_rebuttals": 0,
+     "addressed_rebuttals": 0,
+     "regressions": 0,
+     "critic_retries": 0
+    },
+    {
+     "round": 2,
+     "new_evidence": 0,
+     "new_verified": 0,
+     "valid_rebuttals": 0,
+     "rejected_rebuttals": 0,
+     "duplicate_rebuttals": 0,
+     "addressed_rebuttals": 0,
+     "regressions": 0,
+     "critic_retries": 0
+    },
+    {
+     "stop": {
+      "reason": "stagnation",
+      "detail": "새 증거·새 반박·반박 처리 없음(거부된 반박 0건, 중복 0건)"
+     }
+    }
+   ]
+  },
+  "messages": [
+   {
+    "round": 1,
+    "agent": "idea",
+    "content": "여러 LLM 에이전트 간의 오류 감소를 위한 토론 프로토콜은 다음과 같이 설계할 수 있습니다. 첫째, 각 에이전트가 제안하는 내용을 실시간으로 검토하는 체크리스트를 설정합니다. 이 체크리스트는 주장의 근거 자료, 논리적 일관성, 그리고 상충하는 정보 여부를 포함해야 합니다. 둘째, 각 에이전트가 자신의 주장을 반박할 수 있는 시간 프레임을 설정하여 보다 심도 있는 논의를 유도합니다. 마지막으로, 오류의 원인을 기록하고 분석하는 피드백 루프를 도입하여 지속적으로 프로토콜을 개선해 나가는 방법을 제안합니다.",
+    "claims": [
+     {
+      "text": "각 에이전트가 제안하는 내용을 실시간으로 검토하는 체크리스트를 설정해야 한다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "주장을 반박할 수 있는 시간 프레임을 설정해야 한다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "오류 원인을 기록하고 분석하는 피드백 루프를 도입해야 한다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 1,
+    "agent": "developer",
+    "content": "Idea Agent의 제안은 효과적인 오류 감소에 기여할 수 있습니다. 하지만 체크리스트 설정은 복잡하고 시간 소모가 클 수 있습니다. 이를 보완하기 위해, 간단한 자동화 도구를 구축하여 주장을 평가할 수 있도록 제안합니다. 피드백 루프 역시 유용할 것이나, 이를 구현하기 위한 데이터 저장소와 처리 로직이 필요합니다. 마지막으로, 주장의 반박 시간 프레임은 논의의 흐름을 방해할 수 있으므로, 유연성을 두고 설정해야 합니다.",
+    "claims": [
+     {
+      "text": "Idea Agent의 체크리스트 설정은 복잡하고 시간 소모가 클 수 있다.",
+      "type": "interpretation",
+      "status": "assumption",
+      "evidence_ids": [],
+      "notes": [
+       "해석의 근거 증거 없음",
+       "존재 미확인: Idea Agent"
+      ],
+      "entities": [
+       "Idea Agent"
+      ]
+     },
+     {
+      "text": "자동화 도구를 제안할 필요가 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "피드백 루프 구현을 위해 데이터 저장소가 필요하다.",
+      "type": "assumption",
+      "status": "assumption",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "주장의 반박 시간 프레임은 유연하게 설정해야 한다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 2,
+    "agent": "idea",
+    "content": "Developer Agent의 피드백을 바탕으로 두 가지를 수정합니다. 첫째, 체크리스트 설정의 복잡성을 줄이기 위해 자동화 도구를 활용하여 일부 검토 과정을 기계적으로 수행하도록 제안합니다. 둘째, 주장의 반박 시간 프레임은 정해진 기준을 설정하되, 필요에 따라 유연하게 조정할 수 있도록 하는 방향으로 논의합니다. 이 두 가지 개선이 일관된 동시에 효율적인 오류 감소 접근 방안을 제공할 것입니다.",
+    "claims": [
+     {
+      "text": "자동화 도구를 활용해 체크리스트의 복잡성을 줄일 필요가 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "주장의 반박 시간 프레임을 유연하게 조정할 수 있어야 한다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 2,
+    "agent": "developer",
+    "content": "Idea Agent의 제안에 기반하여, 체크리스트 검토를 자동화하는 도구의 구체적인 기능을 정의할 필요가 있습니다. 예를 들어, 각 주장에 대한 근거 자료를 웹에서 자동으로 검색하고, 논리적 일관성을 평가할 수 있는 알고리즘을 개발하는 것이 중요합니다. 또한, 오류를 기록하는 피드백 시스템은 통계적 데이터를 수집하고 분석할 수 있어야 합니다. 이런 기능들 구현에는 많은 시간과 자원이 필요할 것으로 보이며, 초기 구현 단위로는 자동화 도구의 기본 기능만 개발하는 것이 적합할 것입니다. 따라서, 이 작업은 중간 난이도로 판단되며, 장기적으로 시스템 성능 개선에 기여할 것입니다.",
+    "claims": [
+     {
+      "text": "체크리스트 검토 자동화 도구의 구체적인 기능을 정해야 한다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "피드백 시스템은 오류를 기록하고 분석할 수 있어야 한다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "이러한 기능 구현은 많은 시간과 자원이 필요하다.",
+      "type": "assumption",
+      "status": "assumption",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "초기 구현 단위로는 자동화 도구의 기본 기능 개발이 적합하다.",
+      "type": "interpretation",
+      "status": "assumption",
+      "evidence_ids": [],
+      "notes": [
+       "해석의 근거 증거 없음"
+      ],
+      "entities": []
+     }
+    ]
+   }
+  ],
+  "evidence": [],
+  "ideas": [
+   {
+    "title": "실시간 체크리스트 검토 설정",
+    "description": "각 에이전트가 제안하는 내용을 실시간으로 검토하는 체크리스트 설정",
+    "status": "needs_research",
+    "rationale": "복잡성과 시간 소모 문제 해결을 위한 자동화 도구 필요성 검토가 요구됨.",
+    "risks": [
+     "검토 과정의 복잡성이 여전히 남아있을 수 있음"
+    ],
+    "next_steps": [
+     "자동화 도구의 기능 정의를 논의할 필요가 있음"
+    ],
+    "feasibility": "medium",
+    "confidence": 0.6,
+    "evidence_ids": []
+   },
+   {
+    "title": "주장 반박 시간 프레임 설정",
+    "description": "주장을 반박할 수 있는 시간 프레임을 설정하여 논의 유도",
+    "status": "needs_research",
+    "rationale": "유연한 설정 방법에 대한 논의 필요.",
+    "risks": [
+     "논의 흐름 방해 우려"
+    ],
+    "next_steps": [
+     "주장 반박 프레임의 유연성에 대한 기준 마련 논의"
+    ],
+    "feasibility": "medium",
+    "confidence": 0.5,
+    "evidence_ids": []
+   },
+   {
+    "title": "피드백 루프 도입",
+    "description": "오류 원인을 기록하고 분석하는 피드백 루프 도입",
+    "status": "needs_research",
+    "rationale": "구현을 위한 데이터 저장소와 처리 로직이 필요함.",
+    "risks": [
+     "효율적인 데이터 처리 문제"
+    ],
+    "next_steps": [
+     "피드백 시스템의 구체적인 구현 방법 논의"
+    ],
+    "feasibility": "medium",
+    "confidence": 0.5,
+    "evidence_ids": []
+   },
+   {
+    "title": "체크리스트 검토 자동화 도구 기능 정의",
+    "description": "체크리스트 검토를 자동화하는 도구의 구체적인 기능을 정의할 필요가 있음.",
+    "status": "needs_research",
+    "rationale": "근거 자료 검색 및 논리적 일관성 평가를 위한 알고리즘 개발이 필요함.",
+    "risks": [
+     "기능 구현에 많은 시간과 자원이 필요"
+    ],
+    "next_steps": [
+     "자동화 도구의 기능 세부 사항 결정 논의"
+    ],
+    "feasibility": "medium",
+    "confidence": 0.5,
+    "evidence_ids": []
+   },
+   {
+    "title": "피드백 시스템 개선",
+    "description": "오류를 기록하고 분석할 수 있는 피드백 시스템 구축해야 함.",
+    "status": "needs_research",
+    "rationale": "효율적인 오류 분석을 위한 데이터 처리 로직 필요성.",
+    "risks": [
+     "데이터 저장 및 처리 이슈"
+    ],
+    "next_steps": [
+     "데이터 저장소 구조 설계 논의 필요"
+    ],
+    "feasibility": "medium",
+    "confidence": 0.5,
+    "evidence_ids": []
+   }
+  ],
+  "result": {
+   "summary": "여러 LLM 에이전트 간의 오류 감소를 위한 토론 프로토콜 설계에 대한 아이디어가 제시되었다. 체크리스트를 통한 주장의 실시간 검토와 주장을 반박할 시간 프레임 설정, 오류 원인 분석을 위한 피드백 루프 도입이 논의되었다. 이러한 제안은 자동화 도구의 활용과 유연한 기준 설정을 통해 개선될 수 있으며, 구체적인 기능 정의와 데이터 저장소 요구도 제기되었다.",
+   "decision": "revise",
+   "status": "needs_research",
+   "ideas": [
+    {
+     "title": "실시간 체크리스트 검토 설정",
+     "description": "각 에이전트가 제안하는 내용을 실시간으로 검토하는 체크리스트 설정",
+     "feasibility": "medium",
+     "risks": [
+      "검토 과정의 복잡성이 여전히 남아있을 수 있음"
+     ],
+     "next_steps": [
+      "자동화 도구의 기능 정의를 논의할 필요가 있음"
+     ],
+     "confidence": 0.6,
+     "status": "needs_research",
+     "rationale": "복잡성과 시간 소모 문제 해결을 위한 자동화 도구 필요성 검토가 요구됨.",
+     "evidence_ids": []
+    },
+    {
+     "title": "주장 반박 시간 프레임 설정",
+     "description": "주장을 반박할 수 있는 시간 프레임을 설정하여 논의 유도",
+     "feasibility": "medium",
+     "risks": [
+      "논의 흐름 방해 우려"
+     ],
+     "next_steps": [
+      "주장 반박 프레임의 유연성에 대한 기준 마련 논의"
+     ],
+     "confidence": 0.5,
+     "status": "needs_research",
+     "rationale": "유연한 설정 방법에 대한 논의 필요.",
+     "evidence_ids": []
+    },
+    {
+     "title": "피드백 루프 도입",
+     "description": "오류 원인을 기록하고 분석하는 피드백 루프 도입",
+     "feasibility": "medium",
+     "risks": [
+      "효율적인 데이터 처리 문제"
+     ],
+     "next_steps": [
+      "피드백 시스템의 구체적인 구현 방법 논의"
+     ],
+     "confidence": 0.5,
+     "status": "needs_research",
+     "rationale": "구현을 위한 데이터 저장소와 처리 로직이 필요함.",
+     "evidence_ids": []
+    },
+    {
+     "title": "체크리스트 검토 자동화 도구 기능 정의",
+     "description": "체크리스트 검토를 자동화하는 도구의 구체적인 기능을 정의할 필요가 있음.",
+     "feasibility": "medium",
+     "risks": [
+      "기능 구현에 많은 시간과 자원이 필요"
+     ],
+     "next_steps": [
+      "자동화 도구의 기능 세부 사항 결정 논의"
+     ],
+     "confidence": 0.5,
+     "status": "needs_research",
+     "rationale": "근거 자료 검색 및 논리적 일관성 평가를 위한 알고리즘 개발이 필요함.",
+     "evidence_ids": []
+    },
+    {
+     "title": "피드백 시스템 개선",
+     "description": "오류를 기록하고 분석할 수 있는 피드백 시스템 구축해야 함.",
+     "feasibility": "medium",
+     "risks": [
+      "데이터 저장 및 처리 이슈"
+     ],
+     "next_steps": [
+      "데이터 저장소 구조 설계 논의 필요"
+     ],
+     "confidence": 0.5,
+     "status": "needs_research",
+     "rationale": "효율적인 오류 분석을 위한 데이터 처리 로직 필요성.",
+     "evidence_ids": []
+    }
+   ],
+   "verified_facts": [],
+   "unverified_claims": [
+    "Idea Agent이라는 이름이 존재하지 않음"
+   ],
+   "open_questions": [
+    "자동화 도구의 초기 구현 범위와 기능은 무엇인가?",
+    "'Idea Agent'의 존재와 조건을 확인해야 함"
+   ],
+   "warnings": [
+    "존재가 확인되지 않은 이름: Idea Agent"
+   ],
+   "conflicts": [],
+   "importance": 4,
+   "recommendation": {
+    "accepted": [],
+    "needs_research": [
+     "실시간 체크리스트 검토 설정",
+     "주장 반박 시간 프레임 설정",
+     "피드백 루프 도입",
+     "체크리스트 검토 자동화 도구 기능 정의",
+     "피드백 시스템 개선"
+    ]
+   }
+  },
+  "events": {},
+  "review_stats": {}
+ },
+ "norm": {
+  "summary": "여러 LLM 에이전트 간의 오류 감소를 위한 토론 프로토콜 설계에 대한 아이디어가 제시되었다. 체크리스트를 통한 주장의 실시간 검토와 주장을 반박할 시간 프레임 설정, 오류 원인 분석을 위한 피드백 루프 도입이 논의되었다. 이러한 제안은 자동화 도구의 활용과 유연한 기준 설정을 통해 개선될 수 있으며, 구체적인 기능 정의와 데이터 저장소 요구도 제기되었다.",
+  "ideas": [
+   {
+    "title": "실시간 체크리스트 검토 설정",
+    "description": "각 에이전트가 제안하는 내용을 실시간으로 검토하는 체크리스트 설정",
+    "risks": [
+     "검토 과정의 복잡성이 여전히 남아있을 수 있음"
+    ],
+    "next_steps": [
+     "자동화 도구의 기능 정의를 논의할 필요가 있음"
+    ]
+   },
+   {
+    "title": "주장 반박 시간 프레임 설정",
+    "description": "주장을 반박할 수 있는 시간 프레임을 설정하여 논의 유도",
+    "risks": [
+     "논의 흐름 방해 우려"
+    ],
+    "next_steps": [
+     "주장 반박 프레임의 유연성에 대한 기준 마련 논의"
+    ]
+   },
+   {
+    "title": "피드백 루프 도입",
+    "description": "오류 원인을 기록하고 분석하는 피드백 루프 도입",
+    "risks": [
+     "효율적인 데이터 처리 문제"
+    ],
+    "next_steps": [
+     "피드백 시스템의 구체적인 구현 방법 논의"
+    ]
+   },
+   {
+    "title": "체크리스트 검토 자동화 도구 기능 정의",
+    "description": "체크리스트 검토를 자동화하는 도구의 구체적인 기능을 정의할 필요가 있음.",
+    "risks": [
+     "기능 구현에 많은 시간과 자원이 필요"
+    ],
+    "next_steps": [
+     "자동화 도구의 기능 세부 사항 결정 논의"
+    ]
+   },
+   {
+    "title": "피드백 시스템 개선",
+    "description": "오류를 기록하고 분석할 수 있는 피드백 시스템 구축해야 함.",
+    "risks": [
+     "데이터 저장 및 처리 이슈"
+    ],
+    "next_steps": [
+     "데이터 저장소 구조 설계 논의 필요"
+    ]
+   }
+  ],
+  "open_questions": [
+   "자동화 도구의 초기 구현 범위와 기능은 무엇인가?",
+   "'Idea Agent'의 존재와 조건을 확인해야 함"
+  ],
+  "caveats": [
+   "존재가 확인되지 않은 이름: Idea Agent"
+  ],
+  "evidence_texts": []
+ },
+ "metrics": {
+  "chars": 871,
+  "n_ideas": 5,
+  "with_next_steps": 1.0,
+  "with_risks": 1.0,
+  "unsupported_pct": 0,
+  "n_pct": 0,
+  "warning_coverage": null,
+  "n_warnings": 0
+ },
+ "secs": 21.37,
+ "usage": {
+  "calls": 6,
+  "prompt_tokens": 8090,
+  "completion_tokens": 1998,
+  "cost_usd": 0.002412,
+  "llm_secs": 21.05,
+  "by_purpose": {
+   "debate_plan": 1,
+   "debate_turn:idea": 2,
+   "debate_turn:developer": 2,
+   "debate_synthesis": 1
+  }
+ }
+}

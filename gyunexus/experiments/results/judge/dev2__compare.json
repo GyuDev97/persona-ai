@@ -1,0 +1,94 @@
+{
+ "topic": "dev2",
+ "orders": [
+  {
+   "order": [
+    "B",
+    "C",
+    "A"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "구체적 도구, 방법, 위험, 다음 단계 다룸. 기술 현실성 뒷받침 명확함. 위험평가 및 한계 적절히 서술됨."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "세 가지 방법 구체적이나 후보 1 대비 범위 좁고 위험 검토 덜 세밀함."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "Python/FastAPI 언급 맞춤형, 다소 일반적 제안. 위험·의존성 지적은 긍정적."
+    }
+   }
+  },
+  {
+   "order": [
+    "A",
+    "C",
+    "B"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "각 기능별 AI 활용 방안과 다음 단계, 위험을 구체적으로 제시해 정확성과 실현 가능성 뛰어남. 위험 검토 적절."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "주요 기능별 아이디어와 위험 제시하나 다음 단계가 덜 구체적이고, 위험 검토도 일부 일반적임."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 4.0
+     },
+     "note": "구체적 도구 유형과 방법을 상세 제시해 구체성과 적용 가능성 높음. 다만 위험 검토는 약간 일반적이며, novelty는 다수 도구 조합에서 차별성 부여."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ]
+}

@@ -1,0 +1,24 @@
+{
+ "topic": "proj1",
+ "method": "B",
+ "draft_scores": {
+  "accuracy": 4,
+  "specificity": 3,
+  "feasibility": 4,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 1
+ },
+ "final_scores": {
+  "accuracy": 5,
+  "specificity": 5,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 5,
+  "risk_review": 5
+ },
+ "verdict": "improved",
+ "weakened_points": [],
+ "note": "글 2가 위험 요소와 다음 단계를 구체적으로 제시해 실현 가능성과 가치가 크게 향상됨",
+ "final_first": false
+}

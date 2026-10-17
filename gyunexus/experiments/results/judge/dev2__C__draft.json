@@ -1,0 +1,24 @@
+{
+ "topic": "dev2",
+ "method": "C",
+ "draft_scores": {
+  "accuracy": 5,
+  "specificity": 3,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 1
+ },
+ "final_scores": {
+  "accuracy": 5,
+  "specificity": 5,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 5
+ },
+ "verdict": "improved",
+ "weakened_points": [],
+ "note": "글 2는 글 1에 비해 위험과 다음 단계가 명확히 제시되어 구체적이고 현실적이다.",
+ "final_first": false
+}

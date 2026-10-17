@@ -1,0 +1,94 @@
+{
+ "topic": "arch1",
+ "orders": [
+  {
+   "order": [
+    "A",
+    "B",
+    "C"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "구체적 아이디어와 단계 제시, 위험과 다음 단계 명확, 현재 GyuNexus 구현과 잘 맞음, 실현 가능성 높음."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "일부 새로운 제안 있으나 구현 절차 모호, 존재 확인이 필요한 기술명 언급, 위험 검토 적음."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "아이디어는 명확하나 구체적 구현 미흡, 존재 확인이 필요한 용어 포함, 위험 언급은 있으나 깊이 부족."
+    }
+   }
+  },
+  {
+   "order": [
+    "C",
+    "B",
+    "A"
+   ],
+   "result": {
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "키워드 추출·유사도·개인화 제안 구체적이나 일부 개념 존재 검증 필요"
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "요약·TF-IDF·피드백 언급 구체성 낮고 실행계획 부족, 실현에 가정 많음"
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 5.0,
+      "risk_review": 4.0
+     },
+     "note": "키워드 빈도·피드백·맥락 활용 상세하며 실현 가능하고 위험도 현실적 평가"
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ]
+}

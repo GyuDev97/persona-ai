@@ -1,0 +1,96 @@
+{
+ "topic": "dev2",
+ "orders": [
+  {
+   "order": [
+    "B",
+    "C",
+    "A"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "구체적인 도구를 언급하고, 함수와 메소드 분석을 기반으로 설명하여 구현 가능성이 높음."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 3.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "번째 방법에 대한 구체적인 설명은 부족하나 AI 활용에 대한 이해도를 나름 명확히 표현."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 5.0,
+      "risk_review": 4.0
+     },
+     "note": "구체적인 도구 및 방법 제안이 신뢰성을 높이고, 일부 새로운 각도에서 접근하였음."
+    }
+   }
+  },
+  {
+   "order": [
+    "A",
+    "C",
+    "B"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "모든 주장에 근거 있으나 구체성 부족하여 중복."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "제안된 각 방법에 대한 설명이 충분히 구체적이며 단계가 명확."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 5.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 4.0
+     },
+     "note": "다양한 도구를 제안하며 구체성과 활용 가치 높음."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4o-mini"
+}

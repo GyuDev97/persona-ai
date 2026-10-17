@@ -1,0 +1,24 @@
+{
+ "topic": "arch3",
+ "method": "C",
+ "draft_scores": {
+  "accuracy": 5,
+  "specificity": 4,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 5,
+  "risk_review": 4
+ },
+ "final_scores": {
+  "accuracy": 4,
+  "specificity": 3,
+  "feasibility": 4,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 4
+ },
+ "verdict": "improved",
+ "weakened_points": [],
+ "note": "글 2가 구체적인 예와 권한 강화 설명으로 정확도와 실행 가능성을 높여 개선됨.",
+ "final_first": true
+}

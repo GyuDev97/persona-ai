@@ -1,0 +1,24 @@
+{
+ "topic": "collab1",
+ "method": "C",
+ "draft_scores": {
+  "accuracy": 4,
+  "specificity": 3,
+  "feasibility": 4,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 2
+ },
+ "final_scores": {
+  "accuracy": 5,
+  "specificity": 4,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 5,
+  "risk_review": 4
+ },
+ "verdict": "improved",
+ "weakened_points": [],
+ "note": "글 2가 위험·다음 단계 구체화와 비용 관리 포함하여 보다 현실적이고 구체적임.",
+ "final_first": false
+}

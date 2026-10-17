@@ -1,0 +1,54 @@
+{
+ "topic": "arch2",
+ "orders": [
+  {
+   "order": [
+    "A",
+    "B",
+    "C"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "정확성, 비용, 만족도 등 관련 있지만 일부 내용이 모호하고 근거·측정법 부족. 설계 맥락에 부합하며 구현 복잡성은 낮아 실현 가능."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "지표 정의·위험·다음 단계를 가장 구체적으로 명시. 평가 방법·구체적 지표 설정에 진전이 있으나 완전한 근거·측정식 제시는 부족."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 4.0
+     },
+     "note": "유용성·효율성 등 중요한 요소 언급과 위험 분석은 적정. 구체적인 방법론 부족(스스로 명시)으로 설계·실행까지는 추가 연구가 필요함."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4.1"
+}

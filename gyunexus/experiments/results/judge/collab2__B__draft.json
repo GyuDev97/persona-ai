@@ -1,0 +1,27 @@
+{
+ "topic": "collab2",
+ "method": "B",
+ "draft_scores": {
+  "accuracy": 4,
+  "specificity": 3,
+  "feasibility": 4,
+  "novelty": 4,
+  "value": 3,
+  "risk_review": 2
+ },
+ "final_scores": {
+  "accuracy": 4,
+  "specificity": 4,
+  "feasibility": 4,
+  "novelty": 4,
+  "value": 4,
+  "risk_review": 5
+ },
+ "verdict": "weakened",
+ "weakened_points": [
+  "글 2는 글 1의 구체적인 위험 검토와 다음 단계 제안을 생략하여 위험 인지와 실현 계획이 약화됨.",
+  "글 2는 구체적인 '누가, 어떻게'에 대한 설명이 덜하여 구체성과 활용 가치가 줄어듦."
+ ],
+ "note": "글 2는 요약과 구체성, 위험 평가에서 후퇴하여 타당성 일부 약화됨.",
+ "final_first": true
+}

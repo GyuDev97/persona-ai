@@ -1,0 +1,24 @@
+{
+ "topic": "sky1",
+ "method": "C",
+ "draft_scores": {
+  "accuracy": 5,
+  "specificity": 4,
+  "feasibility": 5,
+  "novelty": 2,
+  "value": 5,
+  "risk_review": 4
+ },
+ "final_scores": {
+  "accuracy": 4,
+  "specificity": 3,
+  "feasibility": 4,
+  "novelty": 2,
+  "value": 4,
+  "risk_review": 3
+ },
+ "verdict": "improved",
+ "weakened_points": [],
+ "note": "글 2는 근거 명시와 구체적 수치를 제시하며 정확성, 활용성, 위험 검토가 향상됨.",
+ "final_first": true
+}

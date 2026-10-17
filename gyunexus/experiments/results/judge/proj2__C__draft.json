@@ -1,0 +1,26 @@
+{
+ "topic": "proj2",
+ "method": "C",
+ "draft_scores": {
+  "accuracy": 4,
+  "specificity": 3,
+  "feasibility": 4,
+  "novelty": 3,
+  "value": 3,
+  "risk_review": 2
+ },
+ "final_scores": {
+  "accuracy": 5,
+  "specificity": 4,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 4
+ },
+ "verdict": "weakened",
+ "weakened_points": [
+  "글 2는 사용자 요구 조사 부족과 위험 검토와 다음 단계 제시가 빠져 구체성과 위험 검토가 약화됨"
+ ],
+ "note": "글 2가 구체성과 위험 검토를 덜 포함해 아이디어 신뢰도가 떨어짐",
+ "final_first": true
+}

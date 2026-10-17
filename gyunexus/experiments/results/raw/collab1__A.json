@@ -1,0 +1,75 @@
+{
+ "topic": "collab1",
+ "method": "A",
+ "ok": true,
+ "error": null,
+ "raw": {},
+ "norm": {
+  "summary": "여러 LLM 에이전트 간의 오류를 줄이기 위한 토론 프로토콜은 책임 분담, 오류 검증 단계 및 결과 классификация 체계를 포함해야 한다. 각 에이전트는 증거 검증 장부를 참조하여 주장을 지원해야 하며, 최대 3라운드의 논의를 통해 의견을 교환할 수 있다. 성공적인 토론을 위해서는 주제에 따라 규칙 기반 참가자 선택이 반드시 필요하다.",
+  "ideas": [
+   {
+    "title": "오류 검증 단계 추가",
+    "description": "각 에이전트가 자신의 주장 앞에 관련 증거를 명시하여 타당성을 높이는 검증 단계를 추가한다.",
+    "risks": [
+     "추가 시간 소요",
+     "복잡성 증가"
+    ],
+    "next_steps": [
+     "구체적인 증거 제시 규칙 설정",
+     "검증 단계 프로토타입 구현"
+    ]
+   },
+   {
+    "title": "결과 클래시피케이션 개선",
+    "description": "토론 후 결과를 'accepted', 'needs_research', 'discarded' 외에 'under_review', 'validated' 등의 상태를 추가하여, 더욱 세부적인 피드백을 제공한다.",
+    "risks": [
+     "구분 기준의 모호함"
+    ],
+    "next_steps": [
+     "기존 분류 체계 분석",
+     "새로운 상태 추가 기준 설정"
+    ]
+   },
+   {
+    "title": "주제별 규칙 기반 참가자 선택 강화",
+    "description": "각 주제에 맞는 에이전트를 선정하는 알고리즘을 개선하여 전문성을 반영한다.",
+    "risks": [
+     "AI의 성능 의존"
+    ],
+    "next_steps": [
+     "사용자 피드백 수집",
+     "참가자 선택 알고리즘 구조 업데이트"
+    ]
+   }
+  ],
+  "open_questions": [
+   "어떤 기준으로 증거를 검증할 것인가?",
+   "에이전트 간의 의사소통 방식을 어떻게 효율적으로 문제화할 것인가?"
+  ],
+  "caveats": [
+   "현재 시스템에 통합하기 위한 추가 개발 시간이 필요함."
+  ],
+  "evidence_texts": []
+ },
+ "metrics": {
+  "chars": 756,
+  "n_ideas": 3,
+  "with_next_steps": 1.0,
+  "with_risks": 1.0,
+  "unsupported_pct": 0,
+  "n_pct": 0,
+  "warning_coverage": null,
+  "n_warnings": 0
+ },
+ "secs": 3.28,
+ "usage": {
+  "calls": 1,
+  "prompt_tokens": 736,
+  "completion_tokens": 443,
+  "cost_usd": 0.000376,
+  "llm_secs": 3.28,
+  "by_purpose": {
+   "single": 1
+  }
+ }
+}

@@ -1,0 +1,24 @@
+{
+ "topic": "collab2",
+ "method": "C",
+ "draft_scores": {
+  "accuracy": 4,
+  "specificity": 3,
+  "feasibility": 4,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 2
+ },
+ "final_scores": {
+  "accuracy": 5,
+  "specificity": 4,
+  "feasibility": 4,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 5
+ },
+ "verdict": "improved",
+ "weakened_points": [],
+ "note": "글 2는 리스크와 다음 단계 세부 검토로 정확성과 위험 인지가 개선됨.",
+ "final_first": false
+}

@@ -1,0 +1,94 @@
+{
+ "topic": "proj1",
+ "orders": [
+  {
+   "order": [
+    "C",
+    "A",
+    "B"
+   ],
+   "result": {
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "다양한 기능과 위험 덧붙여 구체적이나 위험 반영 미흡 일부 지적됨"
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "배경과 기술 스택에 부합하며 은하수 특화 태깅 등 구체적·실현 가능, 위험·개선 점 잘 다룸"
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "기본적 기능 구체적이나 천체 특화 부분 미반영, 위험 반영 적절하나 노벨티 약간 낮음"
+    }
+   }
+  },
+  {
+   "order": [
+    "B",
+    "A",
+    "C"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "기능과 위험, 다음 단계 구체적이며 증거와 충돌 없음."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "천체 태깅 등 사용자 배경 반영, 세부적이고 현실적 위험 검토."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 5.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "출사 일정 기능 신선하나 기술 난이도와 신뢰성 우려 일부만 반영."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ]
+}

@@ -1,0 +1,69 @@
+{
+ "topic": "sky1",
+ "method": "A0",
+ "ok": true,
+ "error": null,
+ "raw": {},
+ "norm": {
+  "summary": "오늘 밤(2026-10-17)과 내일 밤(2026-10-18) 중 어디서 은하수를 촬영하기에 더 나은 날인지는 명확한 정보가 없어 확인이 필요합니다. 은하수 촬영을 위해서는 구름이 적고 시각적 방해 요소가 없는 밤이 이상적입니다. 현재 주어진 데이터에는 날씨나 천문적 정보가 포함되어 있지 않아 직접적인 결론을 내리기 어렵습니다.",
+  "ideas": [],
+  "open_questions": [
+   "오늘 밤과 내일 밤의 날씨는 어떤가요?",
+   "구름량, 강수확률, 달 밝기 등의 천문적 정보를 확인할 수 있나요?"
+  ],
+  "caveats": [
+   "날씨와 천문적 조건이 은하수 촬영의 성공에 큰 영향을 미치므로 추가 정보가 필요함."
+  ],
+  "evidence_texts": []
+ },
+ "metrics": {
+  "chars": 313,
+  "n_ideas": 0,
+  "with_next_steps": 0.0,
+  "with_risks": 0.0,
+  "unsupported_pct": 0,
+  "n_pct": 0,
+  "warning_coverage": null,
+  "n_warnings": 0
+ },
+ "secs": 1.8,
+ "usage": {
+  "calls": 1,
+  "prompt_tokens": 424,
+  "completion_tokens": 186,
+  "cost_usd": 0.000175,
+  "llm_secs": 1.8,
+  "by_purpose": {
+   "single": 1
+  }
+ },
+ "bundle": {
+  "text": "[E1] (weather.forecast) {\"date\": \"2026-10-17\", \"period\": \"밤\", \"location\": \"기본 위치(설정값)\", \"avg_cloud_cover_pct\": 60, \"max_precip_prob_pct\": 2, \"avg_temp_c\": 17.7, \"hours_sampled\": 5, \"window_passed\": false, \"source\": \"https://open-meteo.com\"}\n     ⚠ 평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음\n[E2] (weather.forecast) {\"date\": \"2026-10-18\", \"period\": \"밤\", \"location\": \"기본 위치(설정값)\", \"avg_cloud_cover_pct\": 8, \"max_precip_prob_pct\": 9, \"avg_temp_c\": 14.6, \"hours_sampled\": 5, \"window_passed\": false, \"source\": \"https://open-meteo.com\"}\n[E3] (astro.moon_phase) {\"phase\": \"상현달\", \"age_days\": 6.2, \"illumination_pct\": 38, \"days_to_next_new_moon\": 23.3, \"dark_sky_friendly\": false, \"source\": \"computed:mean-synodic-month\", \"for\": {\"date\": \"2026-10-17\", \"period\": \"밤\"}}\n     ⚠ 달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리\n[E4] (astro.moon_phase) {\"phase\": \"상현달\", \"age_days\": 7.2, \"illumination_pct\": 48, \"days_to_next_new_moon\": 22.3, \"dark_sky_friendly\": false, \"source\": \"computed:mean-synodic-month\", \"for\": {\"date\": \"2026-10-18\", \"period\": \"밤\"}}\n     ⚠ 달 밝기 48%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리",
+  "flags": [
+   {
+    "code": "cloudy",
+    "severity": "warn",
+    "text": "평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+    "date": "2026-10-17",
+    "period": "밤",
+    "location": "기본 위치(설정값)"
+   },
+   {
+    "code": "moon_bright",
+    "severity": "warn",
+    "text": "달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리",
+    "date": "2026-10-17",
+    "period": null,
+    "location": null
+   },
+   {
+    "code": "moon_bright",
+    "severity": "warn",
+    "text": "달 밝기 48%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리",
+    "date": "2026-10-18",
+    "period": null,
+    "location": null
+   }
+  ]
+ }
+}

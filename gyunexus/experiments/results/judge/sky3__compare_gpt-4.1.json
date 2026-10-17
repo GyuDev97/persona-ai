@@ -1,0 +1,54 @@
+{
+ "topic": "sky3",
+ "orders": [
+  {
+   "order": [
+    "B",
+    "C",
+    "A"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 3.0,
+      "feasibility": 5.0,
+      "novelty": 2.0,
+      "value": 3.0,
+      "risk_review": 4.0
+     },
+     "note": "대체 활동 제안이 평범하고 활동 대부분이 사실상 구름 많은 밤과 무관, 위험 검토 구체적 설명 반복."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "별자리 앱, 디지털 아트 등 IT 개발자 맞춤 활동 제안이 구체적 새로움. 증거 언급과 한계 인식도 적절."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 2.0,
+      "value": 3.0,
+      "risk_review": 4.0
+     },
+     "note": "구름·달 상황 정리 적확, 대안(별자리/관측/공부) 구체적이나 색다름 부족. 위험 안내 실질적."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4.1"
+}

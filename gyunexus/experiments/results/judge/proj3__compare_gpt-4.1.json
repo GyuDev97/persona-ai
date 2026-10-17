@@ -1,0 +1,54 @@
+{
+ "topic": "proj3",
+ "orders": [
+  {
+   "order": [
+    "A",
+    "B",
+    "C"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 4.0
+     },
+     "note": "구성요소와 단계가 일부 구체적이나 기능 설명·실현 과정이 추상적; 데이터셋 수집 등 실행 현실성 있음. risk 적절."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "현재 배경에서 가능한 FastAPI/React 방식 설명. 데이터베이스 설계 등 구체적이며, 사용자의 스택과 정확히 부합. 요구사항/데이터모델 등 리스크 검토 다소 형식적임."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 2.0,
+      "specificity": 4.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 4.0
+     },
+     "note": "NASA/OWM API/HF Transformers 등 구체 명칭이 배경에 확인되지 않았는데 확정적으로 서술. 기술 명칭 검증 필요성 언급은 risk 리뷰에 반영. 설명은 구체적이나 배경 증거 부족 및 가능성 불명확."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4.1"
+}

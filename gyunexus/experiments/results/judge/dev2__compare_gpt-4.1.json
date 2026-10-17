@@ -1,0 +1,54 @@
+{
+ "topic": "dev2",
+ "orders": [
+  {
+   "order": [
+    "B",
+    "C",
+    "A"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "여러 도구별 구체적 설명, 실제 도구 조사의 구체적 다음 단계, 위험 등 제한사항 현실적 기술. 일반론 섞여 있으나 FastAPI와 Python에 특화된 내용은 없음."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "실제 도구 이름이나 FastAPI/파이썬 특이점 언급 없이 일반적이나, 방법·위험·다음 단계 구체적으로 기술. 새로움은 다소 부족."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "테스트 코드 자동화, 오류 탐지, 리팩토링 등 비교적 구체적이나 많은 부분이 일반적인 설명. FastAPI 언급 있으나 세부 구현 제안은 부족."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4.1"
+}

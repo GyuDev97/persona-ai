@@ -1,0 +1,94 @@
+{
+ "topic": "arch2",
+ "orders": [
+  {
+   "order": [
+    "A",
+    "B",
+    "C"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "구체적 지표 항목과 다음 단계, 위험까지 제시하여 실현 가능하며 사용자 피드백 신뢰도 문제도 다룸."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 3.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "정확성·만족도·일관성 지표 제시하나 세부 구현 방안 및 구체성 부족, 위험 검토도 일부 형식적."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 4.0
+     },
+     "note": "정확성·유용성·효율성 평가 제안하나 방법론 구체성 부족, 요약에 자체 경고 포함하며 위험 인식은 양호."
+    }
+   }
+  },
+  {
+   "order": [
+    "C",
+    "B",
+    "A"
+   ],
+   "result": {
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 5.0
+     },
+     "note": "정확성·유용성·효율성 지표 제안 명확, 구체적 다음단계 포함; 위험·한계 세밀히 다룸."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 3.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 4.0
+     },
+     "note": "정확성·사용자만족도·일관성 제시하나 구체성 및 활용 가치 상대적 다소 낮음; 위험 검토 통상적."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "정확성·비용효율성·사용자 만족 다루며 구현 가능, 주기적 평가 제안; 위험 검토 있지만 일부 한계 있음."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ]
+}

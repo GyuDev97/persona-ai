@@ -1,0 +1,54 @@
+{
+ "topic": "proj2",
+ "orders": [
+  {
+   "order": [
+    "C",
+    "B",
+    "A"
+   ],
+   "result": {
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 3.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "공유·알림 등 제안은 구체성이 약하며, 논의·피드백 등 추상적 부분이 있음. 기술 스택 바로 적용 가능, 위험 지적 명확."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 5.0
+     },
+     "note": "파일·신고 등에 구체 아이디어, 위험과 다음 단계 구체적. 기존 기능 범위 내 제안(뻔한 면), API 실현성·처리정책 검토 명시."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "핵심 기능 구체적, API 활용 등 가능성 높음. 단, 비교적 일반론적 아이디어로 참신성 보통. 범위·위험 명확, 구체 다음 단계."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4.1"
+}

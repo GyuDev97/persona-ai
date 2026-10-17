@@ -1,0 +1,95 @@
+{
+ "topic": "asst1",
+ "orders": [
+  {
+   "order": [
+    "B",
+    "D",
+    "A"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 5.0
+     },
+     "note": "구체적 기준과 구현 방식을 제안하며 위험·다음 단계 명시, 다만 구체적 방법론 미흡."
+    },
+    "D": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 5.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "UI와 행동패턴 등 구체적 조치 포함, 음성도 주요 제안으로 가능성 높음, 위험은 일부 누락."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "집중시간 인식과 상황별 알림 등 기능 구체적, 현실성과 위험 문제 적절히 다룸."
+    }
+   }
+  },
+  {
+   "order": [
+    "A",
+    "D",
+    "B"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 5.0
+     },
+     "note": "사용자 활동·대화 저장 데이터 활용 구체 제시, 위험·다음 단계 명확. 단, 집중패턴 측정 방법 불명확해 일부 감점."
+    },
+    "D": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "명시적 집중모드 설정 등 구체성↑, 음성 기능은 아직 없음으로 가정시 다소 비현실적 요소 있어 실현가능성 낮춤."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 4.0
+     },
+     "note": "구체 기준·알림 조정·대화 기록 분석 제안 현실적이며 GyuNexus 배경과 일치, 단순 반복적 아이디어 감점."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "D"
+ ],
+ "mode": "ablation"
+}

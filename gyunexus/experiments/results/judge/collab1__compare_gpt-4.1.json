@@ -1,0 +1,54 @@
+{
+ "topic": "collab1",
+ "orders": [
+  {
+   "order": [
+    "A",
+    "B",
+    "C"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "백엔드, 에이전트 구조 등과 부합함. 기존 구조(장부·분류체계·참가자 선택) 언급하며, 구체 단계·위험 확인. 분류체계 확충 등 일부 새로움 부족."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 5.0
+     },
+     "note": "구성요소 다수 구체적이나, 일부(실시간 평가, 신뢰 점수 등)는 구현 제약 및 근거 미흡. 위험 적극 검토는 우수."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "장부, 예산, 라운드 등 배경 반영했고 크로스-체크·요약 등 새 시도. 세부에선 아직 배경 세팅과의 완전한 결합은 미흡."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4.1"
+}

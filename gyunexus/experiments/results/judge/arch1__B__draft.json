@@ -1,0 +1,27 @@
+{
+ "topic": "arch1",
+ "method": "B",
+ "draft_scores": {
+  "accuracy": 3,
+  "specificity": 2,
+  "feasibility": 4,
+  "novelty": 2,
+  "value": 3,
+  "risk_review": 2
+ },
+ "final_scores": {
+  "accuracy": 3,
+  "specificity": 3,
+  "feasibility": 3,
+  "novelty": 3,
+  "value": 3,
+  "risk_review": 3
+ },
+ "verdict": "weakened",
+ "weakened_points": [
+  "글 2는 글 1에서 언급한 구체적인 알고리즘(TextRank)과 다음 단계가 빠지고, 위험 검토도 약화됨",
+  "글 2는 제안된 아이디어 구현을 위한 명확한 절차와 방법론 제시가 부족함"
+ ],
+ "note": "글 2는 구체성이 떨어지고 위험 검토가 약하며, 구체적 구현 방안이 약화됨.",
+ "final_first": true
+}

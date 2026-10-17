@@ -1,0 +1,26 @@
+{
+ "topic": "dev1",
+ "method": "C",
+ "draft_scores": {
+  "accuracy": 5,
+  "specificity": 4,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 3
+ },
+ "final_scores": {
+  "accuracy": 4,
+  "specificity": 4,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 5
+ },
+ "verdict": "improved",
+ "weakened_points": [
+  "글 2는 CI/CD 도구와 플랫폼(GitHub, GitLab 등) 존재 확인이 안 되어 불확실성을 명확히 하지 못함"
+ ],
+ "note": "글 2는 위험 검토와 관리 방안 구체화가 우수하나, 일부 배경 확인 부족이 아쉽다.",
+ "final_first": false
+}

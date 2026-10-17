@@ -1,0 +1,496 @@
+{
+ "topic": "sky3",
+ "method": "C",
+ "ok": true,
+ "error": null,
+ "raw": {
+  "debate": {
+   "status": "completed",
+   "stop_reason": "token_budget",
+   "rounds": 2,
+   "error": null,
+   "participants": [
+    "research",
+    "idea",
+    "critic"
+   ],
+   "importance": 4,
+   "plan": {
+    "reasons": {
+     "research": {
+      "selected": true,
+      "reason": "외부 사실·수치·최신 정보가 필요한 표현 '오늘' -> 조사 필수 (LLM은 제외를 제안했으나 규칙이 우선)",
+      "by": "rule"
+     },
+     "idea": {
+      "selected": true,
+      "reason": "아이디어·방안 도출이 목적이므로 참여",
+      "by": "rule+llm"
+     },
+     "developer": {
+      "selected": false,
+      "reason": "소프트웨어 구현과 무관한 주제라 제외",
+      "by": "rule"
+     },
+     "critic": {
+      "selected": true,
+      "reason": "주장과 결론에 대한 검토는 항상 필요",
+      "by": "rule"
+     }
+    },
+    "needs_facts": true,
+    "llm_reason": "기상과 달 조건에 따라 은하수 촬영이 어려운 상황에서 가능한 활동을 찾아 새로운 창의성을 발휘하기 위함이다."
+   },
+   "progress": [
+    {
+     "round": 1,
+     "new_evidence": 2,
+     "new_verified": 0,
+     "valid_rebuttals": 0,
+     "rejected_rebuttals": 1,
+     "duplicate_rebuttals": 0,
+     "addressed_rebuttals": 0,
+     "regressions": 0,
+     "critic_retries": 0
+    },
+    {
+     "round": 2,
+     "new_evidence": 0,
+     "new_verified": 1,
+     "valid_rebuttals": 1,
+     "rejected_rebuttals": 1,
+     "duplicate_rebuttals": 1,
+     "addressed_rebuttals": 0,
+     "regressions": 0,
+     "critic_retries": 1
+    },
+    {
+     "round": 3,
+     "new_evidence": 0,
+     "new_verified": 1,
+     "valid_rebuttals": 0,
+     "rejected_rebuttals": 0,
+     "duplicate_rebuttals": 0,
+     "addressed_rebuttals": 0,
+     "regressions": 0,
+     "critic_retries": 0
+    },
+    {
+     "stop": {
+      "reason": "token_budget",
+      "detail": "토큰 19357/19000 사용"
+     }
+    }
+   ]
+  },
+  "messages": [
+   {
+    "round": 1,
+    "agent": "research",
+    "content": "은하수 촬영이 어려운 조건인지 확인하기 위해 오늘 밤의 날씨와 달의 상태를 조사해야 합니다. 날씨 정보는 구름량과 강수확률을, 달 정보는 위상과 밝기를 확인할 필요가 있습니다. 이를 위해 weather.forecast와 astro.moon_phase 도구를 요청하겠습니다.",
+    "claims": []
+   },
+   {
+    "round": 1,
+    "agent": "idea",
+    "content": "오늘 밤 은하수 촬영이 어려운 상황에서는 재미있고 창의적인 대안으로 두 가지를 제안합니다. 첫째, 별과 천체에 대한 디지털 아트를 생성해 보세요. Python을 활용하여 별자리 패턴이나 천체를 시뮬레이션하고, 이를 기반으로 작품을 만들 수 있습니다. 둘째, 야외에서 어두운 하늘을 활용한 장기 촬영을 시도해 보세요. 피사체를 특정 시간 동안 조명하며 독특한 빛의 궤적을 촬영할 수 있습니다.",
+    "claims": [
+     {
+      "text": "은하수 촬영이 어려운 날씨 조건으로 인해 대체 활동이 필요하다.",
+      "type": "interpretation",
+      "status": "conflicted",
+      "evidence_ids": [
+       1,
+       2
+      ],
+      "notes": [
+       "의미 검토: 증거 경고와 모순"
+      ],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 1,
+    "agent": "critic",
+    "content": "검토 요약",
+    "claims": [
+     {
+      "text": "[B1] 주장과 증거의 모순: 디지털 아트를 생성하는 과정은 날씨와 직접적인 연관성이 없지만 은하수 촬영 대신 제안된 활동이 하늘 관측과 관련된 촬영 활동이라는 점에서 은하수 촬영이 불가능한 상황과의 일치성이 낮습니다. (제안: 은하수 촬영이 어렵다면 날씨나 천문 효과와 관계없이 실행 가능한 다른 창의적인 활동을 제안하는 것이 좋습니다.)",
+      "type": "rebuttal",
+      "status": "rebuttal",
+      "evidence_ids": [
+       1,
+       2
+      ],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 2,
+    "agent": "research",
+    "content": "오늘 밤 기상 조건을 확인해 보았습니다. 평균 구름량은 60%로 하늘이 가려질 가능성이 높고, 달의 밝기는 38%로 어두운 하늘 조건이 아닙니다. 따라서 은하수 촬영은 어려울 것으로 판단됩니다. 이와 함께, 대안으로는 다음과 같은 활동을 추천합니다. 첫째, 천체 망원경을 사용해 다른 천체를 관찰해보세요. 둘째, 별자리 앱을 활용하여 별자리를 식별하고, 이를 기록하는 시간을 가져보세요. 셋째, 주변 자연을 주제로 야경 촬영에 도전해 보세요.",
+    "claims": [
+     {
+      "text": "오늘 밤 은하수 촬영이 어렵다",
+      "type": "interpretation",
+      "status": "conflicted",
+      "evidence_ids": [
+       1,
+       2
+      ],
+      "notes": [
+       "의미 검토: 증거 경고와 모순"
+      ],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 2,
+    "agent": "idea",
+    "content": "은하수 촬영이 힘든 조건에서 재미있고 창의적인 대안으로 세 가지를 제안합니다. 첫째, Python을 활용하여 천체 관찰 애플리케이션을 개발해 보세요. 이를 통해 천체의 위치와 움직임을 시뮬레이션하고 학습할 수 있습니다. 둘째, 별자리 앱을 사용하여 주변 친구들과 별자리 식별 놀이를 하면서 새로운 경험을 공유할 수 있습니다. 셋째, 캠핑 장비를 활용하여 어두운 하늘 대신 텐트나 캠프파이어를 배경으로 감성적인 수확 사진을 촬영해 보세요.",
+    "claims": [
+     {
+      "text": "오늘 밤 은하수 촬영이 어렵기 때문에 대체 활동이 필요하다.",
+      "type": "fact",
+      "status": "conflicted",
+      "evidence_ids": [
+       1,
+       2
+      ],
+      "notes": [
+       "의미 검토: 증거 경고와 모순"
+      ],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 2,
+    "agent": "critic",
+    "content": "검토 요약",
+    "claims": [
+     {
+      "text": "[B2] 누락된 조건: 별자리 앱을 사용해 별자리를 식별하는 과정은 오늘 밤의 기상 조건에 따라 하늘이 가려져 않아 별이 보이지 않을 수 있습니다. 따라서 별자리를 식별하기 위해서는 적어도 하늘이 어느 정도 맑아야 하므로, 날씨 조건을 반영하는 내용이 누락되었습니다. (제안: 특정 기상 조건에서도 가능할 활동을 제안하거나, 해가 진 후에도 실내에서 가능한 방법(Sky Map 아트 제작 등)을 소개하는 것이 좋습니다.)",
+      "type": "rebuttal",
+      "status": "rebuttal",
+      "evidence_ids": [
+       1,
+       2
+      ],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 3,
+    "agent": "research",
+    "content": "오늘 밤 기상 조건을 다시 정리하겠습니다. 평균 구름량이 60%로 하늘이 가려질 가능성이 높고, 달의 밝기는 38%로 어두운 하늘 조건이 아닙니다. 따라서 은하수 촬영은 어렵습니다. 대안으로는 흥미롭고 창의적인 활동을 제안합니다. 첫째, 근처의 천체 관찰 앱을 통해 다른 천체를 관찰하고 그 경험을 기록해 보세요. 둘째, 별과 자연을 주제로 사진 촬영을 시도해 보시면 좋습니다. 셋째, 집에서 밤하늘에 대한 디지털 아트를 만들어 보는 것도 좋은 방법입니다.",
+    "claims": [
+     {
+      "text": "오늘 밤 은하수 촬영은 어렵다.",
+      "type": "fact",
+      "status": "conflicted",
+      "evidence_ids": [
+       1,
+       2
+      ],
+      "notes": [
+       "의미 검토: 증거 경고와 모순"
+      ],
+      "entities": []
+     }
+    ]
+   }
+  ],
+  "evidence": [
+   {
+    "id": 1,
+    "tool": "weather.forecast",
+    "status": "ok",
+    "summary": "{\"date\": \"2026-10-17\", \"period\": \"밤\", \"location\": \"기본 위치(설정값)\", \"avg_cloud_cover_pct\": 60, \"max_precip_prob_pct\": 2, \"avg_temp_c\": 17.7, \"hours_sampled\": 5, \"window_passed\": false, \"source\": \"https://open-meteo.com\"}",
+    "flags": [
+     {
+      "code": "cloudy",
+      "severity": "warn",
+      "text": "평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+      "date": "2026-10-17",
+      "period": "밤",
+      "location": "기본 위치(설정값)"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "tool": "astro.moon_phase",
+    "status": "ok",
+    "summary": "{\"phase\": \"상현달\", \"age_days\": 6.2, \"illumination_pct\": 38, \"days_to_next_new_moon\": 23.3, \"dark_sky_friendly\": false, \"source\": \"computed:mean-synodic-month\", \"for\": {\"date\": \"2026-10-17\", \"period\": \"밤\"}}",
+    "flags": [
+     {
+      "code": "moon_bright",
+      "severity": "warn",
+      "text": "달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리",
+      "date": "2026-10-17",
+      "period": null,
+      "location": null
+     }
+    ]
+   }
+  ],
+  "ideas": [
+   {
+    "title": "별자리 앱 활용하기",
+    "description": "별자리 앱을 사용하여 별자리를 식별하고 이를 기록하는 과정을 친구들과 공유해보세요.",
+    "status": "needs_research",
+    "rationale": "하늘이 가려져 별이 보이지 않을 수도 있기 때문에, 날씨 조건을 반영해야 합니다. / 창의적인 아이디어이나 구체적인 접근 방식이 부족할 수 있다.",
+    "risks": [
+     "하늘이 흐려 별이 보이지 않아 어려울 수 있음.",
+     "증거 경고: 평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+     "증거 경고: 달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리"
+    ],
+    "next_steps": [
+     "날씨가 맑은 날에 별자리 앱을 사용할 수 있는 확률을 높여야 함."
+    ],
+    "feasibility": "medium",
+    "confidence": 0.6,
+    "evidence_ids": []
+   },
+   {
+    "title": "디지털 아트 제작하기",
+    "description": "Python을 사용하여 별자리 패턴이나 천체를 시뮬레이션하고 디지털 아트를 만들어보세요.",
+    "status": "needs_research",
+    "rationale": "날씨에 구애받지 않고 창의적인 작업이 가능하기 때문입니다. / 뒷받침하는 증거 없음 / Python을 활용한 창의적인 아트 제작은 흥미로운 접근이나 세부 정보가 부족하다.",
+    "risks": [
+     "증거 경고: 평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+     "증거 경고: 달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리"
+    ],
+    "next_steps": [],
+    "feasibility": "high",
+    "confidence": 0.8,
+    "evidence_ids": []
+   },
+   {
+    "title": "자연을 주제로 야경 촬영하기",
+    "description": "주변 자연을 배경으로 사용하여 야경 촬영에 도전해보세요.",
+    "status": "needs_research",
+    "rationale": "하늘의 맑고 어두운 조건과 무관하게 아름다운 자연을 촬영할 수 있는 방법입니다. / 자연 야경 촬영은 새로운 관점이지만 이미 존재하는 아이디어일 수 있다.",
+    "risks": [
+     "증거 경고: 평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+     "증거 경고: 달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리"
+    ],
+    "next_steps": [
+     "날씨의 변화에 따라 적절한 촬영 장소를 선택해야 함."
+    ],
+    "feasibility": "medium",
+    "confidence": 0.7,
+    "evidence_ids": []
+   }
+  ],
+  "result": {
+   "summary": "오늘 밤은 평균 구름량 60%와 달 밝기 38%로 인해 은하수 촬영이 어려울 것으로 예상됩니다. 따라서, 대신 할 수 있는 재미있고 창의적인 활동으로는 별자리 앱을 사용해 친구들과 별자리 식별 놀이를 하거나, 디지털 아트를 제작하며 천체를 시뮬레이션해 보는 것이 있습니다.",
+   "decision": "revise",
+   "status": "needs_research",
+   "ideas": [
+    {
+     "title": "별자리 앱 활용하기",
+     "description": "별자리 앱을 사용하여 별자리를 식별하고 이를 기록하는 과정을 친구들과 공유해보세요.",
+     "feasibility": "medium",
+     "risks": [
+      "하늘이 흐려 별이 보이지 않아 어려울 수 있음.",
+      "증거 경고: 평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+      "증거 경고: 달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리"
+     ],
+     "next_steps": [
+      "날씨가 맑은 날에 별자리 앱을 사용할 수 있는 확률을 높여야 함."
+     ],
+     "confidence": 0.6,
+     "status": "needs_research",
+     "rationale": "하늘이 가려져 별이 보이지 않을 수도 있기 때문에, 날씨 조건을 반영해야 합니다. / 창의적인 아이디어이나 구체적인 접근 방식이 부족할 수 있다.",
+     "evidence_ids": []
+    },
+    {
+     "title": "디지털 아트 제작하기",
+     "description": "Python을 사용하여 별자리 패턴이나 천체를 시뮬레이션하고 디지털 아트를 만들어보세요.",
+     "feasibility": "high",
+     "risks": [
+      "증거 경고: 평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+      "증거 경고: 달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리"
+     ],
+     "next_steps": [],
+     "confidence": 0.8,
+     "status": "needs_research",
+     "rationale": "날씨에 구애받지 않고 창의적인 작업이 가능하기 때문입니다. / 뒷받침하는 증거 없음 / Python을 활용한 창의적인 아트 제작은 흥미로운 접근이나 세부 정보가 부족하다.",
+     "evidence_ids": []
+    },
+    {
+     "title": "자연을 주제로 야경 촬영하기",
+     "description": "주변 자연을 배경으로 사용하여 야경 촬영에 도전해보세요.",
+     "feasibility": "medium",
+     "risks": [
+      "증거 경고: 평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+      "증거 경고: 달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리"
+     ],
+     "next_steps": [
+      "날씨의 변화에 따라 적절한 촬영 장소를 선택해야 함."
+     ],
+     "confidence": 0.7,
+     "status": "needs_research",
+     "rationale": "하늘의 맑고 어두운 조건과 무관하게 아름다운 자연을 촬영할 수 있는 방법입니다. / 자연 야경 촬영은 새로운 관점이지만 이미 존재하는 아이디어일 수 있다.",
+     "evidence_ids": []
+    }
+   ],
+   "verified_facts": [],
+   "unverified_claims": [],
+   "open_questions": [],
+   "warnings": [
+    "평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+    "달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리",
+    "증거와 충돌하는 주장: 은하수 촬영이 어려운 날씨 조건으로 인해 대체 활동이 필요하다. ()",
+    "증거와 충돌하는 주장: 오늘 밤 은하수 촬영이 어렵다 ()",
+    "증거와 충돌하는 주장: 오늘 밤 은하수 촬영이 어렵기 때문에 대체 활동이 필요하다. ()",
+    "증거와 충돌하는 주장: 오늘 밤 은하수 촬영은 어렵다. ()"
+   ],
+   "conflicts": [],
+   "importance": 4,
+   "recommendation": {
+    "accepted": [],
+    "needs_research": [
+     "별자리 앱 활용하기",
+     "디지털 아트 제작하기",
+     "자연을 주제로 야경 촬영하기"
+    ]
+   }
+  },
+  "events": {
+   "review.rebuttal_rejected": 1,
+   "critic.retry": 1
+  },
+  "review_stats": {
+   "claims_flagged": 4,
+   "claims_reviewed": 4,
+   "rebuttals_rejected": 1,
+   "rebuttals_reviewed": 2
+  }
+ },
+ "norm": {
+  "summary": "오늘 밤은 평균 구름량 60%와 달 밝기 38%로 인해 은하수 촬영이 어려울 것으로 예상됩니다. 따라서, 대신 할 수 있는 재미있고 창의적인 활동으로는 별자리 앱을 사용해 친구들과 별자리 식별 놀이를 하거나, 디지털 아트를 제작하며 천체를 시뮬레이션해 보는 것이 있습니다.",
+  "ideas": [
+   {
+    "title": "별자리 앱 활용하기",
+    "description": "별자리 앱을 사용하여 별자리를 식별하고 이를 기록하는 과정을 친구들과 공유해보세요.",
+    "risks": [
+     "하늘이 흐려 별이 보이지 않아 어려울 수 있음.",
+     "평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+     "달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리"
+    ],
+    "next_steps": [
+     "날씨가 맑은 날에 별자리 앱을 사용할 수 있는 확률을 높여야 함."
+    ]
+   },
+   {
+    "title": "디지털 아트 제작하기",
+    "description": "Python을 사용하여 별자리 패턴이나 천체를 시뮬레이션하고 디지털 아트를 만들어보세요.",
+    "risks": [
+     "평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+     "달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리"
+    ],
+    "next_steps": []
+   },
+   {
+    "title": "자연을 주제로 야경 촬영하기",
+    "description": "주변 자연을 배경으로 사용하여 야경 촬영에 도전해보세요.",
+    "risks": [
+     "평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+     "달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리"
+    ],
+    "next_steps": [
+     "날씨의 변화에 따라 적절한 촬영 장소를 선택해야 함."
+    ]
+   }
+  ],
+  "open_questions": [],
+  "caveats": [
+   "평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+   "달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리",
+   "증거와 충돌하는 주장: 은하수 촬영이 어려운 날씨 조건으로 인해 대체 활동이 필요하다. ()",
+   "증거와 충돌하는 주장: 오늘 밤 은하수 촬영이 어렵다 ()",
+   "증거와 충돌하는 주장: 오늘 밤 은하수 촬영이 어렵기 때문에 대체 활동이 필요하다. ()",
+   "증거와 충돌하는 주장: 오늘 밤 은하수 촬영은 어렵다. ()"
+  ],
+  "evidence_texts": [
+   "{\"date\": \"2026-10-17\", \"period\": \"밤\", \"location\": \"기본 위치(설정값)\", \"avg_cloud_cover_pct\": 60, \"max_precip_prob_pct\": 2, \"avg_temp_c\": 17.7, \"hours_sampled\": 5, \"window_passed\": false, \"source\": \"https://open-meteo.com\"}",
+   "{\"phase\": \"상현달\", \"age_days\": 6.2, \"illumination_pct\": 38, \"days_to_next_new_moon\": 23.3, \"dark_sky_friendly\": false, \"source\": \"computed:mean-synodic-month\", \"for\": {\"date\": \"2026-10-17\", \"period\": \"밤\"}}",
+   "평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+   "달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리"
+  ]
+ },
+ "metrics": {
+  "chars": 1142,
+  "n_ideas": 3,
+  "with_next_steps": 0.67,
+  "with_risks": 1.0,
+  "unsupported_pct": 0,
+  "n_pct": 10,
+  "warning_coverage": 1.0,
+  "n_warnings": 2
+ },
+ "secs": 30.83,
+ "usage": {
+  "calls": 17,
+  "prompt_tokens": 21261,
+  "completion_tokens": 2366,
+  "cost_usd": 0.004609,
+  "llm_secs": 29.35,
+  "by_purpose": {
+   "debate_plan": 1,
+   "debate_turn:research": 3,
+   "debate_turn:idea": 2,
+   "review:claims": 4,
+   "debate_turn:critic": 3,
+   "review:rebuttal": 2,
+   "debate_synthesis": 1,
+   "review:result": 1
+  }
+ },
+ "bundle": {
+  "text": "[E1] (weather.forecast) {\"date\": \"2026-10-17\", \"period\": \"밤\", \"location\": \"기본 위치(설정값)\", \"avg_cloud_cover_pct\": 60, \"max_precip_prob_pct\": 2, \"avg_temp_c\": 17.7, \"hours_sampled\": 5, \"window_passed\": false, \"source\": \"https://open-meteo.com\"}\n     ⚠ 평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음\n[E2] (weather.forecast) {\"date\": \"2026-10-17\", \"period\": \"저녁\", \"location\": \"기본 위치(설정값)\", \"avg_cloud_cover_pct\": 72, \"max_precip_prob_pct\": 0, \"avg_temp_c\": 20.1, \"hours_sampled\": 4, \"window_passed\": true, \"source\": \"https://open-meteo.com\"}\n     ⚠ 평균 구름량 72% (2026-10-17 저녁 기본 위치(설정값)): 하늘이 가려질 가능성이 높음 / ⚠ 요청 시간대(2026-10-17 저녁 기본 위치(설정값))는 이미 지남\n[E3] (astro.moon_phase) {\"phase\": \"상현달\", \"age_days\": 6.2, \"illumination_pct\": 38, \"days_to_next_new_moon\": 23.3, \"dark_sky_friendly\": false, \"source\": \"computed:mean-synodic-month\", \"for\": {\"date\": \"2026-10-17\", \"period\": \"밤\"}}\n     ⚠ 달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리",
+  "flags": [
+   {
+    "code": "cloudy",
+    "severity": "warn",
+    "text": "평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+    "date": "2026-10-17",
+    "period": "밤",
+    "location": "기본 위치(설정값)"
+   },
+   {
+    "code": "cloudy",
+    "severity": "warn",
+    "text": "평균 구름량 72% (2026-10-17 저녁 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+    "date": "2026-10-17",
+    "period": "저녁",
+    "location": "기본 위치(설정값)"
+   },
+   {
+    "code": "window_passed",
+    "severity": "warn",
+    "text": "요청 시간대(2026-10-17 저녁 기본 위치(설정값))는 이미 지남",
+    "date": "2026-10-17",
+    "period": "저녁",
+    "location": "기본 위치(설정값)"
+   },
+   {
+    "code": "moon_bright",
+    "severity": "warn",
+    "text": "달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리",
+    "date": "2026-10-17",
+    "period": null,
+    "location": null
+   }
+  ]
+ }
+}

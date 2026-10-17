@@ -1,0 +1,95 @@
+{
+ "topic": "arch2",
+ "orders": [
+  {
+   "order": [
+    "A",
+    "B",
+    "D"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "정확성·비용·사용자 피드백 기반 설계, 실제 도입 방안·위험 구체 제시"
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "정확성·만족도·일관성 평가 지표 명확하나 위험 검토 다소 형식적"
+    },
+    "D": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 2.0
+     },
+     "note": "다양한 구체 지표 포함, 기술 구현 가능성 높으나 위험 검토 미흡"
+    }
+   }
+  },
+  {
+   "order": [
+    "D",
+    "B",
+    "A"
+   ],
+   "result": {
+    "D": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "제안 지표가 구체적이고 GyuNexus 특성 반영됨. 응답 시간 포함해 실현 가능성 높음. 위험 검토 부족."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 4.0
+     },
+     "note": "정확성·일관성·만족도 지표 명확히 구분, 위험과 다음 단계 구체 제시해 반론 적절함. 구현 세부방법은 미제시."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "정확성·비용 효율성·만족도 포함, 비용 관련 위험과 조치 제시해 현실성 높음. 사용자 요구와 메트릭 질문은 열린 점이 아쉬움."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "D"
+ ],
+ "mode": "ablation"
+}

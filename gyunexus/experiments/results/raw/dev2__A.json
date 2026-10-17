@@ -1,0 +1,70 @@
+{
+ "topic": "dev2",
+ "method": "A",
+ "ok": true,
+ "error": null,
+ "raw": {},
+ "norm": {
+  "summary": "AI를 활용하여 테스트 코드 작성 시간을 줄이기 위한 방법으로는 코드 자동 생성, 오류 탐지 및 수정 제안, 그리고 기존 코드의 리팩토링 기능을 제공하는 도구의 사용이 있다. 이러한 기능들은 개발자가 반복적으로 수행하는 작업을 자동화하여 생산성을 높일 수 있으며, 특히 Python 언어와 FastAPI를 사용하는 경우에 유용할 것으로 보인다.",
+  "ideas": [
+   {
+    "title": "자동화된 테스트 코드 생성",
+    "description": "AI 기반 도구가 기존 코드의 함수와 메소드를 분석하여 테스트 코드를 자동으로 생성한다.",
+    "risks": [],
+    "next_steps": [
+     "AI 도구 조사",
+     "테스트 코드 샘플 제공"
+    ]
+   },
+   {
+    "title": "오류 탐지 및 수정 제안",
+    "description": "AI가 코드 작성 중 발견된 오류를 실시간으로 탐지하고 수정 방안을 제시하는 기능을 도입한다.",
+    "risks": [
+     "오류 제안의 신뢰성 문제"
+    ],
+    "next_steps": [
+     "기존 코드를 통한 테스트",
+     "사용자 피드백 수집"
+    ]
+   },
+   {
+    "title": "리팩토링 지원 도구 사용",
+    "description": "AI가 코드 구조를 분석하고 최적화된 리팩토링 방안을 제시하여 코드 품질을 향상시킨다.",
+    "risks": [],
+    "next_steps": [
+     "리팩토링 요구 사항 정립",
+     "도구 검토"
+    ]
+   }
+  ],
+  "open_questions": [
+   "AI 도구의 신뢰도는 얼마나 되는가?",
+   "버그 수정 과정에서의 신뢰성 확보 방법은 무엇인가?"
+  ],
+  "caveats": [
+   "AI 도구에 대한 의존도가 높아질 수 있다."
+  ],
+  "evidence_texts": []
+ },
+ "metrics": {
+  "chars": 620,
+  "n_ideas": 3,
+  "with_next_steps": 1.0,
+  "with_risks": 0.33,
+  "unsupported_pct": 0,
+  "n_pct": 0,
+  "warning_coverage": null,
+  "n_warnings": 0
+ },
+ "secs": 3.11,
+ "usage": {
+  "calls": 1,
+  "prompt_tokens": 416,
+  "completion_tokens": 373,
+  "cost_usd": 0.000286,
+  "llm_secs": 3.11,
+  "by_purpose": {
+   "single": 1
+  }
+ }
+}

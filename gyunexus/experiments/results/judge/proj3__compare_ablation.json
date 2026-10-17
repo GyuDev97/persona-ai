@@ -1,0 +1,95 @@
+{
+ "topic": "proj3",
+ "orders": [
+  {
+   "order": [
+    "D",
+    "A",
+    "B"
+   ],
+   "result": {
+    "D": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 5.0
+     },
+     "note": "모든 핵심 구성요소 명확, 위험과 다음 단계 구체적, 구체적 통합 방식 미흡"
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 3.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "주요 기능 제시했으나 세부 구현과 데이터 출처 불명확, 리스크 부족"
+    },
+    "B": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "구현 스택과 구조 명확, UI, DB 고려, 리스크 평범하나 방향성 불명확 언급"
+    }
+   }
+  },
+  {
+   "order": [
+    "B",
+    "A",
+    "D"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "로컬 LLM과 FastAPI, React, DB 구조 구체적 서술. 다만 구체 요구사항 부재는 감점."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 3.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "날씨·천문 정보에 초점, 구체 기술은 부족, 위험·다음 단계 일부 모호함."
+    },
+    "D": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "빠진 구체적 구현방식·위험 상세, API 통합까지 서술해 완성도 높음."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "D"
+ ],
+ "mode": "ablation"
+}

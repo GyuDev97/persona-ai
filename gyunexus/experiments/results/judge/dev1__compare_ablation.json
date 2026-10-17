@@ -1,0 +1,95 @@
+{
+ "topic": "dev1",
+ "orders": [
+  {
+   "order": [
+    "B",
+    "D",
+    "A"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "CI/CD, 린터, 리뷰봇 언급은 배경 기술과 일치. 다음 단계와 위험 구체적이나 리뷰봇 기술 지식 내용은 모호."
+    },
+    "D": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "정적/동적 분석 도구, CI/CD 통합 구체적. 자동 기록 시스템 및 템플릿 신선. 다만 동적 분석 현실성 미확인, 위험검토 일부 부족."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "GitHub Actions, 린터, PR봇, 대시보드 구체적으로 제시. 실현 가능하고 유지보수 문제 명확. 차별적 피드백 자동화 및 통계 시각화 포함."
+    }
+   }
+  },
+  {
+   "order": [
+    "A",
+    "D",
+    "B"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "구체적 기술(GitHub Actions, linters, PR 봇)과 위험 고찰 명확, 개인 개발자 관점 적합."
+    },
+    "D": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "정적·동적 분석 포함 구체적이나 불필요한 유사 내용 중복·불확실성 있음, 위험 고찰 부족."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 3.0,
+      "feasibility": 4.0,
+      "novelty": 2.0,
+      "value": 3.0,
+      "risk_review": 4.0
+     },
+     "note": "전반적 설명은 있으나 구체적 도구·방법 미흡, 위험·다음 단계 언급은 있으나 일부 불명확."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "D"
+ ],
+ "mode": "ablation"
+}

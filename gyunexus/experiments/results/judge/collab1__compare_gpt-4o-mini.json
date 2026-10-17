@@ -1,0 +1,96 @@
+{
+ "topic": "collab1",
+ "orders": [
+  {
+   "order": [
+    "A",
+    "B",
+    "C"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "증거 검증 및 규칙 기반 참가자 선택의 필요성을 강조하였고, 구체적인 제안이 포함됨."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "주장 근거 명시와 신뢰성 점수 시스템의 도입이 제안되었으나, 효율성 저하 우려가 남음."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 3.0,
+      "novelty": 4.0,
+      "value": 3.0,
+      "risk_review": 4.0
+     },
+     "note": "크로스-체크 및 비용 최소화 방안의 혁신적 접근, 그러나 신뢰성 기준이 모호할 수 있음."
+    }
+   }
+  },
+  {
+   "order": [
+    "C",
+    "B",
+    "A"
+   ],
+   "result": {
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 3.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "주장에 기반한 근거 부족과 일반적인 내용으로 구체성이 떨어짐."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "많은 좋은 아이디어와 구체적 계획이 있으나 실행 속도 관련 우려 존재."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 3.0
+     },
+     "note": "상당히 구체적이며, 관련 증거를 포함해 실행 가능성과 활용도가 높음."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4o-mini"
+}

@@ -1,0 +1,27 @@
+{
+ "topic": "asst1",
+ "method": "B",
+ "draft_scores": {
+  "accuracy": 4,
+  "specificity": 3,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 3
+ },
+ "final_scores": {
+  "accuracy": 4,
+  "specificity": 4,
+  "feasibility": 4,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 4
+ },
+ "verdict": "weakened",
+ "weakened_points": [
+  "글 2는 위험 요소 검토가 누락되고 구체적 연구·기준 설정 제안을 줄여 위험 검토가 약해짐",
+  "글 2는 집중 모드 인식에 대해 자동 판단 근거보다 사용자가 사전 설정한 시간대에 의존해 자동 인식 구체성 감소됨"
+ ],
+ "note": "글 2는 실현 가능성은 높였으나, 위험 검토와 자동 인식 구체성이 약화되어 다소 후퇴함.",
+ "final_first": true
+}

@@ -1,0 +1,96 @@
+{
+ "topic": "sky1",
+ "orders": [
+  {
+   "order": [
+    "B",
+    "C",
+    "A"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 2.0,
+      "specificity": 2.0,
+      "feasibility": 3.0,
+      "novelty": 2.0,
+      "value": 2.0,
+      "risk_review": 2.0
+     },
+     "note": "구름량 및 강수확률의 수치가 부정확하고, 출사에 대한 확실한 제안이 부족함."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 3.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "날씨 조건을 비교하여 적합성을 잘 설명하였으나, 일부 비목적성이 존재함."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 3.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "은하수 촬영 자문에 대한 심층적 접근을 시도했으나, 대안 제시 부족."
+    }
+   }
+  },
+  {
+   "order": [
+    "A",
+    "C",
+    "B"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "증거와 모순되는 주장이 포함되어 있으나, 요약 및 아이디어는 잘 구성됨."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "대부분의 주장이 인정되나, 결론이 불명확."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 1.0,
+      "specificity": 1.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 1.0
+     },
+     "note": "증거와 모순된 주장을 바탕으로 작성됨."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4o-mini"
+}

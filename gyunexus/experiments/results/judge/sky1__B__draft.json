@@ -1,0 +1,24 @@
+{
+ "topic": "sky1",
+ "method": "B",
+ "draft_scores": {
+  "accuracy": 4,
+  "specificity": 3,
+  "feasibility": 5,
+  "novelty": 2,
+  "value": 3,
+  "risk_review": 3
+ },
+ "final_scores": {
+  "accuracy": 5,
+  "specificity": 4,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 5
+ },
+ "verdict": "improved",
+ "weakened_points": [],
+ "note": "글 2가 달 밝기 정보 추가로 정확도·위험 검토 강화, 활용 가치도 높임.",
+ "final_first": false
+}

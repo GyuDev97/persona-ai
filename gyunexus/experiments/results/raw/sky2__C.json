@@ -1,0 +1,444 @@
+{
+ "topic": "sky2",
+ "method": "C",
+ "ok": true,
+ "error": null,
+ "raw": {
+  "debate": {
+   "status": "completed",
+   "stop_reason": "token_budget",
+   "rounds": 2,
+   "error": null,
+   "participants": [
+    "research",
+    "idea",
+    "critic"
+   ],
+   "importance": 0,
+   "plan": {
+    "reasons": {
+     "research": {
+      "selected": true,
+      "reason": "외부 사실·수치·최신 정보가 필요한 표현 '이번 주' -> 조사 필수",
+      "by": "rule"
+     },
+     "idea": {
+      "selected": true,
+      "reason": "아이디어·방안 도출이 목적이므로 참여",
+      "by": "rule+llm"
+     },
+     "developer": {
+      "selected": false,
+      "reason": "소프트웨어 구현과 무관한 주제라 제외",
+      "by": "rule"
+     },
+     "critic": {
+      "selected": true,
+      "reason": "주장과 결론에 대한 검토는 항상 필요",
+      "by": "rule"
+     }
+    },
+    "needs_facts": true,
+    "llm_reason": "은하수 출사 계획을 세우기 위해 아이디어 생성과 외부 정보 조사가 필요하다."
+   },
+   "progress": [
+    {
+     "round": 1,
+     "new_evidence": 2,
+     "new_verified": 0,
+     "valid_rebuttals": 1,
+     "rejected_rebuttals": 0,
+     "duplicate_rebuttals": 0,
+     "addressed_rebuttals": 0,
+     "regressions": 0,
+     "critic_retries": 0
+    },
+    {
+     "round": 2,
+     "new_evidence": 0,
+     "new_verified": 0,
+     "valid_rebuttals": 0,
+     "rejected_rebuttals": 1,
+     "duplicate_rebuttals": 1,
+     "addressed_rebuttals": 1,
+     "regressions": 0,
+     "critic_retries": 1
+    },
+    {
+     "round": 3,
+     "new_evidence": 0,
+     "new_verified": 0,
+     "valid_rebuttals": 0,
+     "rejected_rebuttals": 0,
+     "duplicate_rebuttals": 0,
+     "addressed_rebuttals": 0,
+     "regressions": 0,
+     "critic_retries": 0
+    },
+    {
+     "stop": {
+      "reason": "token_budget",
+      "detail": "토큰 19522/19000 사용"
+     }
+    }
+   ]
+  },
+  "messages": [
+   {
+    "round": 1,
+    "agent": "research",
+    "content": "이번 주말 은하수 출사를 계획하기 위해 날씨와 천문 정보를 확인해야 합니다. 은하수 촬영에 적합한지 판단하기 위해 구름량, 강수확률, 그리고 달의 위상을 확인해야 합니다. 이를 위해 weather.forecast와 astro.moon_phase 도구를 요청하겠습니다. 구체적으로 요청할 내용은 2026-10-17과 2026-10-18에 대한 예보입니다.",
+    "claims": []
+   },
+   {
+    "round": 1,
+    "agent": "idea",
+    "content": "이번 주말 은하수 출사를 위해 다음과 같은 일정을 제안합니다. 2026년 10월 18일 저녁에 출사 계획을 세우는 것이 좋습니다. 이 날의 평균 구름량은 15%로, 은하수 촬영에 유리한 조건입니다(전날 저녁 대비). 그러나 비가 올 가능성이 높아 계획에 주의가 필요합니다(강수확률 90%) [E2]. 촬영 준비물로는 삼각대, 카메라, 렌즈, 방수 커버 및 촬영에 필요한 배터리와 메모리 카드의 여유를 확인해야 합니다. 공기 압축기 및 색지 필터도 있으면 좋습니다.",
+    "claims": [
+     {
+      "text": "2026년 10월 18일 저녁은 은하수 촬영에 유리한 조건이다.",
+      "type": "interpretation",
+      "status": "conflicted",
+      "evidence_ids": [
+       2
+      ],
+      "notes": [
+       "의미 검토: 증거 경고와 모순"
+      ],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 1,
+    "agent": "critic",
+    "content": "검토 요약",
+    "claims": [
+     {
+      "text": "[B1] 주장과 증거의 모순: 2026년 10월 18일 저녁에 강수확률이 90%로 비가 올 가능성이 매우 높으므로 은하수 촬영에 불리하다. (제안: 대안으로는 강수 확률이 낮은 날을 선택하거나 비가 올 경우에 대비한 촬영 준비를 고려해야 한다.)",
+      "type": "rebuttal",
+      "status": "rebuttal",
+      "evidence_ids": [
+       2
+      ],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "촬영 준비물로는 삼각대, 카메라, 렌즈, 방수 커버 및 촬영에 필요한 배터리와 메모리 카드의 여유를 확인해야 한다.",
+      "type": "endorsement",
+      "status": "endorsed",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 2,
+    "agent": "research",
+    "content": "2026년 10월 17일 저녁은 평균 구름량이 72%로 하늘이 가려질 가능성이 높아 은하수 촬영에 불리합니다[E1]. 2026년 10월 18일 저녁은 평균 구름량이 15%로 은하수 촬영에 유리하지만, 강수확률이 90%로 비가 올 위험이 매우 높습니다[E2]. 따라서 은하수 촬영을 위한 최적의 일정이 확인되지 않았습니다. 조건이 좋지 않은 만큼 강수 확률이 낮은 다른 날을 선택하거나 비에 대비한 촬영 준비를 고려할 필요가 있습니다.",
+    "claims": [
+     {
+      "text": "2026년 10월 17일 저녁은 은하수 촬영에 불리하다.",
+      "type": "interpretation",
+      "status": "conflicted",
+      "evidence_ids": [
+       1
+      ],
+      "notes": [
+       "의미 검토: 증거 경고와 모순"
+      ],
+      "entities": []
+     },
+     {
+      "text": "2026년 10월 18일 저녁은 은하수 촬영에 유리하지만 비가 올 위험이 있다.",
+      "type": "interpretation",
+      "status": "interpretation",
+      "evidence_ids": [
+       2
+      ],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 2,
+    "agent": "idea",
+    "content": "2026년 10월 17일과 18일 모두 은하수 촬영에 적합한 조건이 아닙니다. 17일 저녁은 평균 구름량이 72%로 하늘이 가려질 가능성이 높아 은하수 촬영에 불리합니다[E1]. 18일 저녁은 평균 구름량이 15%로 촬영 조건이 좋아 보이나, 강수 확률이 90%로 비가 올 위험이 매우 높아 출사에 적합하지 않습니다[E2]. 따라서, 다른 날을 선택하거나 비에 대비한 준비가 필요합니다. 추가적으로, 촬영 준비물로는 품질 높은 방수 장비를 추천합니다. 특히, 카메라 보호를 위해 방수 가방과 튼튼한 삼각대를 준비하는 것이 좋습니다.",
+    "claims": [
+     {
+      "text": "2026년 10월 17일 저녁은 은하수 촬영에 불리하다.",
+      "type": "interpretation",
+      "status": "interpretation",
+      "evidence_ids": [
+       1
+      ],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "2026년 10월 18일 저녁은 강수 확률이 90%로 은하수 촬영에 불리하다.",
+      "type": "interpretation",
+      "status": "conflicted",
+      "evidence_ids": [
+       2
+      ],
+      "notes": [
+       "의미 검토: 증거 경고와 모순"
+      ],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 2,
+    "agent": "critic",
+    "content": "검토 요약",
+    "claims": [
+     {
+      "text": "2026년 10월 17일 저녁은 은하수 촬영에 불리하다.",
+      "type": "endorsement",
+      "status": "endorsed",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "2026년 10월 18일 저녁은 은하수 촬영에 유리하지만 비가 올 위험이 있다.",
+      "type": "endorsement",
+      "status": "endorsed",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 3,
+    "agent": "research",
+    "content": "이번 주말 은하수 출사 계획을 위해 날씨와 천문 정보를 다시 검토해야 합니다. 특히, 2026년 10월 18일 저녁의 강수 확률이 90%로 매우 높아 은하수 촬영에 불리합니다[E2]. 따라서 강수 확률이 낮은 다른 날을 선택하거나 비에 대한 대비가 필요합니다. 비에 대비한 준비물로는 방수 장비와 튼튼한 삼각대를 추천합니다. 오늘 저녁은 이미 시간이 지나 조건이 좋지 않은 만큼, 18일 저녁의 출사 계획은 재조정할 필요가 있습니다. 추가로, 비가 오지 않는 대체 날도 검토해 보아야 할 것 같습니다.",
+    "claims": [
+     {
+      "text": "2026년 10월 18일 저녁은 약 90%의 강수확률로 은하수 촬영에 불리하다.",
+      "type": "interpretation",
+      "status": "conflicted",
+      "evidence_ids": [
+       2
+      ],
+      "notes": [
+       "의미 검토: 증거 경고와 모순"
+      ],
+      "entities": []
+     }
+    ]
+   }
+  ],
+  "evidence": [
+   {
+    "id": 1,
+    "tool": "weather.forecast",
+    "status": "ok",
+    "summary": "{\"date\": \"2026-10-17\", \"period\": \"저녁\", \"location\": \"기본 위치(설정값)\", \"avg_cloud_cover_pct\": 72, \"max_precip_prob_pct\": 0, \"avg_temp_c\": 20.1, \"hours_sampled\": 4, \"window_passed\": true, \"source\": \"https://open-meteo.com\"}",
+    "flags": [
+     {
+      "code": "cloudy",
+      "severity": "warn",
+      "text": "평균 구름량 72% (2026-10-17 저녁 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+      "date": "2026-10-17",
+      "period": "저녁",
+      "location": "기본 위치(설정값)"
+     },
+     {
+      "code": "window_passed",
+      "severity": "warn",
+      "text": "요청 시간대(2026-10-17 저녁 기본 위치(설정값))는 이미 지남",
+      "date": "2026-10-17",
+      "period": "저녁",
+      "location": "기본 위치(설정값)"
+     }
+    ]
+   },
+   {
+    "id": 2,
+    "tool": "weather.forecast",
+    "status": "ok",
+    "summary": "{\"date\": \"2026-10-18\", \"period\": \"저녁\", \"location\": \"기본 위치(설정값)\", \"avg_cloud_cover_pct\": 15, \"max_precip_prob_pct\": 90, \"avg_temp_c\": 17.2, \"hours_sampled\": 4, \"window_passed\": false, \"source\": \"https://open-meteo.com\"}",
+    "flags": [
+     {
+      "code": "high_precip",
+      "severity": "warn",
+      "text": "강수확률 90% (2026-10-18 저녁 기본 위치(설정값)): 비·강수 위험이 높음",
+      "date": "2026-10-18",
+      "period": "저녁",
+      "location": "기본 위치(설정값)"
+     }
+    ]
+   }
+  ],
+  "ideas": [
+   {
+    "title": "은하수 촬영 일정 결정",
+    "description": "2026년 10월 18일 저녁에 촬영 계획을 세우는 것이 좋지만, 강수 확률이 높아 불리하다.",
+    "status": "discarded",
+    "rationale": "2026년 10월 18일 저녁의 강수확률이 높아 은하수 촬영에 적합하지 않음. / 의미 검토: 가치 낮음(1) / 이미 날씨 증거에 의해 강수확률이 높아 불리하다고 평가됨",
+    "risks": [
+     "강수로 인한 촬영 불가능",
+     "최적 일정 부족"
+    ],
+    "next_steps": [
+     "대체 날 고려",
+     "비에 대비한 준비물 점검"
+    ],
+    "feasibility": "low",
+    "confidence": 0.2,
+    "evidence_ids": [
+     1,
+     2
+    ]
+   }
+  ],
+  "result": {
+   "summary": "2026년 10월 17일과 18일 두 날의 날씨 조건을 평가한 결과 은하수 촬영에 적합한 조건이 발견되지 않았습니다. 특히 17일 저녁은 평균 구름량이 72%로 불리하며, 18일 저녁은 구름량은 낮지만 강수확률이 90%로 인해 비가 올 가능성이 매우 높습니다. 따라서 다른 날을 선택하거나 비에 대처할 준비가 필요합니다. ⚠ 의미 검토: 요약에 증거 경고와 모순되는 서술이 있어 확정하지 않습니다. 작성된 요약에서 17일과 18일 날씨 조건이 불리하다고 평가하였으나, 아이디어에서는 18일 저녁에 촬영 계획을 세우는 것을 제안하고 있어 모순됨.",
+   "decision": "discard",
+   "status": "needs_research",
+   "ideas": [
+    {
+     "title": "은하수 촬영 일정 결정",
+     "description": "2026년 10월 18일 저녁에 촬영 계획을 세우는 것이 좋지만, 강수 확률이 높아 불리하다.",
+     "feasibility": "low",
+     "risks": [
+      "강수로 인한 촬영 불가능",
+      "최적 일정 부족"
+     ],
+     "next_steps": [
+      "대체 날 고려",
+      "비에 대비한 준비물 점검"
+     ],
+     "confidence": 0.2,
+     "status": "discarded",
+     "rationale": "2026년 10월 18일 저녁의 강수확률이 높아 은하수 촬영에 적합하지 않음. / 의미 검토: 가치 낮음(1) / 이미 날씨 증거에 의해 강수확률이 높아 불리하다고 평가됨",
+     "evidence_ids": [
+      1,
+      2
+     ]
+    }
+   ],
+   "verified_facts": [],
+   "unverified_claims": [
+    "2026년 10월 18일 저녁은 은하수 촬영에 유리한 조건이다."
+   ],
+   "open_questions": [
+    "강수 확률이 낮은 다른 촬영 가능일이 있는가?"
+   ],
+   "warnings": [
+    "평균 구름량 72% (2026-10-17 저녁 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+    "요청 시간대(2026-10-17 저녁 기본 위치(설정값))는 이미 지남",
+    "강수확률 90% (2026-10-18 저녁 기본 위치(설정값)): 비·강수 위험이 높음",
+    "증거와 충돌하는 주장: 2026년 10월 18일 저녁은 은하수 촬영에 유리한 조건이다. ()",
+    "증거와 충돌하는 주장: 2026년 10월 17일 저녁은 은하수 촬영에 불리하다. ()",
+    "증거와 충돌하는 주장: 2026년 10월 18일 저녁은 강수 확률이 90%로 은하수 촬영에 불리하다. ()",
+    "증거와 충돌하는 주장: 2026년 10월 18일 저녁은 약 90%의 강수확률로 은하수 촬영에 불리하다. ()"
+   ],
+   "conflicts": [
+    "summary"
+   ],
+   "importance": 0,
+   "recommendation": {
+    "accepted": [],
+    "needs_research": []
+   }
+  },
+  "events": {
+   "critic.retry": 1,
+   "consensus.ignored": 1
+  },
+  "review_stats": {
+   "claims_flagged": 4,
+   "claims_reviewed": 6,
+   "rebuttals_reviewed": 1,
+   "summary_conflict": 1
+  }
+ },
+ "norm": {
+  "summary": "2026년 10월 17일과 18일 두 날의 날씨 조건을 평가한 결과 은하수 촬영에 적합한 조건이 발견되지 않았습니다. 특히 17일 저녁은 평균 구름량이 72%로 불리하며, 18일 저녁은 구름량은 낮지만 강수확률이 90%로 인해 비가 올 가능성이 매우 높습니다. 따라서 다른 날을 선택하거나 비에 대처할 준비가 필요합니다. ⚠ 의미 검토: 요약에 증거 경고와 모순되는 서술이 있어 확정하지 않습니다. 작성된 요약에서 17일과 18일 날씨 조건이 불리하다고 평가하였으나, 아이디어에서는 18일 저녁에 촬영 계획을 세우는 것을 제안하고 있어 모순됨.",
+  "ideas": [],
+  "open_questions": [
+   "강수 확률이 낮은 다른 촬영 가능일이 있는가?"
+  ],
+  "caveats": [
+   "평균 구름량 72% (2026-10-17 저녁 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+   "요청 시간대(2026-10-17 저녁 기본 위치(설정값))는 이미 지남",
+   "강수확률 90% (2026-10-18 저녁 기본 위치(설정값)): 비·강수 위험이 높음",
+   "증거와 충돌하는 주장: 2026년 10월 18일 저녁은 은하수 촬영에 유리한 조건이다. ()",
+   "증거와 충돌하는 주장: 2026년 10월 17일 저녁은 은하수 촬영에 불리하다. ()",
+   "증거와 충돌하는 주장: 2026년 10월 18일 저녁은 강수 확률이 90%로 은하수 촬영에 불리하다. ()",
+   "증거와 충돌하는 주장: 2026년 10월 18일 저녁은 약 90%의 강수확률로 은하수 촬영에 불리하다. ()"
+  ],
+  "evidence_texts": [
+   "{\"date\": \"2026-10-17\", \"period\": \"저녁\", \"location\": \"기본 위치(설정값)\", \"avg_cloud_cover_pct\": 72, \"max_precip_prob_pct\": 0, \"avg_temp_c\": 20.1, \"hours_sampled\": 4, \"window_passed\": true, \"source\": \"https://open-meteo.com\"}",
+   "{\"date\": \"2026-10-18\", \"period\": \"저녁\", \"location\": \"기본 위치(설정값)\", \"avg_cloud_cover_pct\": 15, \"max_precip_prob_pct\": 90, \"avg_temp_c\": 17.2, \"hours_sampled\": 4, \"window_passed\": false, \"source\": \"https://open-meteo.com\"}",
+   "평균 구름량 72% (2026-10-17 저녁 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+   "요청 시간대(2026-10-17 저녁 기본 위치(설정값))는 이미 지남",
+   "강수확률 90% (2026-10-18 저녁 기본 위치(설정값)): 비·강수 위험이 높음"
+  ]
+ },
+ "metrics": {
+  "chars": 722,
+  "n_ideas": 0,
+  "with_next_steps": 0.0,
+  "with_risks": 0.0,
+  "unsupported_pct": 0,
+  "n_pct": 6,
+  "warning_coverage": 1.0,
+  "n_warnings": 3
+ },
+ "secs": 34.72,
+ "usage": {
+  "calls": 16,
+  "prompt_tokens": 21313,
+  "completion_tokens": 2406,
+  "cost_usd": 0.004641,
+  "llm_secs": 32.05,
+  "by_purpose": {
+   "debate_plan": 1,
+   "debate_turn:research": 3,
+   "debate_turn:idea": 2,
+   "review:claims": 4,
+   "debate_turn:critic": 3,
+   "review:rebuttal": 1,
+   "debate_synthesis": 1,
+   "review:result": 1
+  }
+ },
+ "bundle": {
+  "text": "[E1] (weather.forecast) {\"date\": \"2026-10-17\", \"period\": \"밤\", \"location\": \"기본 위치(설정값)\", \"avg_cloud_cover_pct\": 60, \"max_precip_prob_pct\": 2, \"avg_temp_c\": 17.7, \"hours_sampled\": 5, \"window_passed\": false, \"source\": \"https://open-meteo.com\"}\n     ⚠ 평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음\n[E2] (weather.forecast) {\"date\": \"2026-10-18\", \"period\": \"밤\", \"location\": \"기본 위치(설정값)\", \"avg_cloud_cover_pct\": 8, \"max_precip_prob_pct\": 9, \"avg_temp_c\": 14.6, \"hours_sampled\": 5, \"window_passed\": false, \"source\": \"https://open-meteo.com\"}\n[E3] (astro.moon_phase) {\"phase\": \"상현달\", \"age_days\": 6.2, \"illumination_pct\": 38, \"days_to_next_new_moon\": 23.3, \"dark_sky_friendly\": false, \"source\": \"computed:mean-synodic-month\", \"for\": {\"date\": \"2026-10-17\", \"period\": \"밤\"}}\n     ⚠ 달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리\n[E4] (astro.moon_phase) {\"phase\": \"상현달\", \"age_days\": 7.2, \"illumination_pct\": 48, \"days_to_next_new_moon\": 22.3, \"dark_sky_friendly\": false, \"source\": \"computed:mean-synodic-month\", \"for\": {\"date\": \"2026-10-18\", \"period\": \"밤\"}}\n     ⚠ 달 밝기 48%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리",
+  "flags": [
+   {
+    "code": "cloudy",
+    "severity": "warn",
+    "text": "평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+    "date": "2026-10-17",
+    "period": "밤",
+    "location": "기본 위치(설정값)"
+   },
+   {
+    "code": "moon_bright",
+    "severity": "warn",
+    "text": "달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리",
+    "date": "2026-10-17",
+    "period": null,
+    "location": null
+   },
+   {
+    "code": "moon_bright",
+    "severity": "warn",
+    "text": "달 밝기 48%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리",
+    "date": "2026-10-18",
+    "period": null,
+    "location": null
+   }
+  ]
+ }
+}

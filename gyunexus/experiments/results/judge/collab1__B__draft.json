@@ -1,0 +1,24 @@
+{
+ "topic": "collab1",
+ "method": "B",
+ "draft_scores": {
+  "accuracy": 4,
+  "specificity": 3,
+  "feasibility": 4,
+  "novelty": 3,
+  "value": 3,
+  "risk_review": 3
+ },
+ "final_scores": {
+  "accuracy": 5,
+  "specificity": 5,
+  "feasibility": 4,
+  "novelty": 4,
+  "value": 4,
+  "risk_review": 5
+ },
+ "verdict": "improved",
+ "weakened_points": [],
+ "note": "글 2는 글 1의 내용을 확장하고 위험과 다음 단계를 구체적으로 제시하여 완성도가 높음.",
+ "final_first": false
+}

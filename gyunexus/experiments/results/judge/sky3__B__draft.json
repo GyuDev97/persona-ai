@@ -1,0 +1,26 @@
+{
+ "topic": "sky3",
+ "method": "B",
+ "draft_scores": {
+  "accuracy": 5,
+  "specificity": 4,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 4
+ },
+ "final_scores": {
+  "accuracy": 5,
+  "specificity": 4,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 5
+ },
+ "verdict": "weakened",
+ "weakened_points": [
+  "글 2는 달과 달 주변 경치 촬영을 새 제안으로 소개했으나, 구체적 방법이나 리스크 검토가 부족하고, 글 1의 각 아이디어별 위험 및 주의 사항 설명이 줄어 위험 검토 점수가 낮아짐"
+ ],
+ "note": "글 2는 대체 활동을 간결히 제시하나 위험 검토가 약해 아쉬움.",
+ "final_first": true
+}

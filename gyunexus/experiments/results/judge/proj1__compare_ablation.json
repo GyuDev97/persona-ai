@@ -1,0 +1,95 @@
+{
+ "topic": "proj1",
+ "orders": [
+  {
+   "order": [
+    "A",
+    "B",
+    "D"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "아이디어가 구체적이고 GyuNexus 및 은하수 촬영 특화 기능 포함. 위험과 다음 단계 명확히 제시함."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "기능은 일관적이나 일부 모호, 메타데이터 없는 사진 처리 포함해 실현성에 일부 가정 존재."
+    },
+    "D": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "구현 아이디어 다양하지만 하루 내 개발 가능성 낮고, 구체성·위험 검토 약함."
+    }
+   }
+  },
+  {
+   "order": [
+    "D",
+    "B",
+    "A"
+   ],
+   "result": {
+    "D": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "여러 아이디어 제시 및 위험과 다음 단계 구체적. 단 천문 관련 특화 언급 부족."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "기본 기능 구체화 우수하나 천문 관련 특화 요소 누락, 위험검토 다소 일반적."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "사용자 배경 반영해 천문사진 특화 태깅 포함, 구현 가능성·주의점 명확, 위험검토도 구체적"
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "D"
+ ],
+ "mode": "ablation"
+}

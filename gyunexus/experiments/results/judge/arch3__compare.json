@@ -1,0 +1,94 @@
+{
+ "topic": "arch3",
+ "orders": [
+  {
+   "order": [
+    "C",
+    "A",
+    "B"
+   ],
+   "result": {
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 3.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 4.0
+     },
+     "note": "주요 아이디어가 실현 가능하나 구현 구체성 낮음. 위험 검토 적절하나 보안 구체성 미흡."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "GyuNexus 구현 환경과 자료 일치, API 연동과 리스크 구체적. 다만 일부 구현상 과제 존재."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 5.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "인증·캐싱 구체적이며 개발 단계 언급, 사용자 동의 강조. JWT 미확인 점 약간 감점."
+    }
+   }
+  },
+  {
+   "order": [
+    "B",
+    "A",
+    "C"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "각 제안이 GyuNexus 구조에 맞고 세부적으로 구체적이며 위험과 다음 단계까지 상세하고, JWT 언급 진위 확인 필요 명시함."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "일정과 교통 연동 전반적 표현 있으나 구체적 구현 방법 일부 미흡, 위험과 다음 단계 균형적 제시, 실현 가능함."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "주장 다소 일반적, 자동 상태 전환과 승인 절차 등만 제시, 위험 고찰 부족하고 구체 기술 설명 부족함."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ]
+}

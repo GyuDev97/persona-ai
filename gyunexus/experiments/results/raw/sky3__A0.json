@@ -1,0 +1,111 @@
+{
+ "topic": "sky3",
+ "method": "A0",
+ "ok": true,
+ "error": null,
+ "raw": {},
+ "norm": {
+  "summary": "오늘 밤 기상과 달 조건에서 은하수 촬영이 어렵다면 다른 대안을 고려해야 한다. 예를 들어, 도시의 야경이나 파노라마 사진 촬영은 좋은 선택이 될 수 있다. 또한, 별자리 관찰이나 천체 망원경을 활용한 관측도 좋은 대안이 될 것이다.",
+  "ideas": [
+   {
+    "title": "도시 야경 촬영",
+    "description": "은하수 촬영이 어려운 경우, 도시의 야경 조명과 경관을 촬영하여 색다른 사진을 만들어 볼 수 있다.",
+    "risks": [
+     "필요한 장비가 부족할 수 있음"
+    ],
+    "next_steps": [
+     "촬영 위치 선정",
+     "필요 장비 점검"
+    ]
+   },
+   {
+    "title": "별자리 관찰",
+    "description": "달이 밝아 은하수를 촬영할 수 없다면, 별자리를 관찰하고 기록하는 활동을 통해 천문학적인 흥미를 느낄 수 있다.",
+    "risks": [
+     "시각적 혼잡으로 인한 관찰 어려움"
+    ],
+    "next_steps": [
+     "적합한 장소 찾기",
+     "별자리 지도 다운로드"
+    ]
+   },
+   {
+    "title": "천체 망원경 활용",
+    "description": "달이 밝은 밤에 다른 천체를 관찰할 수 있는 망원경을 활용하여 다양한 천체를 관찰하고 사진을 찍어보는 것도 좋다.",
+    "risks": [
+     "망원경 사용 경험 부족"
+    ],
+    "next_steps": [
+     "망원경 세팅 및 학습",
+     "촬영 계획 수립"
+    ]
+   }
+  ],
+  "open_questions": [
+   "오늘 밤 기상 조건은 어떤가요?",
+   "달 밝기는 얼마인가요?"
+  ],
+  "caveats": [
+   "날씨가 기상 예보와 다를 수 있음"
+  ],
+  "evidence_texts": []
+ },
+ "metrics": {
+  "chars": 590,
+  "n_ideas": 3,
+  "with_next_steps": 1.0,
+  "with_risks": 1.0,
+  "unsupported_pct": 0,
+  "n_pct": 0,
+  "warning_coverage": null,
+  "n_warnings": 0
+ },
+ "secs": 3.06,
+ "usage": {
+  "calls": 1,
+  "prompt_tokens": 426,
+  "completion_tokens": 392,
+  "cost_usd": 0.000299,
+  "llm_secs": 3.06,
+  "by_purpose": {
+   "single": 1
+  }
+ },
+ "bundle": {
+  "text": "[E1] (weather.forecast) {\"date\": \"2026-10-17\", \"period\": \"밤\", \"location\": \"기본 위치(설정값)\", \"avg_cloud_cover_pct\": 60, \"max_precip_prob_pct\": 2, \"avg_temp_c\": 17.7, \"hours_sampled\": 5, \"window_passed\": false, \"source\": \"https://open-meteo.com\"}\n     ⚠ 평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음\n[E2] (weather.forecast) {\"date\": \"2026-10-17\", \"period\": \"저녁\", \"location\": \"기본 위치(설정값)\", \"avg_cloud_cover_pct\": 72, \"max_precip_prob_pct\": 0, \"avg_temp_c\": 20.1, \"hours_sampled\": 4, \"window_passed\": true, \"source\": \"https://open-meteo.com\"}\n     ⚠ 평균 구름량 72% (2026-10-17 저녁 기본 위치(설정값)): 하늘이 가려질 가능성이 높음 / ⚠ 요청 시간대(2026-10-17 저녁 기본 위치(설정값))는 이미 지남\n[E3] (astro.moon_phase) {\"phase\": \"상현달\", \"age_days\": 6.2, \"illumination_pct\": 38, \"days_to_next_new_moon\": 23.3, \"dark_sky_friendly\": false, \"source\": \"computed:mean-synodic-month\", \"for\": {\"date\": \"2026-10-17\", \"period\": \"밤\"}}\n     ⚠ 달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리",
+  "flags": [
+   {
+    "code": "cloudy",
+    "severity": "warn",
+    "text": "평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+    "date": "2026-10-17",
+    "period": "밤",
+    "location": "기본 위치(설정값)"
+   },
+   {
+    "code": "cloudy",
+    "severity": "warn",
+    "text": "평균 구름량 72% (2026-10-17 저녁 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+    "date": "2026-10-17",
+    "period": "저녁",
+    "location": "기본 위치(설정값)"
+   },
+   {
+    "code": "window_passed",
+    "severity": "warn",
+    "text": "요청 시간대(2026-10-17 저녁 기본 위치(설정값))는 이미 지남",
+    "date": "2026-10-17",
+    "period": "저녁",
+    "location": "기본 위치(설정값)"
+   },
+   {
+    "code": "moon_bright",
+    "severity": "warn",
+    "text": "달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리",
+    "date": "2026-10-17",
+    "period": null,
+    "location": null
+   }
+  ]
+ }
+}

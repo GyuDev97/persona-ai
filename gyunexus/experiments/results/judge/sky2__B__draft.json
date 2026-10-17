@@ -1,0 +1,28 @@
+{
+ "topic": "sky2",
+ "method": "B",
+ "draft_scores": {
+  "accuracy": 4,
+  "specificity": 3,
+  "feasibility": 4,
+  "novelty": 2,
+  "value": 3,
+  "risk_review": 2
+ },
+ "final_scores": {
+  "accuracy": 4,
+  "specificity": 4,
+  "feasibility": 4,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 4
+ },
+ "verdict": "weakened",
+ "weakened_points": [
+  "글 2가 강수 위험과 구체적 위험 요소(72% 구름량, 90% 강수확률 등)를 구체적 수치와 함께 자세히 제시하지 않고 위험 검토가 약화됨",
+  "글 2는 열린 질문과 날씨 불확실성에 대한 주의사항 삭제로 위험 검토의 깊이가 줄어듦",
+  "글 2는 준비사항은 언급하지만 준비의 다음 단계나 구체적 행동 제안이 부족함"
+ ],
+ "note": "글 2는 구체적 위험수치와 상세 위험 검토가 축소되어 위험 인식과 가치가 떨어짐.",
+ "final_first": true
+}

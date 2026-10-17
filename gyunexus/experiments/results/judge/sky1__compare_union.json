@@ -1,0 +1,96 @@
+{
+ "topic": "sky1",
+ "orders": [
+  {
+   "order": [
+    "B",
+    "C",
+    "A"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 5.0
+     },
+     "note": "증거 기반 구름량·강수·달 밝기 적절히 반영, 위험 반복 과다 언급점 감점."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 2.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "구름량·강수 반영하나 강수 확률 90% 간과, 달 영향 부적절 처리."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 4.0
+     },
+     "note": "모든 증거 충실 반영, 달·구름 고려해 균형 판단, 구체적 추가 개발 아이디어 포함."
+    }
+   }
+  },
+  {
+   "order": [
+    "A",
+    "C",
+    "B"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "모든 증거 충실 반영, 달 밝기·구름량 영향 명확 서술·요약, 구체적 아이디어·위험·다음 단계 포함, 상반된 영향 균형감 평가까지 적절함."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "주로 구름량·강수 위주, 달 밝기 영향 미반영 점 감점, 아이디어 간략하고 위험 검토 부족함."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 5.0
+     },
+     "note": "강수확률 포함한 상세 위험 분석 우수, 단 출사 추천 불명확·구체 아이디어 미흡하여 점수 하락."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "union",
+ "model": "gpt-4.1-mini"
+}

@@ -1,0 +1,24 @@
+{
+ "topic": "arch2",
+ "method": "C",
+ "draft_scores": {
+  "accuracy": 4,
+  "specificity": 3,
+  "feasibility": 4,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 2
+ },
+ "final_scores": {
+  "accuracy": 5,
+  "specificity": 5,
+  "feasibility": 5,
+  "novelty": 4,
+  "value": 5,
+  "risk_review": 5
+ },
+ "verdict": "improved",
+ "weakened_points": [],
+ "note": "글 2가 글 1보다 구체적이고 위험 검토도 충실하여 품질 평가 지표 설계에 더 도움이 됨",
+ "final_first": false
+}

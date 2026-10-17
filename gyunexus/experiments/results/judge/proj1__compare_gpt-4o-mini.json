@@ -1,0 +1,96 @@
+{
+ "topic": "proj1",
+ "orders": [
+  {
+   "order": [
+    "C",
+    "A",
+    "B"
+   ],
+   "result": {
+    "C": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "GPS 정보 없이 처리의 미흡 가능성 언급, 그러나 설계 방법 부족. 확인된 위험으로 이어질 수 있다."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 5.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "명확한 기능 제안과 신뢰할 수 있는 데이터 기반, 위험 요소도 구체적. 실현성과 가치가 높음."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "기능 설명은 있지만 구체성이 더 필요하고, 위험의 현 명확성 부족. 전체적으로 실현 가능성 높음."
+    }
+   }
+  },
+  {
+   "order": [
+    "B",
+    "A",
+    "C"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "기능별로 명확하지만, 메타데이터가 없는 경우의 처리 방안이 부족."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 4.0
+     },
+     "note": "정확한 메타데이터 기반 자동화와 천체 인식까지 잘 제시됨."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 2.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "구체적이지 않으며 기술적 난이도가 높고 증거 부족."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4o-mini"
+}

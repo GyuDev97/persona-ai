@@ -1,0 +1,95 @@
+{
+ "topic": "collab1",
+ "orders": [
+  {
+   "order": [
+    "B",
+    "D",
+    "A"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "주장마다 근거·출처 명시, 신뢰점수 보류 도입, 실시간 평가 현실적 위험과 다음 단계 구체적."
+    },
+    "D": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 4.0
+     },
+     "note": "실시간 체크리스트·반박 시간·피드백 루프 구체성 부족, 자동화 기능·데이터처리 현실적 고민 있음."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "증거 명시·3라운드 토론·결과 분류 개선 구체적, 규칙 기반 선택 언급했으나 통합 추가 개발 필요성 있음."
+    }
+   }
+  },
+  {
+   "order": [
+    "A",
+    "D",
+    "B"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "제안이 배경과 직접 일치, 구체적 단계·위험제시, 리스크도 적절히 검토됨."
+    },
+    "D": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "일부 구체적·증거 명확하나 'Idea Agent' 오류, 위험 검토 다소 형식적."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 3.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 5.0
+     },
+     "note": "근거 명시·독립 출처 등 구체적, 위험과 다음 단계 명시, 반응속도·효율성 현실적 문제 명확."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "D"
+ ],
+ "mode": "ablation"
+}

@@ -1,0 +1,119 @@
+{
+ "topic": "sky3",
+ "orders": [
+  {
+   "order": [
+    "B",
+    "A0",
+    "C",
+    "A"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "모든 아이디어가 증거(E1,E3)와 부합함. 대안 다양하고 위험도 구체적."
+    },
+    "A0": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 5.0,
+      "risk_review": 4.0
+     },
+     "note": "아이디어와 위험, 다음 단계 구체적 증거 일치. 위험 검토는 다소 간략."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "증거 일부 반영했으나 위험 및 일부 주장은 불필요 중복과 부정확함."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "모든 내용이 정확하고 구체적이며 다음 단계 포함. 위험 검토 적절함."
+    }
+   }
+  },
+  {
+   "order": [
+    "A",
+    "C",
+    "A0",
+    "B"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "증거에 맞는 상세 대체 아이디어 및 다음 단계, 위험 인지 명확히 기술됨."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "증거 정확 반영하나 일부 위험 검토 형식적, 주장 반복 과잉; 대안 중 디지털 아트 신선함."
+    },
+    "A0": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "증거 적절 반영, 구체성 일부 부족, 위험 현실적 제시됨."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "증거와 부합하는 다수 대안 제시, 구체성 일부 떨어지고 위험 덧붙임 반복됨."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C",
+  "A0"
+ ]
+}

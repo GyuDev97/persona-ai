@@ -1,0 +1,94 @@
+{
+ "topic": "asst1",
+ "orders": [
+  {
+   "order": [
+    "C",
+    "A",
+    "B"
+   ],
+   "result": {
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "수동/자동 집중모드 제안하며 기술 위험 언급, 다만 'Frequency' 이름 확인 불필요해 -1점"
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "사용자 활동 분석과 상황 인식 구체적, 위험과 다음 단계도 명확히 다룸, 배경과 완전 부합"
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "집중모드 인식 기준 및 알림 조정 구체적, 대화 기록 활용 제안 있으나 일부 구현 방법 구체성 약간 아쉬움"
+    }
+   }
+  },
+  {
+   "order": [
+    "B",
+    "A",
+    "C"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 5.0
+     },
+     "note": "집중 모드 인식, 알림 조정, 대화 기록 분석 구체적. 구현 가능성 높고 핵심 위험 꼼꼼, 다만 새로움은 제한적."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "활동 패턴 분석, 상황별 알림, 자동 응답 구체성 있음. 실현 가능하나 위험 일부 누락, 혁신성 제한적."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "수동 집중 모드 설정과 자동감지 함께 논의, 개인화 정보 빈도 도입 언급. 단어 주의는 정확성 약간 낮음, 위험·구체성도 다소 부족."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ]
+}

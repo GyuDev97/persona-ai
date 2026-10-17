@@ -1,0 +1,24 @@
+{
+ "topic": "dev2",
+ "method": "B",
+ "draft_scores": {
+  "accuracy": 4,
+  "specificity": 3,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 2
+ },
+ "final_scores": {
+  "accuracy": 5,
+  "specificity": 5,
+  "feasibility": 5,
+  "novelty": 4,
+  "value": 5,
+  "risk_review": 5
+ },
+ "verdict": "improved",
+ "weakened_points": [],
+ "note": "글 2가 구체적이고 위험 검토도 포함하여 전반적으로 내용이 풍부해지고 실용적임",
+ "final_first": false
+}

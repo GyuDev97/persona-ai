@@ -1,0 +1,54 @@
+{
+ "topic": "sky1",
+ "orders": [
+  {
+   "order": [
+    "B",
+    "C",
+    "A"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 1.0,
+      "specificity": 2.0,
+      "feasibility": 2.0,
+      "novelty": 3.0,
+      "value": 2.0,
+      "risk_review": 1.0
+     },
+     "note": "구름량·강수확률·달밝기 등 수치가 증거와 불일치(72%, 90%, 37%, 43% 등). 근거없는 시간 경과 언급도 있음."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 4.0,
+      "novelty": 2.0,
+      "value": 3.0,
+      "risk_review": 2.0
+     },
+     "note": "구름량(60%, 8%)은 맞으나, 강수확률 등 평가 일부 누락과 달 밝기(48% 불리) 반영 부족, 위험 검토 형식적."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 5.0
+     },
+     "note": "구름량/달밝기 수치 정확. 두 날짜 모두 비적합(구름/달 밝음)이나 18일이 덜 불리함을 근거 중심으로 서술. 한계 및 실무적 다음 단계 현실적."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4.1"
+}

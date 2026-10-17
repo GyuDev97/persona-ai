@@ -1,0 +1,54 @@
+{
+ "topic": "collab3",
+ "orders": [
+  {
+   "order": [
+    "C",
+    "A",
+    "B"
+   ],
+   "result": {
+    "C": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "구체적 조건·실현 방법이 모호하고 기존 증거 검증 장부와 어떻게 통합되는지 불분명. 피드백 시스템, 데이터 기준 등 추상적 제안 위주."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "기존 시스템에 맞춘 구체적 위험 및 절차 제안이 많고, 알림/신뢰성 점검 등 실질적 구현 경로 적시. 절차 설계·메시지 작성 등 구체적 후속 단계 존재."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "출처 명시, 자동 감지, 내부 리뷰 등 의미 있으나 구현·검증 기준·시스템 통합에 대한 실질적 설명 부족. 위험과 다음 단계가 다소 추상적."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4.1"
+}

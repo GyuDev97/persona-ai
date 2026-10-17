@@ -1,0 +1,54 @@
+{
+ "topic": "sky2",
+ "orders": [
+  {
+   "order": [
+    "C",
+    "A",
+    "B"
+   ],
+   "result": {
+    "C": {
+     "scores": {
+      "accuracy": 1.0,
+      "specificity": 2.0,
+      "feasibility": 2.0,
+      "novelty": 2.0,
+      "value": 2.0,
+      "risk_review": 2.0
+     },
+     "note": "17일 구름량 72%, 18일 강수확률 90% 등 증거에 없는 수치·주장, 증거와 상충하여 정확성·실현성 모두 낮다."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "17일 구름량 60%, 18일 구름량 8%, 달 밝기 38%, 48% 등 증거와 일치하며 구체적; 촬영 기법 대안까지 신선, 위험 명확히 짚음."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 2.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "18일 강수·비 위험이 높다 주장 및 구체적 수치 누락, '달 밝기 조건이 유리' 등 증거와 일부 불일치. 준비물 등 안내는 무난."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4.1"
+}

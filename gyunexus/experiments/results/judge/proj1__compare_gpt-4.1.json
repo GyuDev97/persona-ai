@@ -1,0 +1,54 @@
+{
+ "topic": "proj1",
+ "orders": [
+  {
+   "order": [
+    "C",
+    "A",
+    "B"
+   ],
+   "result": {
+    "C": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "핵심 주장과 다음 단계, 위험 검토는 있으나 상세·배경 맥락·실현계획 부족. 일부 모호한 진술과 근거 불충분."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "배경(Python, AI, 사진 정리)과 도구 활용 구체성 모두 충족했고, 위험 검토 및 현실성도 명확. 기존 기능 반복 아님."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "핵심 기능·실현 방식은 제시하나 구체적 구현/범위가 다소 덜 구체적임. 위험과 다음 단계는 언급됨, 평이한 아이디어 포함."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4.1"
+}

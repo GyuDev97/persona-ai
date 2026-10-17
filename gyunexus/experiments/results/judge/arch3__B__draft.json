@@ -1,0 +1,26 @@
+{
+ "topic": "arch3",
+ "method": "B",
+ "draft_scores": {
+  "accuracy": 4,
+  "specificity": 4,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 2
+ },
+ "final_scores": {
+  "accuracy": 4,
+  "specificity": 4,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 4
+ },
+ "verdict": "weakened",
+ "weakened_points": [
+  "글 2는 글 1에서 구체적으로 언급된 OAuth/JWT 인증체계 도입과 캐싱 예외 처리, 사용자 동의 절차에 대한 상세한 위험 검토가 생략되어 위험 검토 점수가 하락했다."
+ ],
+ "note": "글 2는 구체적 예시와 설명이 있으나 위험 검토가 약화되어 개선되지 않았음.",
+ "final_first": true
+}

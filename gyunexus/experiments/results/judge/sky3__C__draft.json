@@ -1,0 +1,27 @@
+{
+ "topic": "sky3",
+ "method": "C",
+ "draft_scores": {
+  "accuracy": 5,
+  "specificity": 4,
+  "feasibility": 5,
+  "novelty": 4,
+  "value": 4,
+  "risk_review": 3
+ },
+ "final_scores": {
+  "accuracy": 5,
+  "specificity": 5,
+  "feasibility": 5,
+  "novelty": 4,
+  "value": 5,
+  "risk_review": 5
+ },
+ "verdict": "weakened",
+ "weakened_points": [
+  "글 2는 별자리 앱을 사용하는 구체적 활동과 위험 검토를 제거하여 구체성과 위험 검토 점수가 낮아짐",
+  "글 2는 대안 활동의 위험 요소 및 다음 단계 언급이 빠져 위험 검토가 형식적임"
+ ],
+ "note": "글 2는 구체성과 위험 검토가 약화되어 개선되지 않았음.",
+ "final_first": true
+}

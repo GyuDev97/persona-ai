@@ -1,0 +1,24 @@
+{
+ "topic": "collab3",
+ "method": "B",
+ "draft_scores": {
+  "accuracy": 4,
+  "specificity": 3,
+  "feasibility": 3,
+  "novelty": 3,
+  "value": 3,
+  "risk_review": 2
+ },
+ "final_scores": {
+  "accuracy": 5,
+  "specificity": 4,
+  "feasibility": 4,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 5
+ },
+ "verdict": "improved",
+ "weakened_points": [],
+ "note": "글 2가 글 1의 내용을 구체화하고 위험 검토까지 더해 실현 가능성과 가치를 높임.",
+ "final_first": false
+}

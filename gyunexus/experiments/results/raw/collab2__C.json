@@ -1,0 +1,490 @@
+{
+ "topic": "collab2",
+ "method": "C",
+ "ok": true,
+ "error": null,
+ "raw": {
+  "debate": {
+   "status": "completed",
+   "stop_reason": "token_budget",
+   "rounds": 2,
+   "error": null,
+   "participants": [
+    "idea",
+    "developer",
+    "critic"
+   ],
+   "importance": 4,
+   "plan": {
+    "reasons": {
+     "research": {
+      "selected": false,
+      "reason": "외부 사실·수치·최신 정보가 필요한 표현이 없어 제외",
+      "by": "rule"
+     },
+     "idea": {
+      "selected": true,
+      "reason": "아이디어·방안 도출이 목적이므로 참여",
+      "by": "rule+llm"
+     },
+     "developer": {
+      "selected": true,
+      "reason": "소프트웨어 구현 검토가 필요한 표현 '에이전트'",
+      "by": "rule"
+     },
+     "critic": {
+      "selected": true,
+      "reason": "주장과 결론에 대한 검토는 항상 필요",
+      "by": "rule"
+     }
+    },
+    "needs_facts": false,
+    "llm_reason": "아이디어 생성을 통해 혁신적이고 비용 효율적인 시스템을 찾고, 비판적 검증을 통해 제안된 아이디어의 타당성을 평가하기 위해 참여자를 설정했다."
+   },
+   "progress": [
+    {
+     "round": 1,
+     "new_evidence": 0,
+     "new_verified": 0,
+     "valid_rebuttals": 3,
+     "rejected_rebuttals": 0,
+     "duplicate_rebuttals": 0,
+     "addressed_rebuttals": 0,
+     "regressions": 0,
+     "critic_retries": 0
+    },
+    {
+     "round": 2,
+     "new_evidence": 0,
+     "new_verified": 0,
+     "valid_rebuttals": 2,
+     "rejected_rebuttals": 1,
+     "duplicate_rebuttals": 1,
+     "addressed_rebuttals": 3,
+     "regressions": 0,
+     "critic_retries": 0
+    },
+    {
+     "round": 3,
+     "new_evidence": 0,
+     "new_verified": 0,
+     "valid_rebuttals": 0,
+     "rejected_rebuttals": 0,
+     "duplicate_rebuttals": 0,
+     "addressed_rebuttals": 2,
+     "regressions": 0,
+     "critic_retries": 0
+    },
+    {
+     "stop": {
+      "reason": "token_budget",
+      "detail": "토큰 19522/19000 사용"
+     }
+    }
+   ]
+  },
+  "messages": [
+   {
+    "round": 1,
+    "agent": "idea",
+    "content": "에이전트 토론의 비용을 줄이면서 결과 품질을 유지하기 위해 세 가지 시스템 설계 방안을 제안합니다. 첫째, 과거 대화의 내용을 요약하여 사용할 수 있는 요약 기능을 구현하면, 더 긴 대화 맥락을 유지하면서도 토큰 비용을 절감할 수 있습니다. 둘째, 에이전트 간의 협업을 위한 후속 질문 체계를 도입하여 각 에이전트가 이전 결과를 기반으로 더 나은 제안을 할 수 있도록 하여, 대한 품질을 높입니다. 셋째, 사용자가 평소에 자주 사용하는 도구나 기능을 우선순위로 설정하여 자동화된 실행을 최적화하면, 반복적인 작업으로 인한 인력을 절약하여 비용을 줄일 수 있습니다.",
+    "claims": [
+     {
+      "text": "요약 기능 구현으로 토큰 비용을 절감할 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "후속 질문 체계 도입은 에이전트 협업을 증가시킨다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "우선순위 설정으로 자동화 최적화가 가능하다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 1,
+    "agent": "developer",
+    "content": "에이전트 토론의 비용을 줄이면서 품질을 유지하기 위한 시스템 설계 방안으로 세 가지를 제안합니다. 첫째, 요약 기능을 구현하면 과거 대화의 핵심을 추출해 사용하므로 긴 대화도 효과적으로 관리할 수 있습니다. 둘째, 후속 질문 체계를 도입해 에이전트들 간의 상호작용을 강화하면 품질을 높이고 중복 작업을 피하는 데 도움이 됩니다. 셋째, 자주 사용하는 도구의 우선순위를 정하고 자동화 기준으로 설정하면 반복 작업을 줄여 비용을 절감할 수 있습니다. 이와 같은 방안은 구현 가능성이 높고, 초기 구현 단위로 요약 기능을 먼저 설정할 수 있습니다.",
+    "claims": [
+     {
+      "text": "요약 기능을 구현하면 과거 대화의 핵심을 효과적으로 관리할 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "후속 질문 체계 도입은 에이전트들 간의 협업을 강화할 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "자주 사용하는 도구의 우선순위를 정하면 비용을 절감할 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 1,
+    "agent": "critic",
+    "content": "검토 요약",
+    "claims": [
+     {
+      "text": "[B1] 누락된 조건: 요약 기능이 실제로 비용을 절감하는 방식에 대한 구체적인 기재가 부족합니다. 요약이 항상 유용할지, 정보 손실이 발생할 가능성도 고려되어야 합니다. (제안: 요약 기능이 보다 실질적으로 비용 절감에 기여할 수 있는 방법과 관련 데이터 또는 사례를 제시해야 합니다.)",
+      "type": "rebuttal",
+      "status": "rebuttal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "[B2] 누락된 조건: 후속 질문 체계의 구체적인 작동 메커니즘이나 기대되는 결과가 설명되지 않아, 실제로 협업을 강화할 수 있는지 불확실합니다. (제안: 후속 질문 체계의 운영 방안 및 기대 효과를 구체적으로 명시해야 합니다.)",
+      "type": "rebuttal",
+      "status": "rebuttal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "[B3] 누락된 조건: 자동화 최적화가 이루어지는 조건과 프로그램이 어떻게 비용을 줄일지에 대한 구체적인 예시가 없습니다. (제안: 우선순위 설정이 비용 절감에 어떻게 기여하는지를 설명해주기 바랍니다.)",
+      "type": "rebuttal",
+      "status": "rebuttal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 2,
+    "agent": "idea",
+    "content": "에이전트 토론의 비용을 줄이면서 품질을 유지하기 위해, 다음과 같은 구체적 시스템 설계 방안을 제안합니다. 첫째, 요약 기능을 구현하여 이전 대화의 핵심 내용을 저장하고, 사용자가 필요한 정보만 쉽게 접근할 수 있도록 하여 토큰 사용을 줄일 수 있습니다. 운영 방식은 LLM이 요약한 내용을 토대로 대화를 진행하게 하여 정보 손실을 최소화하고, 이전 대화의 패턴을 학습하도록 합니다. 둘째, 후속 질문 체계를 도입해 각 에이전트가 이전 결과 분석을 기반으로 질문을 던지도록 하여 협업을 증진시킬 수 있습니다. 이를 통해 에이전트들이 중복 작업을 피하고, 더 깊은 논의를 통해 품질을 높일 수 있습니다. 셋째, 자주 사용하는 도구를 우선순위로 설정하여, 반복적으로 사용하는 기능이 더 빠르게 실행되도록 하여 비용을 절감합니다. 이러한 방안을 통해 자동화를 최적화하고 관리 효율성을 높일 수 있습니다.",
+    "claims": [
+     {
+      "text": "요약 기능을 구현하여 토큰 사용을 줄일 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "후속 질문 체계 도입으로 에이전트 협업을 증진시킬 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "자주 사용하는 도구를 우선순위로 설정하여 비용을 절감할 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 2,
+    "agent": "developer",
+    "content": "요약 기능 구현을 통한 비용 절감 방안에서 정보 손실 문제는 해결해야 할 중요한 고려 사항입니다. 따라서, 요약이 매번 유용한 것은 아니며, 필요한 경우 전체 대화를 유지할 수 있는 대안이 필요합니다. 후속 질문 체계는 에이전트의 결과를 기반으로 질문을 던지게 하여 협업을 증진시킬 수 있으나, 구체적인 작동 방안을 명시해 실제 효과를 입증해야 합니다. 우선순위 설정을 통한 자동화 최적화 역시 조건을 명확히 제시해야 성공적인 구현이 가능할 것입니다. 이러한 요소들은 고품질 결과 도출과 비용 절감을 위해 개선되어야 합니다.",
+    "claims": [
+     {
+      "text": "요약 기능을 통한 비용 절감의 정보 손실 문제를 고려해야 한다.",
+      "type": "interpretation",
+      "status": "assumption",
+      "evidence_ids": [],
+      "notes": [
+       "해석의 근거 증거 없음"
+      ],
+      "entities": []
+     },
+     {
+      "text": "후속 질문 체계의 구체적인 작동 메커니즘이 필요하다.",
+      "type": "interpretation",
+      "status": "assumption",
+      "evidence_ids": [],
+      "notes": [
+       "해석의 근거 증거 없음"
+      ],
+      "entities": []
+     },
+     {
+      "text": "우선순위 설정에 따른 자동화 최적화 조건을 명확히 해야 한다.",
+      "type": "interpretation",
+      "status": "assumption",
+      "evidence_ids": [],
+      "notes": [
+       "해석의 근거 증거 없음"
+      ],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 2,
+    "agent": "critic",
+    "content": "검토 요약",
+    "claims": [
+     {
+      "text": "[B4] 누락된 조건: 후속 질문 체계의 구체적인 작동 방식이나 기대되는 효과에 대한 설명이 부족하여, 실제 협업 증진 가능성이 불확실합니다. (제안: 후속 질문 체계의 구체적인 프로세스와 예상되는 결과를 명확히 제시해야 합니다.)",
+      "type": "rebuttal",
+      "status": "rebuttal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "[B5] 누락된 조건: 우선순위 설정을 통한 자동화 최적화가 이루어지는 조건 및 구체적인 예시가 필요합니다. (제안: 비용 절감의 구체적인 경로를 설명하기 위해 우선순위 설정의 사례나 성공적인 모델을 제시해야 합니다.)",
+      "type": "rebuttal",
+      "status": "rebuttal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 3,
+    "agent": "idea",
+    "content": "에이전트 토론의 비용을 줄이면서 품질을 유지하기 위해 구체적인 시스템 설계 방안을 제안합니다. 첫째, 요약 기능을 구현하여 특정 길이의 대화를 요약하고, 사용자가 필요할 때 전체 대화를 유지할 수 있는 옵션을 제공하여 정보 손실을 최소화하고 비용을 절감할 수 있습니다. 요약은 대화의 핵심 내용을 역할에 적합하게 전달하여, 에이전트가 계속해서 질 높은 정보를 다룰 수 있도록 합니다. 둘째, 후속 질문 체계는 각 에이전트가 이전 결과를 바탕으로 명확한 질문을 던지게 하여 협업을 증진시킵니다. 이를 통해 각 에이전트의 전문성이 발휘되어 중복 작업을 피할 수 있습니다. 셋째, 자주 사용하는 도구의 우선순위를 설정하여, 이 도구들이 최적화된 순서로 실행되도록 하여 비용을 절감합니다. 사용자가 선택한 도구의 우선순위를 지속적으로 조정하는 방식으로 효율성을 높일 수 있습니다. 이러한 방안들은 이후 검증과 테스트를 통해 실질적인 효과를 입증할 수 있습니다.",
+    "claims": [
+     {
+      "text": "요약 기능 구현으로 토큰 사용을 줄일 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "후속 질문 체계 도입으로 에이전트 협업을 증진시킬 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "자주 사용하는 도구를 우선순위로 설정하여 비용을 절감할 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   }
+  ],
+  "evidence": [],
+  "ideas": [
+   {
+    "title": "요약 기능 구현",
+    "description": "이전 대화를 요약하여 핵심 내용을 저장하고, 비용을 절감하며 정보 손실을 최소화하는 기능을 제안합니다.",
+    "status": "needs_research",
+    "rationale": "요약 기능의 구현을 통해 토큰 사용을 줄일 수 있으나, 정보 손실의 위험과 구체적인 비용 절감 방식이 논의되어야 합니다. / 요약 기능으로 정보 손실을 줄이고 비용을 관리할 수 있는 실행 가능한 아이디어입니다.",
+    "risks": [
+     "정보 손실 발생 가능성",
+     "요약의 유용성에 대한 불확실성"
+    ],
+    "next_steps": [
+     "요약 기능의 정확성을 검증할 연구 필요"
+    ],
+    "feasibility": "medium",
+    "confidence": 0.5,
+    "evidence_ids": []
+   },
+   {
+    "title": "후속 질문 체계 도입",
+    "description": "각 에이전트가 이전 결과를 기반으로 질문을 던져 협업을 증진시키는 체계를 도입합니다.",
+    "status": "needs_research",
+    "rationale": "에이전트 간의 효율적인 협업을 위해 필요하나, 구체적인 작동 메커니즘이나 효과에 대한 추가 연구가 필요합니다. / 후속 질문 체계는 협업을 증진시키는 좋은 방향이나 구체성이 부족합니다.",
+    "risks": [
+     "협업 증진 가능성에 대한 불확실성"
+    ],
+    "next_steps": [
+     "후속 질문 체계의 작동 매커니즘 연구 필요"
+    ],
+    "feasibility": "medium",
+    "confidence": 0.5,
+    "evidence_ids": []
+   },
+   {
+    "title": "자주 사용하는 도구 우선순위 설정",
+    "description": "자동화된 실행을 최적화하여 비용을 절감하는 방안을 제안합니다.",
+    "status": "needs_research",
+    "rationale": "우선순위 설정을 통한 비용 절감 가능성이 있으나, 이를 위한 조건과 구체적인 예시가 필요합니다. / 도구 우선순위 설정은 자동화를 최적화할 수 있지만 구체적인 실행 방법이 필요합니다.",
+    "risks": [
+     "자동화 최적화 조건의 불명확성"
+    ],
+    "next_steps": [
+     "우선순위 설정 방안에 대한 구체적인 분석 필요"
+    ],
+    "feasibility": "medium",
+    "confidence": 0.5,
+    "evidence_ids": []
+   }
+  ],
+  "result": {
+   "summary": "에이전트 토론의 비용을 줄이면서 품질을 유지하기 위한 세 가지 시스템 설계 방안이 논의되었습니다. 첫째, 과거 대화를 요약하는 기능을 구현하여 토큰 비용을 절감하고 정보 손실을 최소화하는 방안이 제안되었습니다. 둘째, 후속 질문 체계를 도입하여 에이전트 간 협업을 증진시키고 중복 작업을 줄이는 방법이 검토되었습니다. 셋째, 사용자가 자주 사용하는 도구의 우선순위를 설정하여 자동화를 최적화하는 방안이 논의되었습니다.",
+   "decision": "revise",
+   "status": "needs_research",
+   "ideas": [
+    {
+     "title": "요약 기능 구현",
+     "description": "이전 대화를 요약하여 핵심 내용을 저장하고, 비용을 절감하며 정보 손실을 최소화하는 기능을 제안합니다.",
+     "feasibility": "medium",
+     "risks": [
+      "정보 손실 발생 가능성",
+      "요약의 유용성에 대한 불확실성"
+     ],
+     "next_steps": [
+      "요약 기능의 정확성을 검증할 연구 필요"
+     ],
+     "confidence": 0.5,
+     "status": "needs_research",
+     "rationale": "요약 기능의 구현을 통해 토큰 사용을 줄일 수 있으나, 정보 손실의 위험과 구체적인 비용 절감 방식이 논의되어야 합니다. / 요약 기능으로 정보 손실을 줄이고 비용을 관리할 수 있는 실행 가능한 아이디어입니다.",
+     "evidence_ids": []
+    },
+    {
+     "title": "후속 질문 체계 도입",
+     "description": "각 에이전트가 이전 결과를 기반으로 질문을 던져 협업을 증진시키는 체계를 도입합니다.",
+     "feasibility": "medium",
+     "risks": [
+      "협업 증진 가능성에 대한 불확실성"
+     ],
+     "next_steps": [
+      "후속 질문 체계의 작동 매커니즘 연구 필요"
+     ],
+     "confidence": 0.5,
+     "status": "needs_research",
+     "rationale": "에이전트 간의 효율적인 협업을 위해 필요하나, 구체적인 작동 메커니즘이나 효과에 대한 추가 연구가 필요합니다. / 후속 질문 체계는 협업을 증진시키는 좋은 방향이나 구체성이 부족합니다.",
+     "evidence_ids": []
+    },
+    {
+     "title": "자주 사용하는 도구 우선순위 설정",
+     "description": "자동화된 실행을 최적화하여 비용을 절감하는 방안을 제안합니다.",
+     "feasibility": "medium",
+     "risks": [
+      "자동화 최적화 조건의 불명확성"
+     ],
+     "next_steps": [
+      "우선순위 설정 방안에 대한 구체적인 분석 필요"
+     ],
+     "confidence": 0.5,
+     "status": "needs_research",
+     "rationale": "우선순위 설정을 통한 비용 절감 가능성이 있으나, 이를 위한 조건과 구체적인 예시가 필요합니다. / 도구 우선순위 설정은 자동화를 최적화할 수 있지만 구체적인 실행 방법이 필요합니다.",
+     "evidence_ids": []
+    }
+   ],
+   "verified_facts": [],
+   "unverified_claims": [],
+   "open_questions": [],
+   "warnings": [],
+   "conflicts": [],
+   "importance": 4,
+   "recommendation": {
+    "accepted": [],
+    "needs_research": [
+     "요약 기능 구현",
+     "후속 질문 체계 도입",
+     "자주 사용하는 도구 우선순위 설정"
+    ]
+   }
+  },
+  "events": {},
+  "review_stats": {
+   "rebuttals_reviewed": 5
+  }
+ },
+ "norm": {
+  "summary": "에이전트 토론의 비용을 줄이면서 품질을 유지하기 위한 세 가지 시스템 설계 방안이 논의되었습니다. 첫째, 과거 대화를 요약하는 기능을 구현하여 토큰 비용을 절감하고 정보 손실을 최소화하는 방안이 제안되었습니다. 둘째, 후속 질문 체계를 도입하여 에이전트 간 협업을 증진시키고 중복 작업을 줄이는 방법이 검토되었습니다. 셋째, 사용자가 자주 사용하는 도구의 우선순위를 설정하여 자동화를 최적화하는 방안이 논의되었습니다.",
+  "ideas": [
+   {
+    "title": "요약 기능 구현",
+    "description": "이전 대화를 요약하여 핵심 내용을 저장하고, 비용을 절감하며 정보 손실을 최소화하는 기능을 제안합니다.",
+    "risks": [
+     "정보 손실 발생 가능성",
+     "요약의 유용성에 대한 불확실성"
+    ],
+    "next_steps": [
+     "요약 기능의 정확성을 검증할 연구 필요"
+    ]
+   },
+   {
+    "title": "후속 질문 체계 도입",
+    "description": "각 에이전트가 이전 결과를 기반으로 질문을 던져 협업을 증진시키는 체계를 도입합니다.",
+    "risks": [
+     "협업 증진 가능성에 대한 불확실성"
+    ],
+    "next_steps": [
+     "후속 질문 체계의 작동 매커니즘 연구 필요"
+    ]
+   },
+   {
+    "title": "자주 사용하는 도구 우선순위 설정",
+    "description": "자동화된 실행을 최적화하여 비용을 절감하는 방안을 제안합니다.",
+    "risks": [
+     "자동화 최적화 조건의 불명확성"
+    ],
+    "next_steps": [
+     "우선순위 설정 방안에 대한 구체적인 분석 필요"
+    ]
+   }
+  ],
+  "open_questions": [],
+  "caveats": [],
+  "evidence_texts": []
+ },
+ "metrics": {
+  "chars": 629,
+  "n_ideas": 3,
+  "with_next_steps": 1.0,
+  "with_risks": 1.0,
+  "unsupported_pct": 0,
+  "n_pct": 0,
+  "warning_coverage": null,
+  "n_warnings": 0
+ },
+ "secs": 35.46,
+ "usage": {
+  "calls": 12,
+  "prompt_tokens": 20887,
+  "completion_tokens": 3687,
+  "cost_usd": 0.005345,
+  "llm_secs": 35.21,
+  "by_purpose": {
+   "debate_plan": 1,
+   "debate_turn:idea": 3,
+   "debate_turn:developer": 2,
+   "debate_turn:critic": 2,
+   "review:rebuttal": 2,
+   "debate_synthesis": 1,
+   "review:result": 1
+  }
+ }
+}

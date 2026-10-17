@@ -1,0 +1,94 @@
+{
+ "topic": "collab2",
+ "orders": [
+  {
+   "order": [
+    "C",
+    "B",
+    "A"
+   ],
+   "result": {
+    "C": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "구체적 기능 제안과 위험 명시, GyuNexus 배경과 조화됨."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 3.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 4.0
+     },
+     "note": "전문성 강화·검색 요약 제안 구체적이나 근거 부족, 위험 일부 포함."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "사용자 선택·예산 최적화·요약 기능 구체, 위험과 주의점 제시되었음."
+    }
+   }
+  },
+  {
+   "order": [
+    "A",
+    "B",
+    "C"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "사용자 선택·버짓 기반 소비·요약 기능 등 GyuNexus 구현에 적합해 정확도가 높음. 구체적 단계 포함. 위험도 현실적이고 잘 다룸."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "아이디어가 일반적이고 근거 부족, 구체적 실행방안 미흡. 위험 및 다음 단계 적당히 언급하나 모호함."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "구체적이고 실현 가능하며 차별적 후속 질문 도입 포함. 위험 평가는 다소 일반적이나 전반적 완성도 높음."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ]
+}

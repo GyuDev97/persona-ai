@@ -1,0 +1,54 @@
+{
+ "topic": "collab2",
+ "orders": [
+  {
+   "order": [
+    "C",
+    "B",
+    "A"
+   ],
+   "result": {
+    "C": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "요약 기능·후속질문제·도구 최적화는 대상 시스템에 직접 적용 가능하며, 근거 대체로 충실. 다만 아이디어 차별성은 평이함."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 4.0
+     },
+     "note": "전문화·중요도 검색 아이디어 근거가 부족하고, 구체 구현·실현 설명 짧음. 위험 검토는 비교적 잘됨."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "사용자 선택·버짓 정책 등 제안은 배경에서 바로 실현 가능, 구체적. 단, 참신함은 높지 않고 기존 제한의 단순 확장."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4.1"
+}

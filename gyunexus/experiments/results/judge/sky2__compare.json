@@ -1,0 +1,119 @@
+{
+ "topic": "sky2",
+ "orders": [
+  {
+   "order": [
+    "A0",
+    "B",
+    "A",
+    "C"
+   ],
+   "result": {
+    "A0": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "날씨·달 밝기 근거 있으나 10월 17일 최적 시간대 근거 불충분; 다음 단계 구체적임."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 2.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 2.0
+     },
+     "note": "18일 강수 확률 9%(E2), 90% 과장; 17일 구름량 등 사실 일부 오류; 위험평가 부족."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 5.0
+     },
+     "note": "모든 기상·천문 정보 정확히 반영, 준비 아이디어 구체적; 위험과 다음 단계 명확히."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 1.0,
+      "specificity": 2.0,
+      "feasibility": 3.0,
+      "novelty": 2.0,
+      "value": 2.0,
+      "risk_review": 1.0
+     },
+     "note": "내용 내부 모순 심각, 강수 확률과 구름량 수치 오류, 증거와 다름, 위험 검토 미흡."
+    }
+   }
+  },
+  {
+   "order": [
+    "C",
+    "A",
+    "B",
+    "A0"
+   ],
+   "result": {
+    "C": {
+     "scores": {
+      "accuracy": 2.0,
+      "specificity": 2.0,
+      "feasibility": 3.0,
+      "novelty": 2.0,
+      "value": 2.0,
+      "risk_review": 2.0
+     },
+     "note": "17일 구름량 72%, 18일 강수 90%는 증거와 모순, 혼란 존재하여 감점됨."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "근거와 완벽히 일치, 달 밝기 부정적 영향도 정확히 반영, 구체적 준비 제안."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "날씨 정보를 다소 혼동, 18일 강수 위험 과소평가, 준비사항 구체적."
+    },
+    "A0": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "일부 이론적 최적시간 제시하나 17일 구름량 60% 미반영, 구체적 준비과정 있음."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C",
+  "A0"
+ ]
+}

@@ -1,0 +1,54 @@
+{
+ "topic": "arch1",
+ "orders": [
+  {
+   "order": [
+    "A",
+    "B",
+    "C"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 5.0
+     },
+     "note": "구현된 스택과 현재 상태(임베딩 미사용, 세션 정보, 중요도 등)를 충실히 반영함. 키워드 빈도 및 피드백 시스템, 맥락 활용 등은 DB·알고리즘에 현실적으로 추가 가능. 각 위험·다음 단계도 구체적이고 근거 있음."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 2.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 4.0
+     },
+     "note": "TextRank, TF-IDF 등 언급됐으나 구현/존재가 사실 확인되지 않음(감점). 아이디어 자체는 보통이나, 머신러닝·IDF는 추가 제약을 도입해야 해서 즉시 적용 불가. 다음 단계, 위험은 언급했으나 구체적 실행방안 부족."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 2.0,
+      "feasibility": 2.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "키워드, 개인화, 유사문구 등 일반적이고 기존 방법 범위(구체 구현이 모호함). 존재하지 않는 개념(Cosine similarity, IDF) 제안 등 근거 취약. 맞춤 위험도 있지만 실행 상세 부족."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4.1"
+}

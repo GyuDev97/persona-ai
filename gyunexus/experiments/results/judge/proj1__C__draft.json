@@ -1,0 +1,24 @@
+{
+ "topic": "proj1",
+ "method": "C",
+ "draft_scores": {
+  "accuracy": 4,
+  "specificity": 3,
+  "feasibility": 4,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 2
+ },
+ "final_scores": {
+  "accuracy": 5,
+  "specificity": 5,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 5,
+  "risk_review": 5
+ },
+ "verdict": "improved",
+ "weakened_points": [],
+ "note": "글 2는 구체적 위험 검토와 실현 방안을 갖춰 타당성이 크게 향상됨.",
+ "final_first": false
+}

@@ -1,0 +1,581 @@
+{
+ "topic": "arch1",
+ "method": "B",
+ "ok": true,
+ "error": null,
+ "raw": {
+  "debate": {
+   "status": "completed",
+   "stop_reason": "max_rounds",
+   "rounds": 3,
+   "error": null,
+   "participants": [
+    "idea",
+    "developer",
+    "critic"
+   ],
+   "importance": 4,
+   "plan": {
+    "reasons": {
+     "research": {
+      "selected": false,
+      "reason": "외부 사실·수치·최신 정보가 필요한 표현이 없어 제외",
+      "by": "rule"
+     },
+     "idea": {
+      "selected": true,
+      "reason": "아이디어·방안 도출이 목적이므로 참여",
+      "by": "rule+llm"
+     },
+     "developer": {
+      "selected": true,
+      "reason": "소프트웨어 구현 검토가 필요한 표현 'GyuNexus'",
+      "by": "rule"
+     },
+     "critic": {
+      "selected": true,
+      "reason": "주장과 결론에 대한 검토는 항상 필요",
+      "by": "rule"
+     }
+    },
+    "needs_facts": false,
+    "llm_reason": "정확도를 높이기 위해서는 다양한 아이디어를 도출하고, 이를 비판적으로 검토하여 실현 가능성 및 효과성을 평가하는 것이 필요하다."
+   },
+   "progress": [
+    {
+     "round": 1,
+     "new_evidence": 0,
+     "new_verified": 0,
+     "valid_rebuttals": 3,
+     "rejected_rebuttals": 0,
+     "duplicate_rebuttals": 0,
+     "addressed_rebuttals": 0,
+     "regressions": 0,
+     "critic_retries": 0
+    },
+    {
+     "round": 2,
+     "new_evidence": 0,
+     "new_verified": 0,
+     "valid_rebuttals": 3,
+     "rejected_rebuttals": 0,
+     "duplicate_rebuttals": 0,
+     "addressed_rebuttals": 3,
+     "regressions": 0,
+     "critic_retries": 0
+    },
+    {
+     "round": 3,
+     "new_evidence": 0,
+     "new_verified": 0,
+     "valid_rebuttals": 2,
+     "rejected_rebuttals": 1,
+     "duplicate_rebuttals": 1,
+     "addressed_rebuttals": 3,
+     "regressions": 0,
+     "critic_retries": 0
+    },
+    {
+     "stop": {
+      "reason": "max_rounds",
+      "detail": "3라운드 도달"
+     }
+    }
+   ]
+  },
+  "messages": [
+   {
+    "round": 1,
+    "agent": "idea",
+    "content": "GyuNexus의 기억 검색 정확도를 높이기 위한 구체적인 방법은 다음과 같습니다. 첫째, 최근 메시지 외에 이전 대화도 요약하여 중요한 정보를 기억하도록 하는 기능을 구현하는 것입니다. 이를 통해 사용자가 자주 질문하는 내용을 기억할 수 있어 검색 결과의 정확도가 높아질 수 있습니다. 둘째, 대화의 주제 및 컨텍스트에 따라 우선순위를 조정하여 관련성을 높이는 알고리즘을 도입하는 것입니다. 마지막으로, 사용자 피드백을 통한 피드백 루프를 구축하여 검색 결과의 품질을 지속적으로 개선할 수 있습니다. 이러한 전략을 통해 GyuNexus의 검색 기능을 강화할 수 있습니다.",
+    "claims": [
+     {
+      "text": "이전 대화 요약 기능을 통해 검색 정확도를 높일 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "주제별 우선순위 조정이 검색의 관련성을 높인다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "사용자 피드백 루프를 통해 검색 결과를 지속적으로 개선할 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 1,
+    "agent": "developer",
+    "content": "GyuNexus의 기억 검색 정확도를 높이기 위한 구체적 방법을 검토하겠습니다.",
+    "claims": [
+     {
+      "text": "이전 대화 요약 기능을 통해 검색 정확도를 높일 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "주제별 우선순위 조정이 검색의 관련성을 높인다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "사용자 피드백 루프를 통해 검색 결과를 지속적으로 개선할 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 1,
+    "agent": "critic",
+    "content": "검토 요약",
+    "claims": [
+     {
+      "text": "[B1] 누락된 조건: 이전 대화를 요약하는 구체적인 방법이나 알고리즘이 부족하여 실제로 어떻게 구현할 것인지 불명확합니다. (제안: 어떤 방식으로 이전 대화를 요약하고 저장할 것인지에 대한 구체적인 기술적 방안을 제시해야 합니다.)",
+      "type": "rebuttal",
+      "status": "rebuttal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "[B2] 누락된 조건: 주제와 컨텍스트에 따른 우선순위 조정 알고리즘의 구체적인 예나 방법론이 제시되지 않아, 이를 실현할 수 있는 근거가 필요합니다. (제안: 어떤 알고리즘을 사용할 것인지, 그리고 그 예시를 명확하게 제시해야 합니다.)",
+      "type": "rebuttal",
+      "status": "rebuttal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "[B3] 누락된 조건: 사용자 피드백을 어떻게 수집하고 분석할지에 대한 방법론이 누락되어, 실행 가능성이 불확실합니다. (제안: 사용자 피드백을 수집할 구체적인 방법과 그 결과를 어떻게 적용할 것인지 설명해야 합니다.)",
+      "type": "rebuttal",
+      "status": "rebuttal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 2,
+    "agent": "idea",
+    "content": "GyuNexus의 기억 검색 정확도를 높이기 위한 개선 방안을 구체적으로 설명하겠습니다. 첫째, 이전 대화 요약 기능을 구현하기 위해, 각 대화의 주요 키워드를 추출하고, 텍스트 요약 알고리즘(예: TextRank 또는 LSA)을 활용하여 간결한 요약을 생성해야 합니다. 둘째, 대화의 주제 및 컨텍스트에 따라 검색 알고리즘에서 TF-IDF 가중치를 설정하고, 사용자가 자주 질문하는 주제를 학습하여 우선순위를 조정하는 머신러닝 모델을 도입할 수 있습니다. 셋째, 사용자 피드백은 별도의 UI에서 질문과 답변에 대한 만족도를 평가하게 하고, 이 데이터를 분석하여 결과를 개선하는 데 활용할 수 있습니다. 이러한 방법들을 통해 GyuNexus의 검색 품질을 크게 향상시킬 수 있습니다.",
+    "claims": [
+     {
+      "text": "이전 대화를 요약하기 위해 TextRank 알고리즘을 사용할 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [
+       "존재 미확인: TextRank"
+      ],
+      "entities": [
+       "TextRank"
+      ]
+     },
+     {
+      "text": "TF-IDF 가중치를 조정하여 검색 우선순위를 높일 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [
+       "존재 미확인: IDF"
+      ],
+      "entities": [
+       "IDF"
+      ]
+     },
+     {
+      "text": "사용자 피드백을 UI를 통해 수집하고 분석할 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 2,
+    "agent": "developer",
+    "content": "GyuNexus의 기억 검색 정확도를 높이기 위한 구체적인 방법을 검토하겠습니다. 첫째, 이전 대화 요약 기능을 구현하기 위해, TextRank와 같은 텍스트 요약 알고리즘을 활용할 수 있습니다. 이는 대화의 주요 키워드를 추출하여 간결한 요약을 생성하는 데 유용합니다. 둘째, TF-IDF 가중치를 조정하여 대화의 주제 및 컨텍스트에 따라 검색 알고리즘의 우선순위를 높일 수 있습니다. 마지막으로, 사용자 피드백은 별도의 UI에서 수집하여 답변에 대한 만족도를 평가하고, 이 데이터를 분석하여 검색 알고리즘을 지속적으로 개선할 수 있습니다.",
+    "claims": [
+     {
+      "text": "GyuNexus의 검색 정확도를 높이기 위해 TextRank 알고리즘을 사용할 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [
+       "존재 미확인: TextRank"
+      ],
+      "entities": [
+       "TextRank"
+      ]
+     },
+     {
+      "text": "TF-IDF 가중치를 조정하여 검색 우선순위를 높일 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [
+       "존재 미확인: IDF"
+      ],
+      "entities": [
+       "IDF"
+      ]
+     },
+     {
+      "text": "사용자 피드백을 UI를 통해 수집하고 분석할 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 2,
+    "agent": "critic",
+    "content": "검토 요약",
+    "claims": [
+     {
+      "text": "[B4] 누락된 조건: 텍스트 요약 알고리즘을 활용하더라도, 각 대화에서 어떤 키워드를 어떻게 추출할 것인지에 대한 구체적인 방법이 부족합니다. (제안: 구체적인 키워드 추출 기법이나 알고리즘을 명시하고, 어떻게 요약을 사용할지에 대한 실용적인 예를 제공해야 합니다.)",
+      "type": "rebuttal",
+      "status": "rebuttal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "[B5] 누락된 조건: TF-IDF 가중치를 조정하기 위한 구체적인 데이터 및 모델 학습 방법이 제시되지 않아 실제 구현 가능성이 낮습니다. (제안: 어떤 데이터셋에서 학습할 것인지, 어떤 머신러닝 기법을 사용할 것인지 명확히 정의해야 합니다.)",
+      "type": "rebuttal",
+      "status": "rebuttal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "[B6] 누락된 조건: 사용자 피드백 수집 및 분석에 대한 구체적인 계획과 방법론이 제시되지 않아 실행 가능성이 불확실합니다. (제안: 어떤 UI 요소를 고려할 것인지, 피드백 데이터를 어떻게 처리할 것인지에 대한 구체적인 전략을 제시해야 합니다.)",
+      "type": "rebuttal",
+      "status": "rebuttal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 3,
+    "agent": "idea",
+    "content": "GyuNexus의 기억 검색 정확도를 높이기 위한 구체적인 방안을 제시하겠습니다. 첫째, 이전 대화 요약을 위해 TF-IDF 기반의 키워드 추출 알고리즘을 활용하여 각 대화의 핵심 단어를 추출한 후, TextRank 알고리즘으로 요약을 생성할 수 있습니다. 둘째, 머신러닝 모델을 도입하여 사용자가 자주 질문하는 내용을 학습하고, 이를 바탕으로 TF-IDF 가중치를 동적으로 조정하여 검색 우선순위를 높일 수 있습니다. 마지막으로, 만족도 평가를 위한 UI를 구축하고, 사용자 피드백 데이터를 분석하여 상대적으로 정확도가 높은 검색 결과를 도출하는 알고리즘에 피드백을 반영함으로써 개선할 수 있습니다.",
+    "claims": [
+     {
+      "text": "이전 대화 요약을 TF-IDF 기반 키워드 추출 및 TextRank 알고리즘으로 구현할 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [
+       "존재 미확인: IDF, TextRank"
+      ],
+      "entities": [
+       "IDF",
+       "TextRank"
+      ]
+     },
+     {
+      "text": "머신러닝 모델을 통해 TF-IDF 가중치를 동적으로 조정하여 검색 우선순위를 높일 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [
+       "존재 미확인: IDF"
+      ],
+      "entities": [
+       "IDF"
+      ]
+     },
+     {
+      "text": "사용자 피드백을 UI를 통해 수집하고 분석하여 검색 결과의 품질을 개선할 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 3,
+    "agent": "developer",
+    "content": "GyuNexus의 기억 검색 정확도를 높이기 위한 방법을 구체적으로 검토하겠습니다. 첫째, 이전 대화 요약 기능을 구현하기 위해, TF-IDF 기반의 키워드 추출 알고리즘을 사용하고, 특정 분야에 최적화된 TextRank 알고리즘을 활용하여 요약을 생성 할 수 있습니다. 둘째, 머신러닝 기술을 도입하여 사용자의 질문 빈도를 기반으로 TF-IDF 가중치를 동적으로 조정하는 시스템을 설계해야 합니다. 마지막으로, 사용자 피드백을 평가하는 UI를 구축하고, 이를 통해 수집한 데이터를 분석하여 검색 기술을 지속적으로 개선하는 기제를 마련해야 합니다.",
+    "claims": [
+     {
+      "text": "이전 대화 요약 기능을 TF-IDF와 TextRank 알고리즘을 통해 구현할 수 있다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [
+       "존재 미확인: IDF, TextRank"
+      ],
+      "entities": [
+       "IDF",
+       "TextRank"
+      ]
+     },
+     {
+      "text": "TF-IDF 가중치를 동적으로 조정하기 위해 머신러닝 모델을 도입해야 한다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [
+       "존재 미확인: IDF"
+      ],
+      "entities": [
+       "IDF"
+      ]
+     },
+     {
+      "text": "사용자 피드백을 수집할 UI를 구축하고 이를 분석해야 한다.",
+      "type": "proposal",
+      "status": "proposal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   },
+   {
+    "round": 3,
+    "agent": "critic",
+    "content": "검토 요약",
+    "claims": [
+     {
+      "text": "[B7] 누락된 조건: TF-IDF 기반의 키워드 추출 방법에 대한 구체적 설명이 부족하여 어떻게 실행할지 불분명합니다. (제안: 특정한 키워드 추출 방법론이나 절차를 제시해야 합니다.)",
+      "type": "rebuttal",
+      "status": "rebuttal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     },
+     {
+      "text": "[B8] 누락된 조건: 사용자 피드백을 수집하고 분석하는 방법이 구체적으로 제시되지 않아, 이 피드백 루프의 실현 가능성이 불확실합니다. (제안: 피드백 수집 절차와 이를 처리하기 위한 데이터 분석 방법론을 명시해야 합니다.)",
+      "type": "rebuttal",
+      "status": "rebuttal",
+      "evidence_ids": [],
+      "notes": [],
+      "entities": []
+     }
+    ]
+   }
+  ],
+  "evidence": [],
+  "ideas": [
+   {
+    "title": "이전 대화 요약 기능 구현",
+    "description": "각 대화의 주요 키워드를 추출하고, 이를 기반으로 TextRank 알고리즘을 사용하여 요약을 생성하는 방법을 제안합니다. (존재 미확인: IDF, TextRank)",
+    "status": "needs_research",
+    "rationale": "구체적인 키워드 추출 방법 및 TextRank 적용 시나리오가 필요합니다. / 존재 미확인: IDF, TextRank",
+    "risks": [],
+    "next_steps": [
+     "TF-IDF 키워드 추출 방법론 조사",
+     "TextRank 알고리즘의 구체적 적용 방안 제시"
+    ],
+    "feasibility": "medium",
+    "confidence": 0.5,
+    "evidence_ids": []
+   },
+   {
+    "title": "TF-IDF 가중치 조정",
+    "description": "대화의 주제 및 컨텍스트에 따라 TF-IDF 가중치를 동적으로 조정하는 머신러닝 모델을 도입하는 것을 제안합니다. (존재 미확인: IDF)",
+    "status": "needs_research",
+    "rationale": "구체적인 모델 학습 방법과 데이터 수집 방법이 필요합니다. / 존재 미확인: IDF",
+    "risks": [],
+    "next_steps": [
+     "머신러닝 모델 학습을 위한 데이터 구조 설계",
+     "TF-IDF 가중치 조정 알고리즘 개발"
+    ],
+    "feasibility": "medium",
+    "confidence": 0.5,
+    "evidence_ids": []
+   },
+   {
+    "title": "사용자 피드백 루프 구축",
+    "description": "사용자가 질문 및 답변에 대한 만족도를 평가할 수 있는 UI를 구축하고 분석하여 검색 알고리즘 개선에 활용합니다.",
+    "status": "needs_research",
+    "rationale": "피드백 수집 및 분석 방법론에 대한 구체적 계획이 필요합니다.",
+    "risks": [],
+    "next_steps": [
+     "사용자 피드백 수집을 위한 UI 설계",
+     "수집된 데이터 분석 방법론 정의"
+    ],
+    "feasibility": "medium",
+    "confidence": 0.5,
+    "evidence_ids": []
+   }
+  ],
+  "result": {
+   "summary": "GyuNexus의 기억 검색 정확도를 높이기 위한 여러 가지 아이디어가 제시되었지만, 특정 알고리즘이나 방법론에 대한 구체성이 부족하여 실행 가능성이 불확실한 부분이 많습니다. 이전 대화의 요약 기능, TF-IDF 가중치 조정, 사용자 피드백 루프 구축 등이 제안되었지만, 이를 구현하기 위한 명확한 절차와 방법론이 필요합니다.",
+   "decision": "revise",
+   "status": "needs_research",
+   "ideas": [
+    {
+     "title": "이전 대화 요약 기능 구현",
+     "description": "각 대화의 주요 키워드를 추출하고, 이를 기반으로 TextRank 알고리즘을 사용하여 요약을 생성하는 방법을 제안합니다. (존재 미확인: IDF, TextRank)",
+     "feasibility": "medium",
+     "risks": [],
+     "next_steps": [
+      "TF-IDF 키워드 추출 방법론 조사",
+      "TextRank 알고리즘의 구체적 적용 방안 제시"
+     ],
+     "confidence": 0.5,
+     "status": "needs_research",
+     "rationale": "구체적인 키워드 추출 방법 및 TextRank 적용 시나리오가 필요합니다. / 존재 미확인: IDF, TextRank",
+     "evidence_ids": []
+    },
+    {
+     "title": "TF-IDF 가중치 조정",
+     "description": "대화의 주제 및 컨텍스트에 따라 TF-IDF 가중치를 동적으로 조정하는 머신러닝 모델을 도입하는 것을 제안합니다. (존재 미확인: IDF)",
+     "feasibility": "medium",
+     "risks": [],
+     "next_steps": [
+      "머신러닝 모델 학습을 위한 데이터 구조 설계",
+      "TF-IDF 가중치 조정 알고리즘 개발"
+     ],
+     "confidence": 0.5,
+     "status": "needs_research",
+     "rationale": "구체적인 모델 학습 방법과 데이터 수집 방법이 필요합니다. / 존재 미확인: IDF",
+     "evidence_ids": []
+    },
+    {
+     "title": "사용자 피드백 루프 구축",
+     "description": "사용자가 질문 및 답변에 대한 만족도를 평가할 수 있는 UI를 구축하고 분석하여 검색 알고리즘 개선에 활용합니다.",
+     "feasibility": "medium",
+     "risks": [],
+     "next_steps": [
+      "사용자 피드백 수집을 위한 UI 설계",
+      "수집된 데이터 분석 방법론 정의"
+     ],
+     "confidence": 0.5,
+     "status": "needs_research",
+     "rationale": "피드백 수집 및 분석 방법론에 대한 구체적 계획이 필요합니다.",
+     "evidence_ids": []
+    }
+   ],
+   "verified_facts": [],
+   "unverified_claims": [
+    "TF-IDF 기반 키워드 추출 및 TextRank 알고리즘 사용이 실행 가능하다는 전제.",
+    "머신러닝 모델을 통한 가중치 조정이 효과적일 것이라는 주장."
+   ],
+   "open_questions": [
+    "어떤 구체적인 텍스트 요약 알고리즘이나 데이터 구조가 최적의 성능을 보일 것인가?",
+    "사용자 피드백을 어떻게 수집하고 분석할 것인가?",
+    "'IDF'의 존재와 조건을 확인해야 함",
+    "'TextRank'의 존재와 조건을 확인해야 함"
+   ],
+   "warnings": [
+    "존재가 확인되지 않은 이름: IDF, TextRank"
+   ],
+   "conflicts": [],
+   "importance": 4,
+   "recommendation": {
+    "accepted": [],
+    "needs_research": [
+     "이전 대화 요약 기능 구현",
+     "TF-IDF 가중치 조정",
+     "사용자 피드백 루프 구축"
+    ]
+   }
+  },
+  "events": {},
+  "review_stats": {}
+ },
+ "norm": {
+  "summary": "GyuNexus의 기억 검색 정확도를 높이기 위한 여러 가지 아이디어가 제시되었지만, 특정 알고리즘이나 방법론에 대한 구체성이 부족하여 실행 가능성이 불확실한 부분이 많습니다. 이전 대화의 요약 기능, TF-IDF 가중치 조정, 사용자 피드백 루프 구축 등이 제안되었지만, 이를 구현하기 위한 명확한 절차와 방법론이 필요합니다.",
+  "ideas": [
+   {
+    "title": "이전 대화 요약 기능 구현",
+    "description": "각 대화의 주요 키워드를 추출하고, 이를 기반으로 TextRank 알고리즘을 사용하여 요약을 생성하는 방법을 제안합니다.",
+    "risks": [],
+    "next_steps": [
+     "TF-IDF 키워드 추출 방법론 조사",
+     "TextRank 알고리즘의 구체적 적용 방안 제시"
+    ]
+   },
+   {
+    "title": "TF-IDF 가중치 조정",
+    "description": "대화의 주제 및 컨텍스트에 따라 TF-IDF 가중치를 동적으로 조정하는 머신러닝 모델을 도입하는 것을 제안합니다.",
+    "risks": [],
+    "next_steps": [
+     "머신러닝 모델 학습을 위한 데이터 구조 설계",
+     "TF-IDF 가중치 조정 알고리즘 개발"
+    ]
+   },
+   {
+    "title": "사용자 피드백 루프 구축",
+    "description": "사용자가 질문 및 답변에 대한 만족도를 평가할 수 있는 UI를 구축하고 분석하여 검색 알고리즘 개선에 활용합니다.",
+    "risks": [],
+    "next_steps": [
+     "사용자 피드백 수집을 위한 UI 설계",
+     "수집된 데이터 분석 방법론 정의"
+    ]
+   }
+  ],
+  "open_questions": [
+   "어떤 구체적인 텍스트 요약 알고리즘이나 데이터 구조가 최적의 성능을 보일 것인가?",
+   "사용자 피드백을 어떻게 수집하고 분석할 것인가?",
+   "'IDF'의 존재와 조건을 확인해야 함",
+   "'TextRank'의 존재와 조건을 확인해야 함"
+  ],
+  "caveats": [
+   "존재가 확인되지 않은 이름: IDF, TextRank"
+  ],
+  "evidence_texts": []
+ },
+ "metrics": {
+  "chars": 781,
+  "n_ideas": 3,
+  "with_next_steps": 1.0,
+  "with_risks": 0.0,
+  "unsupported_pct": 0,
+  "n_pct": 0,
+  "warning_coverage": null,
+  "n_warnings": 0
+ },
+ "secs": 35.91,
+ "usage": {
+  "calls": 11,
+  "prompt_tokens": 22967,
+  "completion_tokens": 3813,
+  "cost_usd": 0.005733,
+  "llm_secs": 35.57,
+  "by_purpose": {
+   "debate_plan": 1,
+   "debate_turn:idea": 3,
+   "debate_turn:developer": 3,
+   "debate_turn:critic": 3,
+   "debate_synthesis": 1
+  }
+ }
+}

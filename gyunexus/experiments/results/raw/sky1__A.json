@@ -1,0 +1,96 @@
+{
+ "topic": "sky1",
+ "method": "A",
+ "ok": true,
+ "error": null,
+ "raw": {},
+ "norm": {
+  "summary": "2026년 10월 17일 밤은 평균 구름량이 60%로 하늘이 가려질 가능성이 높아 은하수 촬영에 불리하다. 반면, 10월 18일 밤은 구름량이 8%로 매우 맑고, 하지만 달 밝기가 48%로 은하수 촬영에 적합하지 않은 조건이다. 두 날 모두 최적의 촬영 조건은 아니지만, 10월 18일 밤이 상대적으로 나은 선택이다.",
+  "ideas": [
+   {
+    "title": "촬영일 최적화",
+    "description": "은하수 촬영을 위해 더 어두운 달이 있는 날을 선택하도록 개발하여 추천 기능을 추가할 수 있습니다.",
+    "risks": [
+     "달 밝기로 인한 촬영 성과 저하"
+    ],
+    "next_steps": [
+     "월별 달 주기를 고려하여 추천 알고리즘 개발"
+    ]
+   },
+   {
+    "title": "촬영 장소 추천",
+    "description": "구름이 적고 맑은 장소를 추천하는 기능 추가.",
+    "risks": [],
+    "next_steps": [
+     "기존 위치 기반으로 날씨 데이터와 결합하여 추천"
+    ]
+   }
+  ],
+  "open_questions": [
+   "은하수 촬영에 적합한 조건은 어떤 범위인지?",
+   "촬영에 영향을 주는 다른 천문학적 요소는 무엇인지?"
+  ],
+  "caveats": [
+   "구름량과 달 밝기가 촬영에 미치는 영향이 각각 상이하므로 종합적으로 판단해야 함."
+  ],
+  "evidence_texts": [
+   "{\"date\": \"2026-10-17\", \"period\": \"밤\", \"location\": \"기본 위치(설정값)\", \"avg_cloud_cover_pct\": 60, \"max_precip_prob_pct\": 2, \"avg_temp_c\": 17.7, \"hours_sampled\": 5, \"window_passed\": false, \"source\": \"https://open-meteo.com\"}",
+   "{\"date\": \"2026-10-18\", \"period\": \"밤\", \"location\": \"기본 위치(설정값)\", \"avg_cloud_cover_pct\": 8, \"max_precip_prob_pct\": 9, \"avg_temp_c\": 14.6, \"hours_sampled\": 5, \"window_passed\": false, \"source\": \"https://open-meteo.com\"}",
+   "{\"phase\": \"상현달\", \"age_days\": 6.2, \"illumination_pct\": 38, \"days_to_next_new_moon\": 23.3, \"dark_sky_friendly\": false, \"source\": \"computed:mean-synodic-month\", \"for\": {\"date\": \"2026-10-17\", \"period\": \"밤\"}}",
+   "{\"phase\": \"상현달\", \"age_days\": 7.2, \"illumination_pct\": 48, \"days_to_next_new_moon\": 22.3, \"dark_sky_friendly\": false, \"source\": \"computed:mean-synodic-month\", \"for\": {\"date\": \"2026-10-18\", \"period\": \"밤\"}}",
+   "평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+   "달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리",
+   "달 밝기 48%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리"
+  ]
+ },
+ "metrics": {
+  "chars": 505,
+  "n_ideas": 2,
+  "with_next_steps": 1.0,
+  "with_risks": 0.5,
+  "unsupported_pct": 0,
+  "n_pct": 3,
+  "warning_coverage": 0.67,
+  "n_warnings": 3
+ },
+ "secs": 2.48,
+ "usage": {
+  "calls": 1,
+  "prompt_tokens": 909,
+  "completion_tokens": 332,
+  "cost_usd": 0.000336,
+  "llm_secs": 2.48,
+  "by_purpose": {
+   "single": 1
+  }
+ },
+ "bundle": {
+  "text": "[E1] (weather.forecast) {\"date\": \"2026-10-17\", \"period\": \"밤\", \"location\": \"기본 위치(설정값)\", \"avg_cloud_cover_pct\": 60, \"max_precip_prob_pct\": 2, \"avg_temp_c\": 17.7, \"hours_sampled\": 5, \"window_passed\": false, \"source\": \"https://open-meteo.com\"}\n     ⚠ 평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음\n[E2] (weather.forecast) {\"date\": \"2026-10-18\", \"period\": \"밤\", \"location\": \"기본 위치(설정값)\", \"avg_cloud_cover_pct\": 8, \"max_precip_prob_pct\": 9, \"avg_temp_c\": 14.6, \"hours_sampled\": 5, \"window_passed\": false, \"source\": \"https://open-meteo.com\"}\n[E3] (astro.moon_phase) {\"phase\": \"상현달\", \"age_days\": 6.2, \"illumination_pct\": 38, \"days_to_next_new_moon\": 23.3, \"dark_sky_friendly\": false, \"source\": \"computed:mean-synodic-month\", \"for\": {\"date\": \"2026-10-17\", \"period\": \"밤\"}}\n     ⚠ 달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리\n[E4] (astro.moon_phase) {\"phase\": \"상현달\", \"age_days\": 7.2, \"illumination_pct\": 48, \"days_to_next_new_moon\": 22.3, \"dark_sky_friendly\": false, \"source\": \"computed:mean-synodic-month\", \"for\": {\"date\": \"2026-10-18\", \"period\": \"밤\"}}\n     ⚠ 달 밝기 48%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리",
+  "flags": [
+   {
+    "code": "cloudy",
+    "severity": "warn",
+    "text": "평균 구름량 60% (2026-10-17 밤 기본 위치(설정값)): 하늘이 가려질 가능성이 높음",
+    "date": "2026-10-17",
+    "period": "밤",
+    "location": "기본 위치(설정값)"
+   },
+   {
+    "code": "moon_bright",
+    "severity": "warn",
+    "text": "달 밝기 38%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리",
+    "date": "2026-10-17",
+    "period": null,
+    "location": null
+   },
+   {
+    "code": "moon_bright",
+    "severity": "warn",
+    "text": "달 밝기 48%(상현달): 어두운 하늘 조건이 아님(dark_sky_friendly=false), 은하수 촬영에 불리",
+    "date": "2026-10-18",
+    "period": null,
+    "location": null
+   }
+  ]
+ }
+}

@@ -1,0 +1,94 @@
+{
+ "topic": "proj3",
+ "orders": [
+  {
+   "order": [
+    "A",
+    "B",
+    "C"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "적절하나 구체 데이터명 언급 부족, 일부 위험 설명 있음."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "기술별 역할 구체적, 실현 가능성 높음, 위험 일부만 서술됨."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 2.0,
+      "specificity": 5.0,
+      "feasibility": 3.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "특정 기술 이름 존재 사실 판단 오류, 위험 및 주의 구체적 재검토 필요."
+    }
+   }
+  },
+  {
+   "order": [
+    "C",
+    "B",
+    "A"
+   ],
+   "result": {
+    "C": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "명칭 미확인 및 경고 있음. API 활용 구체적이나 위험과 다음 단계 잘 다룸."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "기술적 구성 정확하고 구체적, 실현 가능성 높음. 위험은 다소 추상적이고 구체성 약함."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "사용자 맞춤화와 기능별 설명 구체적, 위험과 다음 단계 적절하나 일부 일반적 위험 언급."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ]
+}

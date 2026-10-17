@@ -1,0 +1,74 @@
+{
+ "topic": "dev1",
+ "method": "A",
+ "ok": true,
+ "error": null,
+ "raw": {},
+ "norm": {
+  "summary": "개인 개발자가 반복적인 코드 리뷰를 자동화하기 위해, GitHub Actions와 같은 CI/CD 도구를 활용할 수 있다. 코드 품질 검사 도구인 linters와 자동 테스트를 통합하여 코드 푸시 시 자동으로 리뷰를 진행하는 방식이다. 또한, PR(Pull Request) 생성 시 자동화된 피드백을 제공하는 시스템을 구성하여, 품질 향상을 도모할 수 있다.",
+  "ideas": [
+   {
+    "title": "자동 코드 리뷰 시스템 구축",
+    "description": "GitHub Actions를 활용하여 코드 푸시 시 linters와 테스트 스위트를 자동으로 실행하는 시스템을 구축한다.",
+    "risks": [
+     "지속적인 코드 변경에 따른 검토 범위의 한계"
+    ],
+    "next_steps": [
+     "GitHub Actions 설정하기",
+     "반복적인 코드 리뷰 기준 정의하기"
+    ]
+   },
+   {
+    "title": "PR 생성 시 자동 피드백",
+    "description": "PR 생성 시 자동으로 리뷰 코멘트를 추가하는 봇을 구성하여 코드 개선을 유도한다.",
+    "risks": [
+     "봇의 피드백 품질 관리 필요"
+    ],
+    "next_steps": [
+     "봇의 리뷰 기준 정하기",
+     "테스트 및 배포 계획 세우기"
+    ]
+   },
+   {
+    "title": "코드 리뷰 통계 대시보드",
+    "description": "코드 리뷰 상태와 통계를 시각적으로 보여주는 대시보드를 구축하여 진행 상황을 한눈에 알 수 있게 한다.",
+    "risks": [
+     "정기적인 데이터 업데이트 필요"
+    ],
+    "next_steps": [
+     "대시보드 디자인 구상하기",
+     "데이터 수집 구조 설계하기"
+    ]
+   }
+  ],
+  "open_questions": [
+   "어떤 코드 품질 검사 도구를 사용할 것인가?",
+   "자동화 시스템의 유지보수는 어떻게 할 예정인가?"
+  ],
+  "caveats": [
+   "시스템이 복잡해질 경우 관리와 유지보수가 어려울 수 있다."
+  ],
+  "evidence_texts": []
+ },
+ "metrics": {
+  "chars": 749,
+  "n_ideas": 3,
+  "with_next_steps": 1.0,
+  "with_risks": 1.0,
+  "unsupported_pct": 0,
+  "n_pct": 0,
+  "warning_coverage": null,
+  "n_warnings": 0
+ },
+ "secs": 3.44,
+ "usage": {
+  "calls": 1,
+  "prompt_tokens": 423,
+  "completion_tokens": 413,
+  "cost_usd": 0.000311,
+  "llm_secs": 3.44,
+  "by_purpose": {
+   "single": 1
+  }
+ }
+}

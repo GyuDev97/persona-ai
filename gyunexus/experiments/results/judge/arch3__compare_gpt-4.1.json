@@ -1,0 +1,54 @@
+{
+ "topic": "arch3",
+ "orders": [
+  {
+   "order": [
+    "C",
+    "A",
+    "B"
+   ],
+   "result": {
+    "C": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 2.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "구현 제약 및 스택 언급 부족, 다소 개념적이며 기존 기능과 겹침. 일부 위험 제시 및 실현성 있으나 근거 약함."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "현 스택 내 연동 가능성과 API 비용 등 위험·실행 단계를 잘 언급. 일정/교통 통합이 구체적, 근거 있음."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 4.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "일정 관리/인증·교통 API·캐싱 등 구체적이나 JWT 등 구현 적합성 미확인, 사용자 동의 구현 구체성 추가 필요."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4.1"
+}

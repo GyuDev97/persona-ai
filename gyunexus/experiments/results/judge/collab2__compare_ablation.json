@@ -1,0 +1,95 @@
+{
+ "topic": "collab2",
+ "orders": [
+  {
+   "order": [
+    "A",
+    "B",
+    "D"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "사용자 선택·예산 조절, 요약 기능은 현재 구현 가능한 접근이며 위험과 다음 단계 구체적."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "전문성 강화, 중요도 기반 검색은 근거 부족하고 구체성·실현성 낮음, 위험·다음 단계 일반적."
+    },
+    "D": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 5.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 4.0
+     },
+     "note": "자동 조정, 질문 클러스터링, 대화 요약은 기술적 실현성 높고 구체적이며 차별성·활용 가치 큼, 위험 적절히 언급됨."
+    }
+   }
+  },
+  {
+   "order": [
+    "D",
+    "B",
+    "A"
+   ],
+   "result": {
+    "D": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 4.0,
+      "value": 5.0,
+      "risk_review": 4.0
+     },
+     "note": "구체적 기법·효과 논리적이며 GyuNexus 환경에 적합; 위험·다음 단계 명확하다."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "아이디어 검증과 구체적 구현 부족, 근거 미흡; 위험과 다음 단계는 형식적임."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "사용자 선택 구체화·예산관리 현실적; 리스크 구체적; 새로움은 상대적이며 다소 뻔함."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "D"
+ ],
+ "mode": "ablation"
+}

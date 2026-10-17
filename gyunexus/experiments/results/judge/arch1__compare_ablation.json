@@ -1,0 +1,95 @@
+{
+ "topic": "arch1",
+ "orders": [
+  {
+   "order": [
+    "D",
+    "A",
+    "B"
+   ],
+   "result": {
+    "D": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "대화 요약, 피드백, 시간 최적화 등 배경과 부합하지만 수치·방법 미세 부족."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 5.0,
+      "specificity": 5.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "키워드 빈도·맥락 활용 등 정확 구체, 위험·다음 단계 구체적, 배경과 완전 부합."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 4.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "텍스트 요약·TF-IDF 등 구체성 있으나 존재 여부 명확치 않고 배경 불확실성 영향."
+    }
+   }
+  },
+  {
+   "order": [
+    "B",
+    "A",
+    "D"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "구체적 방법 부족하며 일부 불확실한 용어 포함, 실행계획 다소 모호해 가감점 반영."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "현재 구조와 연계 명확, 위험과 다음 단계 구체적, 현실적 제안으로 높게 평가."
+    },
+    "D": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 2.0
+     },
+     "note": "아이디어 구체성·실행계획 부족, 위험 요소 언급 적음, 개선 가능성은 보이나 불충분함."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "D"
+ ],
+ "mode": "ablation"
+}

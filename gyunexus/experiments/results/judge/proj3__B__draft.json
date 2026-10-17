@@ -1,0 +1,26 @@
+{
+ "topic": "proj3",
+ "method": "B",
+ "draft_scores": {
+  "accuracy": 4,
+  "specificity": 3,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 3,
+  "risk_review": 1
+ },
+ "final_scores": {
+  "accuracy": 4,
+  "specificity": 3,
+  "feasibility": 5,
+  "novelty": 3,
+  "value": 4,
+  "risk_review": 4
+ },
+ "verdict": "weakened",
+ "weakened_points": [
+  "글 2에서 위험 요인과 한계 검토가 사라져 반론 및 위험 인식이 약화됨"
+ ],
+ "note": "글 2는 구체성·사실 정확성은 유지하지만 위험 검토가 빠져 가치와 신뢰성이 떨어짐.",
+ "final_first": true
+}

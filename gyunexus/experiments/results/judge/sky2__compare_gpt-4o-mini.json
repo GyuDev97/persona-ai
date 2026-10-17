@@ -1,0 +1,96 @@
+{
+ "topic": "sky2",
+ "orders": [
+  {
+   "order": [
+    "C",
+    "A",
+    "B"
+   ],
+   "result": {
+    "C": {
+     "scores": {
+      "accuracy": 1.0,
+      "specificity": 2.0,
+      "feasibility": 2.0,
+      "novelty": 2.0,
+      "value": 2.0,
+      "risk_review": 1.0
+     },
+     "note": "주장과 증거가 다수 모순되어 사실성이 낮음."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 4.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "날짜와 상황에 맞는 구체적 정보 제공, 위험 요소도 잘 인식."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 3.0
+     },
+     "note": "일부 정보가 불분명하고 위험 요소에 대한 검토가 부족."
+    }
+   }
+  },
+  {
+   "order": [
+    "B",
+    "A",
+    "C"
+   ],
+   "result": {
+    "B": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 3.0
+     },
+     "note": "일부 모호함과 불명확한 점이 존재. 하늘 조건이 불리함을 명시하지 않음."
+    },
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 4.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "정보 기반에서 많은 사실을 잘 다룸, 위험 검토도 적절."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 2.0,
+      "specificity": 2.0,
+      "feasibility": 3.0,
+      "novelty": 2.0,
+      "value": 2.0,
+      "risk_review": 2.0
+     },
+     "note": "제안과 요약 간의 모순이 있어 평가가 낮음."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4o-mini"
+}

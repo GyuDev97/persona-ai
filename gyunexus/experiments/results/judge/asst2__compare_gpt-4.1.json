@@ -1,0 +1,54 @@
+{
+ "topic": "asst2",
+ "orders": [
+  {
+   "order": [
+    "A",
+    "B",
+    "C"
+   ],
+   "result": {
+    "A": {
+     "scores": {
+      "accuracy": 4.0,
+      "specificity": 4.0,
+      "feasibility": 5.0,
+      "novelty": 3.0,
+      "value": 4.0,
+      "risk_review": 4.0
+     },
+     "note": "현 스택에서 구현된 승인 큐와 맞물려 구체적이며 로그·알림·사용자 교육 등은 현실적 옵션. 자동 승인 조건 등 일부는 위험을 짚었으나, 완전히 새로운 각도는 적음."
+    },
+    "B": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 3.0,
+      "value": 3.0,
+      "risk_review": 4.0
+     },
+     "note": "위험평가·이중인증 아이디어는 새롭지만, 판단 기준 등 실제 방법이 추상적이고, 현 시스템에 바로 적용하기엔 구체성/실현 가능성이 부족."
+    },
+    "C": {
+     "scores": {
+      "accuracy": 3.0,
+      "specificity": 3.0,
+      "feasibility": 3.0,
+      "novelty": 4.0,
+      "value": 3.0,
+      "risk_review": 4.0
+     },
+     "note": "구체적이지만 현 스택에서 검증되지 않은 OTP/바이오메트릭스 등은 현실성 부족. 아이디어 다양성은 있으나 대부분 형식적으로 언급됨."
+    }
+   }
+  }
+ ],
+ "methods": [
+  "A",
+  "B",
+  "C"
+ ],
+ "mode": "xjudge",
+ "model": "gpt-4.1"
+}
