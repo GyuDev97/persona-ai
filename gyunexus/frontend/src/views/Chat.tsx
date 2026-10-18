@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { api, useApi, type ChatTrace, type Conversation, type Message } from "../api";
 import type { Nav } from "../App";
-import { ConfirmDialog, EmptyState, fmtAgo, PageHeader } from "../components/ui";
+import { DeleteConfirmDialog } from "../components/crud/DeleteConfirmDialog";
+import { EmptyState, fmtAgo, Icon, PageHeader } from "../components/ui";
 
 const fmt = (topic: string | null, slots: Record<string, unknown>) =>
   [topic, ...Object.entries(slots).map(([k, v]) => `${k}=${String(v)}`)].filter(Boolean).join(", ");
@@ -86,28 +87,30 @@ export default function Chat({ version, nav, llmConfigured }: { version: number;
       <PageHeader title="대화" desc="GYUVIS와 대화합니다. 먼저 말을 거는 능동 제안도 여기에 표시됩니다." />
       <div className={`chat-wrap ${mobileList ? "" : "has-detail"}`}>
         <aside className="side card stack tight" style={{ padding: 10, overflowY: "auto" }}>
-          <button onClick={() => (setConvId(null), setMobileList(false))}>＋ 새 대화</button>
+          <button onClick={() => (setConvId(null), setMobileList(false))}><Icon name="plus" size={15} />새 대화</button>
           {convs.data?.length === 0 && <div className="muted small" style={{ padding: 8 }}>아직 대화가 없습니다.</div>}
           {convs.data?.map((c) => (
             <div key={c.id} className="conv-row">
               <button className={`sel-item ${c.id === convId ? "active" : ""}`} onClick={() => (setConvId(c.id), setMobileList(false))}>
                 <div className="t">{c.title}</div><div className="small muted">{fmtAgo(c.updated_at)}</div>
               </button>
-              <button className="ghost sm" onClick={() => setDel(c)} aria-label={`${c.title} 삭제`}>✕</button>
+              <button className="ghost sm del" onClick={() => setDel(c)} aria-label={`${c.title} 삭제`}>✕</button>
             </div>
           ))}
         </aside>
         <section className="chat-main">
           <div className="chat-head">
-            <button className="ghost back-btn" onClick={() => setMobileList(true)}>☰ 대화 목록</button>
+            <button className="ghost back-btn" onClick={() => setMobileList(true)}>← 대화 목록</button><span className="av" aria-hidden="true">G</span>
             <b className="grow" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{current?.title ?? "새 대화"}</b>
           </div>
           <div className="messages">
             {!convId && pendingText === null && <EmptyState title="GYUVIS에게 말을 걸어보세요" desc="날씨·천문 조회, 기억 활용, 직원 결과 확인 등을 물어볼 수 있습니다." />}
             {msgs.data?.map((m) => (
-              <div key={m.id} className={`msg ${m.role} ${m.proactive ? "proactive" : ""}`}>
+              <div key={m.id} className={`msg-row ${m.role}`}>
+              {m.role !== "user" && <span className={`av ${m.proactive && m.meta.kind === "worker_result" ? "work" : m.proactive ? "sug" : ""}`} aria-hidden="true">{m.proactive && m.meta.kind === "worker_result" ? "AI" : "G"}</span>}
+              <div className={`msg ${m.role} ${m.proactive ? `proactive ${m.meta.kind ?? ""}` : ""}`}>
                 {m.proactive && (
-                  <div className="tag">✦ {PRO_LABEL[m.meta.kind ?? ""] ?? "GYUVIS가 먼저 말을 걸었어요"}</div>
+                  <div className="tag">{m.meta.kind === "worker_result" ? "AI 직원" : "✦"} {PRO_LABEL[m.meta.kind ?? ""] ?? "GYUVIS가 먼저 말을 걸었어요"}</div>
                 )}
                 {m.content}
                 {m.proactive && (m.meta.debate_id || m.meta.run_id || m.meta.suggestion_id) && (
@@ -119,11 +122,12 @@ export default function Chat({ version, nav, llmConfigured }: { version: number;
                 )}
                 {m.meta.trace && <TraceView trace={m.meta.trace} />}
               </div>
+              </div>
             ))}
             {pendingText !== null && (
               <>
-                {!msgs.data?.some((m) => m.content === pendingText) && <div className="msg user">{pendingText}</div>}
-                <div className="msg assistant muted">…</div>
+                {!msgs.data?.some((m) => m.content === pendingText) && <div className="msg-row user"><div className="msg user">{pendingText}</div></div>}
+                <div className="msg-row"><span className="av" aria-hidden="true">G</span><div className="msg assistant muted" role="status" aria-label="응답 작성 중">…</div></div>
               </>
             )}
             <div ref={bottom} />
@@ -137,7 +141,7 @@ export default function Chat({ version, nav, llmConfigured }: { version: number;
           </form>
         </section>
       </div>
-      <ConfirmDialog open={!!del} danger title="대화를 삭제할까요?" message={`‘${del?.title}’ 대화의 메시지가 모두 삭제됩니다. 되돌릴 수 없습니다.`} confirmLabel="삭제" onCancel={() => setDel(null)} onConfirm={remove} />
+      <DeleteConfirmDialog open={!!del} title="대화를 삭제할까요?" itemName={del?.title ?? ""} action="삭제" impact={["이 대화의 메시지가 모두 삭제됩니다"]} recovery={{ reversible: false, note: "삭제한 대화와 메시지는 되돌릴 수 없습니다." }} onCancel={() => setDel(null)} onConfirm={remove} />
     </div>
   );
 }

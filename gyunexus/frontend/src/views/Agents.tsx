@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { api, useApi, type Agent, type Log, type Topic } from "../api";
-import { Async, Collapse, EmptyState, eventLabel, actorLabel, fmtAgo, MODE_LABEL, PageHeader, StatusBadge } from "../components/ui";
+import { Async, Collapse, EmptyState, eventLabel, actorLabel, fmtAgo, Icon, MODE_LABEL, PageHeader, SectionCard, StatusBadge } from "../components/ui";
+
+const AGENT_ICON: Record<string, string> = { research: "search", idea: "ideas", developer: "agents", critic: "approvals" };
 
 export default function Agents({ version }: { version: number }) {
   const agents = useApi<Agent[]>("/agents", version);
@@ -42,29 +44,27 @@ export default function Agents({ version }: { version: number }) {
             {rows.map((a) => {
               const s = state[a.id] ?? "idle";
               return (
-                <div key={a.id} className="card">
-                  <div className="row between"><h3>{a.name}</h3><StatusBadge status={s} /></div>
-                  <div className="muted" style={{ margin: "2px 0 8px" }}>{a.role}</div>
+                <div key={a.id} className="card agent-card">
+                  <div className="agent-head"><span className={`agent-ico ${a.id}`}><Icon name={AGENT_ICON[a.id] ?? "agents"} size={22} /></span><div className="grow"><h3>{a.name}</h3><div className="muted small">{a.role}</div></div><StatusBadge status={s} /></div>
                   <div className="small">
                     {s === "thinking" ? <span style={{ color: "var(--info)" }}>지금 실행 중: {a.current_task ?? "작업 중"}</span> : <span className="muted">대기 중 · 마지막 활동 {fmtAgo(a.last_active_at)}</span>}
                   </div>
                   {s === "error" && <div className="small" style={{ color: "var(--bad)" }}>최근 로그에 오류가 있습니다. 로그 화면에서 확인하세요.</div>}
-                  <div style={{ marginTop: 8 }}><Collapse title="상세 설명"><p className="muted">{a.description}</p></Collapse></div>
+                  <div><Collapse title="상세 설명"><p className="muted">{a.description}</p></Collapse></div>
                 </div>
               );
             })}
           </div>
         )}
       </Async>
-      <div className="card">
-        <div className="card-title"><h3>주제 직접 던지기</h3></div>
+      <SectionCard title="주제 직접 던지기">
         <form className="row wrap" onSubmit={(e) => (e.preventDefault(), title.trim().length >= 3 && submit())}>
           <input className="grow" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="에이전트들이 토론할 주제 (3자 이상)" aria-label="토론 주제" />
           <button disabled={title.trim().length < 3 || busy}>토론 시작</button>
         </form>
         <div className="small muted" style={{ marginTop: 6 }}>비워 두고 상단의 ‘지금 토론’을 누르면 주제를 자동으로 발굴합니다.</div>
         {error && <div className="notice bad" style={{ marginTop: 8 }}>{error}</div>}
-      </div>
+      </SectionCard>
       <div className="grid g2">
         <div className="card">
           <div className="card-title"><h3>주제 큐</h3></div>

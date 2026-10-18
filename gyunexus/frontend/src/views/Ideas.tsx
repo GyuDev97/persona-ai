@@ -1,7 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { useApi, type Debate, type IdeaT } from "../api";
 import type { Nav } from "../App";
-import { Async, EmptyState, fmtTime, MasterDetail, PageHeader, StatusBadge } from "../components/ui";
+import { Async, EmptyState, FilterPills, fmtTime, MasterDetail, PageHeader, SearchField, StatusBadge } from "../components/ui";
 
 type Filter = "all" | "accepted" | "needs_research" | "discarded";
 const FILTERS: { id: Filter; label: string }[] = [{ id: "all", label: "전체" }, { id: "accepted", label: "채택" }, { id: "needs_research", label: "추가 조사" }, { id: "discarded", label: "폐기" }];
@@ -32,8 +32,8 @@ export default function Ideas({ version, nav }: { version: number; nav: Nav }) {
           <MasterDetail hasDetail={current !== null}
             list={
               <>
-                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="제목·내용·토론 검색" aria-label="아이디어 검색" />
-                <div className="row wrap">{FILTERS.map((f) => <button key={f.id} className={`sm ${filter === f.id ? "" : "secondary"}`} onClick={() => setFilter(f.id)}>{f.label} {count(f.id)}</button>)}</div>
+                <SearchField value={q} onChange={setQ} placeholder="제목·내용·토론 검색" label="아이디어 검색" />
+                <FilterPills label="상태 필터" value={filter} onChange={setFilter} options={FILTERS.map((f) => ({ ...f, count: count(f.id) }))} />
                 {rows.length === 0 && <div className="muted small" style={{ padding: 8 }}>조건에 맞는 아이디어가 없습니다.</div>}
                 {rows.map((i) => (
                   <button key={i.id} className={`sel-item ${i.id === sel ? "active" : ""}`} onClick={() => setSel(i.id)}>
@@ -54,8 +54,8 @@ export default function Ideas({ version, nav }: { version: number; nav: Nav }) {
                 <div className="grid g2">
                   <div className="card"><div className="card-title"><h3>판단 근거</h3></div>{current.rationale ? <p style={{ whiteSpace: "pre-wrap" }}>{current.rationale}</p> : <div className="muted">저장된 판단 근거가 없습니다.</div>}</div>
                   <div className="card"><div className="card-title"><h3>검증 상태</h3></div>
-                    <dl className="kv"><dt>상태</dt><dd><StatusBadge status={status(current)} /></dd><dt>확신도</dt><dd>{Math.round(current.confidence * 100)}%</dd><dt>실현성</dt><dd>{FEAS[current.feasibility] ?? current.feasibility}</dd>
-                      <dt>연결된 근거</dt><dd>{current.evidence_ids?.length ? current.evidence_ids.map((e) => `E${e}`).join(", ") : <span className="muted">없음 (증거가 연결되지 않은 일반 의견)</span>}</dd>
+                    <dl className="kv"><dt>상태</dt><dd><StatusBadge status={status(current)} /></dd><dt>확신도(에이전트 자체 평가)</dt><dd>{Math.round(current.confidence * 100)}%</dd><dt>실현성</dt><dd>{FEAS[current.feasibility] ?? current.feasibility}</dd>
+                      <dt>근거 수준</dt><dd>{current.evidence_ids?.length ? <><span className="badge plain ok">증거 {current.evidence_ids.length}건 연결</span> <span className="muted small">{current.evidence_ids.map((e) => `E${e}`).join(", ")}</span></> : <span className="badge plain warn">증거 없음</span>} <span className="muted small">확신도와 별개로, 도구 조회 결과가 연결됐는지를 뜻합니다</span></dd>
                       {importance.has(current.debate_id) && <><dt>토론 중요도</dt><dd>{importance.get(current.debate_id)}</dd></>}</dl></div>
                 </div>
                 <div className="grid g2">

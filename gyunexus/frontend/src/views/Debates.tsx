@@ -66,7 +66,7 @@ function DebateView({ id, version, nav, onBack }: { id: number; version: number;
       </div>
 
       {/* 1. 최종 결론 */}
-      <div className="card">
+      <div className="card conclusion">
         <div className="card-title"><h3>최종 결론</h3>{r && <div className="row"><span className="badge plain info">{DECISION[r.decision] ?? r.decision}</span><span className="badge plain">중요도 {d.importance}</span></div>}</div>
         {r ? <p style={{ whiteSpace: "pre-wrap" }}>{r.summary}</p> : <div className="muted">{d.status === "running" ? "토론 진행 중입니다. 결론은 종합 단계가 끝나면 표시됩니다." : "저장된 결론이 없습니다."}</div>}
         {r && r.open_questions.length > 0 && <><h4>열린 질문</h4><ul>{r.open_questions.map((c, i) => <li key={i}>{c}</li>)}</ul></>}

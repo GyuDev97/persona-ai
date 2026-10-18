@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useApi, type Log } from "../api";
-import { Async, Collapse, EmptyState, actorLabel, eventLabel, fmtTime, PageHeader, SOURCE_LABEL, StatusBadge } from "../components/ui";
+import { Async, Collapse, EmptyState, FilterBar, SearchField, actorLabel, eventLabel, fmtTime, PageHeader, SOURCE_LABEL, StatusBadge } from "../components/ui";
 
 const GROUPS: Record<string, string> = { all: "전체", debate: "토론·에이전트", proactive: "능동 제안", worker: "AI 직원", tool: "도구·승인", chat: "대화·기억", system: "시스템" };
 const groupOf = (l: Log) => {
@@ -29,13 +29,13 @@ export default function Logs({ version }: { version: number }) {
   return (
     <div className="page-inner">
       <PageHeader title="로그" desc={`최근 활동 기록입니다. 오류 ${errors}건.`} />
-      <div className="row wrap">
+      <FilterBar>
         <select value={group} onChange={(e) => setGroup(e.target.value)} aria-label="이벤트 유형">{Object.entries(GROUPS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
         <select value={level} onChange={(e) => setLevel(e.target.value)} aria-label="수준"><option value="">모든 수준</option><option value="error">오류</option><option value="warn">경고</option><option value="info">정보</option></select>
         <select value={actor} onChange={(e) => setActor(e.target.value)} aria-label="주체"><option value="">모든 주체</option>{["research", "idea", "developer", "critic", "gyuvis"].map((a) => <option key={a} value={a}>{SOURCE_LABEL[a]}</option>)}</select>
-        <input className="grow" style={{ maxWidth: 320 }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="이벤트·상세 검색" aria-label="로그 검색" />
-        <span className="muted small">{rows.length}건</span>
-      </div>
+        <SearchField value={q} onChange={setQ} placeholder="이벤트·상세 검색" label="로그 검색" />
+        <span className="muted small" aria-live="polite">{rows.length}건</span>
+      </FilterBar>
       <Async q={logs}>
         {() => (
           <div className="card" style={{ padding: 0 }}>
@@ -43,11 +43,11 @@ export default function Logs({ version }: { version: number }) {
             {rows.map((l) => (
               <div key={l.id} className={`log-row ${l.level}`}>
                 <div className="row wrap">
-                  <span className="muted small nowrap">{fmtTime(l.ts)}</span>
+                  <span className="log-time nowrap">{fmtTime(l.ts)}</span>
                   {l.level !== "info" && <StatusBadge status={l.level === "error" ? "error" : "warn"} />}
                   <b>{eventLabel(l.event)}</b>
                   <span className="muted small">{actorLabel(l.agent_id, l.source)}{l.debate_id ? ` · 토론 #${l.debate_id}` : ""}</span>
-                  <span className="muted small" style={{ marginLeft: "auto" }}>{l.event}</span>
+                  <code className="muted small" style={{ marginLeft: "auto", fontFamily: "var(--mono)" }}>{l.event}</code>
                 </div>
                 {Object.keys(l.detail ?? {}).length > 0 && <div style={{ marginTop: 4 }}><Collapse title={<span className="small muted">{JSON.stringify(l.detail).slice(0, 110)}</span>}><pre>{JSON.stringify(l.detail, null, 2)}</pre></Collapse></div>}
               </div>

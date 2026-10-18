@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, useApi, useServerEvents, type Approval, type Health } from "./api";
-import { ConfirmDialog } from "./components/ui";
+import { ConfirmDialog, Icon } from "./components/ui";
 import Dashboard from "./views/Dashboard";
 import Chat from "./views/Chat";
 import Agents from "./views/Agents";
@@ -14,18 +14,18 @@ import Approvals from "./views/Approvals";
 import Logs from "./views/Logs";
 
 export const PAGES = [
-  { id: "dashboard", label: "대시보드", ico: "◈" },
-  { id: "chat", label: "대화", ico: "✉" },
-  { id: "agents", label: "에이전트", ico: "◎" },
-  { id: "workers", label: "직원", ico: "☰" },
-  { id: "workflows", label: "워크플로", ico: "⇄" },
-  { id: "debates", label: "토론", ico: "❖" },
-  { id: "ideas", label: "아이디어", ico: "✦" },
-  { id: "memories", label: "기억", ico: "▣" },
-  { id: "proactive", label: "능동 제안", ico: "➤" },
-  { id: "approvals", label: "승인", ico: "✔" },
-  { id: "logs", label: "로그", ico: "≣" },
-] as const;
+  { id: "dashboard", label: "대시보드" },
+  { id: "chat", label: "대화" },
+  { id: "agents", label: "에이전트" },
+  { id: "workers", label: "직원" },
+  { id: "workflows", label: "워크플로" },
+  { id: "debates", label: "토론" },
+  { id: "ideas", label: "아이디어" },
+  { id: "memories", label: "기억" },
+  { id: "proactive", label: "능동 제안" },
+  { id: "approvals", label: "승인" },
+  { id: "logs", label: "로그" },
+] as const; // 아이콘 이름은 id 와 같다(components/ui.tsx 의 Icon)
 export type PageId = (typeof PAGES)[number]["id"];
 const RUN_BUTTON_PAGES: PageId[] = ["dashboard", "agents", "debates"]; // ‘지금 토론’은 관련 있는 화면에서만 노출한다
 
@@ -47,6 +47,16 @@ export default function App() {
   const [focusDebate, setFocusDebate] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [confirmAuto, setConfirmAuto] = useState(false);
+  // 데스크톱 사이드바 접기(아이콘만 표시). 선택은 이 브라우저에만 기억한다.
+  const [mini, setMini] = useState(() => {
+    try { return localStorage.getItem("gn.sidebar") === "mini"; } catch { return false; }
+  });
+  const toggleMini = () => {
+    setMini((v) => {
+      try { localStorage.setItem("gn.sidebar", v ? "full" : "mini"); } catch { /* 저장 불가 환경은 무시 */ }
+      return !v;
+    });
+  };
   const health = useApi<Health>("/health", version);
   const approvals = useApi<Approval[]>("/approvals", version);
   const pending = approvals.data?.filter((a) => a.status === "pending").length ?? 0;
@@ -94,18 +104,19 @@ export default function App() {
   return (
     <div className="shell">
       <header className="topbar">
-        <button className="menu-btn" onClick={() => setMenu(!menu)} aria-label="메뉴">☰</button>
-        <div className="logo"><i /><span className="logo-text">GyuNexus</span></div>
+        <button className="icon-btn menu-btn" onClick={() => setMenu(!menu)} aria-label="메뉴 열기/닫기" aria-expanded={menu}><Icon name="menu" /></button>
+        <div className="logo"><i aria-hidden="true">G</i><span className="logo-text">GyuNexus</span></div>
+        <button className="icon-btn collapse-btn" onClick={toggleMini} aria-label={mini ? "사이드바 펼치기" : "사이드바 접기"} aria-pressed={mini} title={mini ? "사이드바 펼치기" : "사이드바 접기"}><Icon name="panel" /></button>
         <div className="top-info">
           {h && (
             <>
-              <span className="chip model" title="현재 LLM 모델"><span className={`badge plain ${h.llm_configured ? "ok" : "bad"}`}>{h.llm_configured ? h.model : "API 키 없음"}</span></span>
+              <span className="chip model" title="현재 LLM 모델"><span className="muted opt-lg">모델</span> <b>{h.llm_configured ? h.model : "API 키 없음"}</b>{!h.llm_configured && <span className="badge bad plain">설정 필요</span>}</span>
               <span className="chip" title="오늘 자율 작업 비용 / 일일 예산">
-                <span className="muted opt">오늘</span> ${h.spent_today_usd.toFixed(3)} / ${h.daily_budget_usd.toFixed(2)}
-                <span className="budget"><i style={{ width: `${spentPct}%` }} /></span>
+                <span className="muted opt">오늘</span> <b>${h.spent_today_usd.toFixed(3)}</b> <span className="muted">/ ${h.daily_budget_usd.toFixed(2)}</span>
+                <span className="budget" role="img" aria-label={`일일 예산 ${Math.round(spentPct)}% 사용`}><i className={spentPct > 90 ? "hot" : ""} style={{ width: `${spentPct}%` }} /></span>
               </span>
-              <button className="secondary sm" onClick={() => (h.autonomous_enabled ? setConfirmAuto(true) : toggleAuto())} title={`${h.debate_interval_minutes}분마다 자율 토론`}>
-                자율<span className="opt"> 토론</span> {h.autonomous_enabled ? "ON" : "OFF"}
+              <button className="secondary sm" onClick={() => (h.autonomous_enabled ? setConfirmAuto(true) : toggleAuto())} title={`${h.debate_interval_minutes}분마다 자율 토론`} aria-pressed={h.autonomous_enabled}>
+                <span className={`badge plain ${h.autonomous_enabled ? "ok" : ""}`} style={{ padding: "0 6px" }}>{h.autonomous_enabled ? "ON" : "OFF"}</span>자율<span className="opt"> 토론</span>
               </button>
               {RUN_BUTTON_PAGES.includes(page) && (
                 <button onClick={run} disabled={!h.llm_configured || h.debate_running}>{h.debate_running ? "토론 중…" : <><span className="opt">지금 </span>토론</>}</button>
@@ -116,13 +127,16 @@ export default function App() {
       </header>
       <div className="body">
         <div className={`scrim ${menu ? "open" : ""}`} onClick={() => setMenu(false)} />
-        <nav className={`sidebar ${menu ? "open" : ""}`} aria-label="주 메뉴">
+        <nav className={`sidebar ${menu ? "open" : ""} ${mini ? "mini" : ""}`} aria-label="주 메뉴">
           {PAGES.map((p) => (
-            <button key={p.id} className={`nav-item ${page === p.id ? "active" : ""}`} aria-current={page === p.id ? "page" : undefined} onClick={() => go(p.id)}>
-              <span className="ico">{p.ico}</span>{p.label}
-              {p.id === "approvals" && pending > 0 && <span className="count">{pending}</span>}
+            <button key={p.id} className={`nav-item ${page === p.id ? "active" : ""}`} aria-current={page === p.id ? "page" : undefined} title={p.label} onClick={() => go(p.id)}>
+              <span className="ico"><Icon name={p.id} size={20} /></span><span className="nav-label">{p.label}</span>
+              {p.id === "approvals" && pending > 0 && <span className="count" aria-label={`대기 ${pending}건`}>{pending}</span>}
             </button>
           ))}
+          <div className="nav-foot">
+            <button className="nav-item gyuvis" title="GYUVIS와 대화" onClick={() => go("chat")}><span className="ico"><Icon name="spark" size={20} /></span><span className="nav-label">GYUVIS에게 묻기</span></button>
+          </div>
         </nav>
         <main className="page">
           {notice && <div className="notice bad" onClick={() => setNotice(null)} style={{ marginBottom: 12 }}>{notice}</div>}
@@ -135,7 +149,7 @@ export default function App() {
           {page === "ideas" && <Ideas version={version} nav={nav} />}
           {page === "memories" && <Memories version={version} />}
           {page === "proactive" && <Proactive version={version} />}
-          {page === "approvals" && <Approvals version={version} />}
+          {page === "approvals" && <Approvals version={version} nav={nav} />}
           {page === "logs" && <Logs version={version} />}
         </main>
       </div>

@@ -1,7 +1,35 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 
 /** 공통 UI 조각. 화면마다 따로 만들지 않도록 상태 표시·모달·탭·빈 상태 등을 한 곳에 둔다. */
 
+/** 선 아이콘(24x24, currentColor). 메뉴·카드·빈 상태가 같은 세트를 쓴다. */
+const ICON_PATHS: Record<string, string> = {
+  dashboard: "M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z",
+  chat: "M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z",
+  agents: "M12 8V4M8 4h8M6 8h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2zM9 13v1M15 13v1M9 18h6",
+  workers: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8",
+  workflows: "M5 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM5 16a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM19 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 6h4a4 4 0 0 1 4 4v0M7 18h4a4 4 0 0 0 4-4v0",
+  debates: "M17 9V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8l3-3h3M21 21l-3-3h-7a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z",
+  ideas: "M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z",
+  memories: "M4 4h12a4 4 0 0 1 4 4v12H8a4 4 0 0 1-4-4zM8 9h8M8 13h6",
+  proactive: "M22 2 11 13M22 2l-7 20-4-9-9-4z",
+  approvals: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4",
+  logs: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
+  search: "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.3-4.3",
+  menu: "M4 6h16M4 12h16M4 18h16",
+  panel: "M3 4h18v16H3zM9 4v16",
+  inbox: "M22 12h-6l-2 3h-4l-2-3H2M5.5 5h13l3.5 7v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z",
+  clock: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2",
+  check: "M5 12l5 5L20 7",
+  plus: "M12 5v14M5 12h14",
+  spark: "M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z",
+  play: "M6 4l14 8-14 8z",
+  warning: "M12 3 2 20h20zM12 10v5M12 18h.01",
+  more: "M5 12h.01M12 12h.01M19 12h.01",
+};
+export function Icon({ name, size = 18 }: { name: string; size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d={ICON_PATHS[name] ?? ICON_PATHS.spark} /></svg>;
+}
 export type Tone = "ok" | "info" | "warn" | "bad" | "muted";
 
 // 서버 상태 코드 -> [사용자용 이름, 색]. 모든 화면이 같은 상태에 같은 이름·색을 쓴다.
@@ -34,9 +62,10 @@ export function PageHeader({ title, desc, actions }: { title: string; desc?: Rea
   );
 }
 
-export function EmptyState({ title, desc, action }: { title: string; desc?: ReactNode; action?: ReactNode }) {
+export function EmptyState({ title, desc, action, icon = "inbox" }: { title: string; desc?: ReactNode; action?: ReactNode; icon?: string }) {
   return (
     <div className="empty">
+      <span className="empty-ico"><Icon name={icon} size={26} /></span>
       <b>{title}</b>
       {desc && <div>{desc}</div>}
       {action}
@@ -55,17 +84,84 @@ export function Async<T>({ q, children }: { q: { data: T | null; error: string |
   return q.error ? <ErrorState message={q.error} onRetry={q.reload} /> : <LoadingState />;
 }
 
+/** 요약 카드. onClick 이 있으면 버튼으로, 없으면 일반 카드로 그린다. tone 은 아이콘 배경색. */
+export function StatCard({ icon, label, value, sub, tone, onClick }: { icon: string; label: string; value: ReactNode; sub?: ReactNode; tone?: "cyan" | "mint" | "violet" | "warn" | "bad"; onClick?: () => void }) {
+  const body = (
+    <>
+      <span className={`stat-ico ${tone ?? ""}`}><Icon name={icon} size={22} /></span>
+      <span className="grow"><span className="lbl">{label}</span><span className="num" style={{ display: "block" }}>{value}</span>{sub && <span className="sub" style={{ display: "block" }}>{sub}</span>}</span>
+    </>
+  );
+  return onClick ? <button className="stat-card" onClick={onClick}>{body}</button> : <div className="stat-card">{body}</div>;
+}
+
+/** 제목·부가 영역·설명을 가진 흰 카드. 화면마다 card-title 을 직접 만들지 않도록 둔다. */
+export function SectionCard({ title, aside, desc, children, flush, className }: { title?: ReactNode; aside?: ReactNode; desc?: ReactNode; children: ReactNode; flush?: boolean; className?: string }) {
+  return (
+    <section className={`card ${flush ? "pad0" : ""} ${className ?? ""}`}>
+      {(title || aside) && <div className="card-title" style={flush ? { padding: "14px 18px 0" } : undefined}><h3>{title}</h3>{aside && <div className="row">{aside}</div>}</div>}
+      {desc && <div className="card-desc">{desc}</div>}
+      {children}
+    </section>
+  );
+}
+
+/** 실제 상태에 연결된 검색 입력. 값·변경 핸들러는 호출한 화면이 소유한다. */
+export function SearchField({ value, onChange, placeholder, label }: { value: string; onChange: (v: string) => void; placeholder: string; label: string }) {
+  return (
+    <div className="search"><Icon name="search" size={16} /><input type="search" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} aria-label={label} /></div>
+  );
+}
+
+/** 검색·필터 한 줄. 화면 폭이 좁으면 줄바꿈된다. */
+export const FilterBar = ({ children }: { children: ReactNode }) => <div className="toolbar" role="search">{children}</div>;
+
+/** 알약형 상태 필터(선택 상태는 색과 aria-pressed 로 함께 표시). */
+export function FilterPills<T extends string>({ options, value, onChange, label }: { options: { id: T; label: string; count?: number }[]; value: T; onChange: (v: T) => void; label: string }) {
+  return (
+    <div className="pills" role="group" aria-label={label}>
+      {options.map((o) => <button key={o.id} className={`pill ${o.id === value ? "on" : ""}`} aria-pressed={o.id === value} onClick={() => onChange(o.id)}>{o.label}{o.count !== undefined && <span className="n"> {o.count}</span>}</button>)}
+    </div>
+  );
+}
+
+/** 아이콘이 있는 실행 버튼. variant 는 기존 버튼 클래스(secondary/ghost/danger)와 같다. */
+export function ActionButton({ icon, variant, children, ...rest }: { icon?: string; variant?: "secondary" | "ghost" | "danger"; children: ReactNode } & ButtonHTMLAttributes<HTMLButtonElement>) {
+  return <button {...rest} className={`${variant ?? ""} ${rest.className ?? ""}`.trim()}>{icon && <Icon name={icon} size={15} />}{children}</button>;
+}
+
+/** Markdown 표시는 안전 렌더러(Markdown.tsx)를 그대로 쓴다. */
+export { MarkdownPane as MarkdownViewer } from "./Markdown";
 export function Modal({ open, title, onClose, children, footer, size }: { open: boolean; title: string; onClose: () => void; children: ReactNode; footer?: ReactNode; size?: "narrow" | "wide" }) {
+  const box = useRef<HTMLDivElement>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose; // 최신 onClose 를 쓰기 위한 참조(열려 있는 동안 부모 상태가 바뀔 수 있다)
   useEffect(() => {
     if (!open) return;
-    const h = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const back = document.activeElement as HTMLElement | null;
+    const focusables = () => Array.from(box.current?.querySelectorAll<HTMLElement>('input:not(:disabled), textarea:not(:disabled), select:not(:disabled), button:not(:disabled), [href], [tabindex]:not([tabindex="-1"])') ?? []).filter((e) => e.offsetParent !== null);
+    // 열릴 때 본문의 첫 입력(없으면 첫 버튼)에 포커스를 두고, 닫히면 열기 전 위치로 돌려 준다.
+    (box.current?.querySelector<HTMLElement>(".modal-body input:not(:disabled), .modal-body textarea:not(:disabled), .modal-body select:not(:disabled)") ?? focusables().find((e) => !e.matches(".modal-head button")))?.focus();
+    const h = (e: KeyboardEvent) => {
+      const all = document.querySelectorAll(".modal");
+      if (all[all.length - 1] !== box.current) return; // 가장 위에 열린 대화상자만 키를 처리한다
+      if (e.key === "Escape") closeRef.current();
+      if (e.key === "Tab") {
+        const f = focusables();
+        if (f.length === 0) return;
+        if (!box.current?.contains(document.activeElement)) { e.preventDefault(); f[0].focus(); }
+        else if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+        else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+      }
+    };
     window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [open, onClose]);
+    return () => { window.removeEventListener("keydown", h); back?.focus?.(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
   if (!open) return null;
   return (
     <div className="modal-back" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={`modal ${size ?? ""}`} role="dialog" aria-modal="true" aria-label={title}>
+      <div ref={box} className={`modal ${size ?? ""}`} role="dialog" aria-modal="true" aria-label={title}>
         <div className="modal-head"><h3>{title}</h3><button className="ghost" onClick={onClose} aria-label="닫기">✕</button></div>
         <div className="modal-body">{children}</div>
         {footer && <div className="modal-foot">{footer}</div>}
@@ -116,8 +212,15 @@ export function MasterDetail({ list, detail, hasDetail }: { list: ReactNode; det
   );
 }
 
-export function Field({ label, required, children, hint }: { label: string; required?: boolean; children: ReactNode; hint?: string }) {
-  return <label className="field"><span>{label}{required && <span className="req"> *</span>}</span>{children}{hint && <span className="small">{hint}</span>}</label>;
+/** 입력 한 칸. error 가 있으면 빨간 테두리와 메시지를 함께 보여 준다(색만으로 구분하지 않는다). */
+export function Field({ label, required, children, hint, error }: { label: string; required?: boolean; children: ReactNode; hint?: ReactNode; error?: string }) {
+  return (
+    <label className={`field ${error ? "invalid" : ""}`}>
+      <span>{label}{required && <span className="req" aria-hidden="true"> *</span>}{required && <span className="sr-only"> (필수)</span>}</span>
+      {children}
+      {error ? <span className="field-err" role="alert">⚠ {error}</span> : hint && <span className="small">{hint}</span>}
+    </label>
+  );
 }
 
 export const toDate = (iso: string) => new Date(iso + (iso.endsWith("Z") ? "" : "Z"));

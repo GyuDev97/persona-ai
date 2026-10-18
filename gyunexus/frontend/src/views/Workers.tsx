@@ -2,7 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { api, useApi, type WorkerDetailT, type WorkerOptions, type WorkerRow, type WorkerRunRow, type WorkerTaskRow } from "../api";
 import type { Nav } from "../App";
 import { MarkdownPane } from "../components/Markdown";
-import { Async, Collapse, ConfirmDialog, EmptyState, Field, fmtAgo, fmtTime, MasterDetail, Modal, PageHeader, StatusBadge, Tabs } from "../components/ui";
+import { Async, Collapse, ConfirmDialog, EmptyState, Field, fmtAgo, fmtTime, MasterDetail, PageHeader, StatusBadge, Tabs } from "../components/ui";
+import { CrudDialog } from "../components/crud/CrudDialog";
+import { CrudList } from "../components/crud/CrudList";
+import { DeleteConfirmDialog } from "../components/crud/DeleteConfirmDialog";
+import { FormSection } from "../components/crud/FormParts";
+import { useCrudForm } from "../components/crud/useCrudForm";
 
 const ERR: Record<string, string> = {
   timeout: "제한 시간 초과", llm_error: "LLM 호출 실패", budget_exceeded: "업무 예산 초과(호출 전 차단)", daily_budget: "오늘 자율 예산 소진",
@@ -25,8 +30,16 @@ export default function Workers({ version, nav }: { version: number; nav: Nav })
     if (sel === null && list.data?.length && window.matchMedia("(min-width: 901px)").matches) setSel(list.data[0].id);
   }, [list.data, sel]);
 
+  const [deact, setDeact] = useState<{ id: number; name: string; task_count: number } | null>(null);
+  const [bump, setBump] = useState(0); // 목록에서 바꾼 뒤 상세도 다시 읽게 하는 신호
+  const [listError, setListError] = useState<string | null>(null);
   const tpl = opts.data?.templates[0];
   const openNew = (from?: Partial<WorkerForm>) => setEditor({ form: { ...emptyWorker(opts.data), ...from } });
+  const toForm = (w: WorkerRow | WorkerDetailT): WorkerForm => ({ name: w.name, role: w.role, description: w.description, model: w.model, permission_level: w.permission_level, max_cost_usd: w.max_cost_usd, allowed_tools: w.allowed_tools, enabled: w.enabled });
+  const setEnabled = async (w: WorkerRow, enabled: boolean) => {
+    try { await api(`/workers/${w.id}`, { method: "PUT", json: { enabled } }); setListError(null); } catch (e) { setListError((e as Error).message); }
+    list.reload(); setBump((b) => b + 1);
+  };
 
   return (
     <div className="page-inner fill">
@@ -42,22 +55,30 @@ export default function Workers({ version, nav }: { version: number; nav: Nav })
             <MasterDetail hasDetail={sel !== null}
               list={
                 <>
-                  {rows.map((w) => (
-                    <button key={w.id} className={`sel-item ${sel === w.id ? "active" : ""}`} onClick={() => setSel(w.id)}>
-                      <div className="row between"><span className="t">{w.name}</span><StatusBadge status={w.state} /></div>
-                      <div className="muted small">{w.role}</div>
-                      <div className="muted small">{w.last_run ? `최근 실행 #${w.last_run.id} · ${w.last_run.status === "completed" ? "완료" : w.last_run.status} · ${fmtAgo(w.last_run.ended_at)}` : "실행 기록 없음"} · 업무 {w.task_count}</div>
-                    </button>
-                  ))}
+                  {listError && <div className="notice bad" onClick={() => setListError(null)}>{listError}</div>}
+                  <CrudList items={rows} rowKey={(w) => w.id} empty={null} selectedKey={sel} onSelect={(w) => setSel(w.id)}
+                    actions={(w) => [
+                      { label: "수정", onClick: () => setEditor({ id: w.id, form: toForm(w) }) },
+                      w.enabled ? { label: "비활성화", danger: true, onClick: () => setDeact({ id: w.id, name: w.name, task_count: w.task_count }) } : { label: "활성화", onClick: () => void setEnabled(w, true) },
+                    ]}
+                    renderCard={(w) => (
+                      <>
+                        <div className="row between"><span className="t">{w.name}</span><StatusBadge status={w.state} /></div>
+                        <div className="muted small">{w.role}</div>
+                        <div className="muted small">{w.last_run ? `최근 실행 #${w.last_run.id} · ${w.last_run.status === "completed" ? "완료" : w.last_run.status} · ${fmtAgo(w.last_run.ended_at)}` : "실행 기록 없음"} · 업무 {w.task_count}</div>
+                      </>
+                    )} />
                   {tpl && <button className="secondary sm" onClick={() => openNew(tpl.worker as Partial<WorkerForm>)}>템플릿: {tpl.label}</button>}
                 </>
               }
-              detail={sel !== null && opts.data ? <WorkerDetail key={sel} id={sel} opts={opts.data} version={version} nav={nav} onBack={() => setSel(null)} onChanged={list.reload}
-                onEdit={(w) => setEditor({ id: w.id, form: { name: w.name, role: w.role, description: w.description, model: w.model, permission_level: w.permission_level, max_cost_usd: w.max_cost_usd, allowed_tools: w.allowed_tools, enabled: w.enabled } })} /> : null}
+              detail={sel !== null && opts.data ? <WorkerDetail key={sel} id={sel} opts={opts.data} version={version + bump} nav={nav} onBack={() => setSel(null)} onChanged={list.reload}
+                onDeactivate={(w) => setDeact({ id: w.id, name: w.name, task_count: w.tasks.length })}
+                onEdit={(w) => setEditor({ id: w.id, form: toForm(w) })} /> : null}
             />
           )
         }
       </Async>
+      <DeactivateDialog target={deact} onCancel={() => setDeact(null)} onDone={() => (setDeact(null), list.reload(), setBump((b) => b + 1))} />
       {editor && opts.data && <WorkerModal opts={opts.data} id={editor.id} initial={editor.form} onClose={() => setEditor(null)} onSaved={(id) => (setEditor(null), list.reload(), setSel(id))} />}
     </div>
   );
@@ -83,62 +104,65 @@ function ToolPicker({ opts, level, value, onChange, within }: { opts: WorkerOpti
   );
 }
 
+const validateWorker = (f: WorkerForm) => ({
+  name: f.name.trim() ? undefined : "이름을 입력하세요",
+  role: f.role.trim() ? undefined : "담당 역할을 입력하세요",
+  model: f.model ? undefined : "모델을 선택하세요",
+  max_cost_usd: f.max_cost_usd > 0 ? undefined : "0보다 큰 금액이어야 합니다",
+});
+
+/** 직원 등록·수정 공통 폼. id 가 있으면 수정(PUT), 없으면 등록(POST) 이고 필드는 같은 컴포넌트를 쓴다. */
 function WorkerModal({ opts, initial, id, onClose, onSaved }: { opts: WorkerOptions; initial: WorkerForm; id?: number; onClose: () => void; onSaved: (id: number) => void }) {
-  const [f, setF] = useState(initial);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const set = <K extends keyof WorkerForm>(k: K, v: WorkerForm[K]) => setF((p) => ({ ...p, [k]: v }));
-  const save = async () => {
-    setBusy(true);
-    try {
-      const w = await api<WorkerRow>(id ? `/workers/${id}` : "/workers", { method: id ? "PUT" : "POST", json: f });
-      onSaved(w.id);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
+  const form = useCrudForm<WorkerForm>(initial, validateWorker);
+  const f = form.values;
   const risky = f.permission_level === "write_with_approval";
+  const bind = (k: keyof WorkerForm) => ({ onBlur: () => form.touch(k) });
   return (
-    <Modal open title={id ? "직원 수정" : "직원 등록"} onClose={onClose}
-      footer={<><button className="secondary" onClick={onClose}>취소</button><button onClick={save} disabled={busy || !f.name.trim() || !f.role.trim()}>{id ? "저장" : "등록"}</button></>}>
-      <div className="stack">
-        {error && <div className="notice bad">{error}</div>}
+    <CrudDialog mode={id ? "update" : "create"} title={id ? "직원 수정" : "직원 등록"} description="등록·수정만으로는 업무가 자동 실행되지 않습니다." dirty={form.dirty} validate={form.check}
+      onClose={onClose} onSubmit={async () => { const w = await api<WorkerRow>(id ? `/workers/${id}` : "/workers", { method: id ? "PUT" : "POST", json: f }); onSaved(w.id); }}>
+      <FormSection title="기본 정보">
         <div className="grid g2">
-          <Field label="이름" required><input value={f.name} maxLength={80} onChange={(e) => set("name", e.target.value)} placeholder="예: 콘텐츠 담당" /></Field>
-          <Field label="담당 역할" required><input value={f.role} maxLength={200} onChange={(e) => set("role", e.target.value)} placeholder="예: 기술 블로그 초안 작성" /></Field>
+          <Field label="이름" required error={form.errorOf("name")}><input value={f.name} maxLength={80} aria-invalid={!!form.errorOf("name")} {...bind("name")} onChange={(e) => form.set("name", e.target.value)} placeholder="예: 콘텐츠 담당" /></Field>
+          <Field label="담당 역할" required error={form.errorOf("role")}><input value={f.role} maxLength={200} aria-invalid={!!form.errorOf("role")} {...bind("role")} onChange={(e) => form.set("role", e.target.value)} placeholder="예: 기술 블로그 초안 작성" /></Field>
         </div>
-        <Field label="업무 목적 및 설명"><textarea rows={3} value={f.description} onChange={(e) => set("description", e.target.value)} placeholder="이 직원이 맡을 업무와 목표" /></Field>
+        <Field label="업무 목적 및 설명"><textarea rows={3} value={f.description} onChange={(e) => form.set("description", e.target.value)} placeholder="이 직원이 맡을 업무와 목표" /></Field>
+      </FormSection>
+      <FormSection title="실행 설정">
         <div className="grid g2">
-          <Field label="LLM 모델"><select value={f.model} onChange={(e) => set("model", e.target.value)}>{opts.models.map((m) => <option key={m}>{m}</option>)}</select></Field>
-          <Field label="1회 최대 비용(USD)" hint="업무별 한도와 함께 작은 값이 적용됩니다"><input type="number" min={0.0001} step={0.01} value={f.max_cost_usd} onChange={(e) => set("max_cost_usd", Number(e.target.value))} /></Field>
+          <Field label="LLM 모델" error={form.errorOf("model")}><select value={f.model} onChange={(e) => form.set("model", e.target.value)}>{opts.models.map((m) => <option key={m}>{m}</option>)}</select></Field>
+          <Field label="1회 최대 비용(USD)" error={form.errorOf("max_cost_usd")} hint="업무별 한도와 함께 작은 값이 적용됩니다"><input type="number" min={0.0001} step={0.01} value={f.max_cost_usd} aria-invalid={!!form.errorOf("max_cost_usd")} {...bind("max_cost_usd")} onChange={(e) => form.set("max_cost_usd", Number(e.target.value))} /></Field>
         </div>
-        <div className={risky ? "danger-zone" : "card flat"}>
-          <h4 style={{ marginTop: 0 }}>{risky ? "⚠ 권한 설정 (위험)" : "권한 설정"}</h4>
-          <Field label="실행 권한">
-            <select value={f.permission_level} onChange={(e) => setF((p) => ({ ...p, permission_level: e.target.value, allowed_tools: e.target.value === "read_only" ? p.allowed_tools.filter((t) => opts.tools.find((x) => x.name === t)?.available_read_only) : p.allowed_tools }))}>
-              <option value="read_only">읽기 전용 — 조회 도구만 사용</option>
-              <option value="write_with_approval">승인 후 쓰기 — 파일 변경 등은 사용자 승인 후 실행</option>
-            </select>
-          </Field>
-          {risky && <div className="small" style={{ color: "var(--warn)", margin: "6px 0" }}>쓰기 도구는 실행 전에 항상 승인 요청이 만들어집니다. 승인하지 않으면 실행되지 않습니다.</div>}
-          <h4>허용 도구</h4>
-          <ToolPicker opts={opts} level={f.permission_level} value={f.allowed_tools} onChange={(v) => set("allowed_tools", v)} />
-        </div>
-        <label className="check"><input type="checkbox" checked={f.enabled} onChange={(e) => set("enabled", e.target.checked)} /><span>활성화<div className="small muted">등록·활성화만으로는 업무가 자동 실행되지 않습니다.</div></span></label>
-      </div>
-    </Modal>
+        <label className="check"><input type="checkbox" checked={f.enabled} onChange={(e) => form.set("enabled", e.target.checked)} /><span>활성화<div className="small muted">등록·활성화만으로는 업무가 자동 실행되지 않습니다.</div></span></label>
+      </FormSection>
+      <FormSection title={risky ? "⚠ 권한 설정 (위험)" : "권한 및 허용 도구"} tone={risky ? "danger" : undefined}>
+        <Field label="실행 권한">
+          <select value={f.permission_level} onChange={(e) => form.patch({ permission_level: e.target.value, allowed_tools: e.target.value === "read_only" ? f.allowed_tools.filter((t) => opts.tools.find((x) => x.name === t)?.available_read_only) : f.allowed_tools })}>
+            <option value="read_only">읽기 전용 — 조회 도구만 사용</option>
+            <option value="write_with_approval">승인 후 쓰기 — 파일 변경 등은 사용자 승인 후 실행</option>
+          </select>
+        </Field>
+        {risky && <div className="small" style={{ color: "var(--warn)" }}>쓰기 도구는 실행 전에 항상 승인 요청이 만들어집니다. 승인하지 않으면 실행되지 않습니다.</div>}
+        <div><h4 style={{ marginTop: 0 }}>허용 도구</h4><ToolPicker opts={opts} level={f.permission_level} value={f.allowed_tools} onChange={(v) => form.set("allowed_tools", v)} /></div>
+      </FormSection>
+    </CrudDialog>
   );
 }
 
-function WorkerDetail({ id, opts, version, nav, onBack, onChanged, onEdit }: { id: number; opts: WorkerOptions; version: number; nav: Nav; onBack: () => void; onChanged: () => void; onEdit: (w: WorkerDetailT) => void }) {
+/** 직원 비활성화 확인. 영향 범위는 목록·상세가 이미 가진 값(업무 수)과 기존 화면 문구에서 확인된 사실만 보여 준다. */
+function DeactivateDialog({ target, onDone, onCancel }: { target: { id: number; name: string; task_count: number } | null; onDone: () => void; onCancel: () => void }) {
+  return (
+    <DeleteConfirmDialog open={!!target} title="직원을 비활성화할까요?" itemName={target?.name ?? ""} action="비활성화" confirmLabel="비활성화"
+      impact={target ? [`담당 업무 ${target.task_count}개가 수동·정기 모두 실행되지 않습니다`, "실행 기록·결과물·업무 설정은 삭제되지 않습니다"] : []}
+      recovery={{ reversible: true, note: "다시 활성화하면 업무를 다시 실행할 수 있습니다." }}
+      onCancel={onCancel} onConfirm={async () => { await api(`/workers/${target!.id}`, { method: "PUT", json: { enabled: false } }); onDone(); }} />
+  );
+}
+function WorkerDetail({ id, opts, version, nav, onBack, onChanged, onEdit, onDeactivate }: { id: number; opts: WorkerOptions; version: number; nav: Nav; onBack: () => void; onChanged: () => void; onEdit: (w: WorkerDetailT) => void; onDeactivate: (w: WorkerDetailT) => void }) {
   const detail = useApi<WorkerDetailT>(`/workers/${id}`, version);
   const runs = useApi<WorkerRunRow[]>(`/workers/runs?worker_id=${id}&limit=40`, version);
   const [tab, setTab] = useState<Tab>("overview");
   const [taskEdit, setTaskEdit] = useState<WorkerTaskRow | "new" | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState<null | { title: string; message: string; label: string; danger?: boolean; run: () => Promise<unknown> }>(null);
   const w = detail.data;
 
   const act = async (fn: () => Promise<unknown>) => {
@@ -167,9 +191,7 @@ function WorkerDetail({ id, opts, version, nav, onBack, onChanged, onEdit }: { i
           <div className="row"><button className="ghost back-btn" onClick={onBack}>← 목록</button><h2>{w.name}</h2><StatusBadge status={w.state} /></div>
           <div className="row">
             <button className="secondary" onClick={() => onEdit(w)}>수정</button>
-            <button className={w.enabled ? "danger" : "secondary"} onClick={() => w.enabled
-              ? setConfirm({ title: "직원을 비활성화할까요?", message: "비활성화하면 이 직원의 업무는 수동·정기 모두 실행되지 않습니다. 기록은 삭제되지 않습니다.", label: "비활성화", danger: true, run: () => api(`/workers/${w.id}`, { method: "PUT", json: { enabled: false } }) })
-              : act(() => api(`/workers/${w.id}`, { method: "PUT", json: { enabled: true } }))}>{w.enabled ? "비활성화" : "활성화"}</button>
+            <button className={w.enabled ? "danger" : "secondary"} onClick={() => w.enabled ? onDeactivate(w) : act(() => api(`/workers/${w.id}`, { method: "PUT", json: { enabled: true } }))}>{w.enabled ? "비활성화" : "활성화"}</button>
           </div>
         </div>
         <div className="muted">{w.role}</div>
@@ -259,13 +281,11 @@ function WorkerDetail({ id, opts, version, nav, onBack, onChanged, onEdit }: { i
             <dl className="kv"><dt>이름</dt><dd>{w.name}</dd><dt>역할</dt><dd>{w.role}</dd><dt>모델</dt><dd>{w.model}</dd><dt>실행 권한</dt><dd>{w.permission_level === "read_only" ? "읽기 전용" : "승인 후 쓰기"}</dd><dt>최대 비용</dt><dd>${w.max_cost_usd}</dd></dl></div>
           <div className="danger-zone"><h4>상태 변경</h4>
             <div className="row between wrap"><span className="small">{w.enabled ? "비활성화하면 업무가 실행되지 않습니다. 데이터는 삭제되지 않습니다." : "활성화하면 업무를 다시 실행할 수 있습니다."}</span>
-              <button className={w.enabled ? "danger" : ""} onClick={() => w.enabled ? setConfirm({ title: "직원을 비활성화할까요?", message: "수동·정기 업무가 모두 실행되지 않습니다. 기록은 삭제되지 않습니다.", label: "비활성화", danger: true, run: () => api(`/workers/${w.id}`, { method: "PUT", json: { enabled: false } }) }) : act(() => api(`/workers/${w.id}`, { method: "PUT", json: { enabled: true } }))}>{w.enabled ? "비활성화" : "활성화"}</button></div></div>
+              <button className={w.enabled ? "danger" : ""} onClick={() => w.enabled ? onDeactivate(w) : act(() => api(`/workers/${w.id}`, { method: "PUT", json: { enabled: true } }))}>{w.enabled ? "비활성화" : "활성화"}</button></div></div>
         </div>
       )}
 
       {taskEdit && <TaskModal worker={w} opts={opts} task={taskEdit === "new" ? undefined : taskEdit} onClose={() => setTaskEdit(null)} onSaved={() => (setTaskEdit(null), detail.reload())} />}
-      <ConfirmDialog open={!!confirm} title={confirm?.title ?? ""} message={confirm?.message} confirmLabel={confirm?.label} danger={confirm?.danger}
-        onCancel={() => setConfirm(null)} onConfirm={() => { const c = confirm; setConfirm(null); if (c) void act(c.run); }} />
     </div>
   );
 }
@@ -319,10 +339,18 @@ const fromTask = (t: Partial<WorkerTaskRow>): TaskForm => ({
   max_age_hours: t.checks?.max_age_hours ? String(t.checks.max_age_hours) : "", min_items: t.checks?.min_items ? String(t.checks.min_items) : "",
 });
 
+/** 업무 등록·수정 공통 폼(task 가 있으면 수정). 항목이 많아 구역으로 나눠 보여 준다. */
 function TaskModal({ worker, opts, task, onClose, onSaved }: { worker: WorkerDetailT; opts: WorkerOptions; task?: WorkerTaskRow; onClose: () => void; onSaved: () => void }) {
-  const [f, setF] = useState<TaskForm>(task ? fromTask(task) : emptyTask());
-  const [error, setError] = useState<string | null>(null);
-  const set = <K extends keyof TaskForm>(k: K, v: TaskForm[K]) => setF((p) => ({ ...p, [k]: v }));
+  const form = useCrudForm<TaskForm>(task ? fromTask(task) : emptyTask(), (v) => ({
+    title: v.title.trim() ? undefined : "업무 제목을 입력하세요",
+    instructions: v.instructions.trim() ? undefined : "상세 지시를 입력하세요",
+    interval_minutes: v.mode === "scheduled" && !(Number(v.interval_minutes) >= opts.min_interval_minutes) ? `주기는 ${opts.min_interval_minutes}분 이상이어야 합니다` : undefined,
+    max_seconds: v.max_seconds > 0 ? undefined : "0보다 커야 합니다",
+    max_cost_usd: v.max_cost_usd > 0 ? undefined : "0보다 큰 금액이어야 합니다",
+  }));
+  const f = form.values;
+  const set = form.set;
+  const err = (k: keyof TaskForm) => form.errorOf(k);
   const save = async () => {
     const checks: Record<string, unknown> = {};
     if (f.min_chars) checks.min_chars = Number(f.min_chars);
@@ -336,63 +364,61 @@ function TaskModal({ worker, opts, task, onClose, onSaved }: { worker: WorkerDet
       materials: f.materials.filter((m) => m.name.trim() && m.content.trim()), input_files: f.input_files.split(",").map((x) => x.trim()).filter(Boolean),
       max_tool_calls: f.max_tool_calls, tool_rounds: f.tool_rounds, report_kind: f.report_kind,
     };
-    try {
-      await api(task ? `/workers/tasks/${task.id}` : `/workers/${worker.id}/tasks`, { method: task ? "PUT" : "POST", json: body });
-      onSaved();
-    } catch (e) {
-      setError((e as Error).message);
-    }
+    await api(task ? `/workers/tasks/${task.id}` : `/workers/${worker.id}/tasks`, { method: task ? "PUT" : "POST", json: body });
+    onSaved();
   };
   const tpl = opts.templates.find((t) => t.worker.name === worker.name) ?? opts.templates[0];
   return (
-    <Modal open size="wide" title={task ? "업무 수정" : "업무 추가"} onClose={onClose}
-      footer={<><button className="secondary" onClick={onClose}>취소</button><button onClick={save} disabled={!f.title.trim() || !f.instructions.trim()}>{task ? "저장" : "추가"}</button></>}>
-      <div className="stack">
-        {!task && tpl && <button className="secondary" onClick={() => setF(fromTask(tpl.task as Partial<WorkerTaskRow>))}>템플릿 업무 채우기: {tpl.label}</button>}
-        {error && <div className="notice bad">{error}</div>}
-        <Field label="업무 제목" required><input value={f.title} onChange={(e) => set("title", e.target.value)} /></Field>
-        <Field label="상세 지시" required><textarea rows={5} value={f.instructions} onChange={(e) => set("instructions", e.target.value)} /></Field>
+    <CrudDialog mode={task ? "update" : "create"} size="wide" title={task ? "업무 수정" : "업무 추가"} submitLabel={task ? "저장" : "추가"} dirty={form.dirty} validate={form.check} onClose={onClose} onSubmit={save}>
+      {!task && tpl && <div><button type="button" className="secondary" onClick={() => form.patch(fromTask(tpl.task as Partial<WorkerTaskRow>))}>템플릿 업무 채우기: {tpl.label}</button></div>}
+      <FormSection title="기본 정보">
+        <Field label="업무 제목" required error={err("title")}><input value={f.title} aria-invalid={!!err("title")} onBlur={() => form.touch("title")} onChange={(e) => set("title", e.target.value)} /></Field>
+        <Field label="상세 지시" required error={err("instructions")}><textarea rows={5} value={f.instructions} aria-invalid={!!err("instructions")} onBlur={() => form.touch("instructions")} onChange={(e) => set("instructions", e.target.value)} /></Field>
+      </FormSection>
+      <FormSection title="완료 기준" desc="결과물 검증에 쓰입니다.">
         <Field label="완료 기준 (한 줄에 하나)" hint="결과물 본문의 문장을 인용해 증명되어야 통과합니다"><textarea rows={3} value={f.criteria} onChange={(e) => set("criteria", e.target.value)} /></Field>
         <div className="grid g2">
           <Field label="최소 글자 수"><input type="number" value={f.min_chars} onChange={(e) => set("min_chars", e.target.value)} /></Field>
           <Field label="필수 섹션 (한 줄에 하나)"><textarea rows={2} value={f.sections} onChange={(e) => set("sections", e.target.value)} /></Field>
         </div>
+      </FormSection>
+      <FormSection title="실행 설정">
         <div className="grid g4">
           <Field label="실행 방식"><select value={f.mode} onChange={(e) => set("mode", e.target.value)}><option value="manual">수동</option><option value="scheduled">정기</option></select></Field>
-          {f.mode === "scheduled" && <Field label={`주기(분, 최소 ${opts.min_interval_minutes})`}><input type="number" value={f.interval_minutes} onChange={(e) => set("interval_minutes", e.target.value)} /></Field>}
+          {f.mode === "scheduled" && <Field label={`주기(분, 최소 ${opts.min_interval_minutes})`} error={err("interval_minutes")}><input type="number" value={f.interval_minutes} onChange={(e) => set("interval_minutes", e.target.value)} /></Field>}
           <Field label="결과물 유형"><select value={f.output_type} onChange={(e) => set("output_type", e.target.value)}>{opts.output_types.map((o) => <option key={o}>{o}</option>)}</select></Field>
-          <Field label="최대 시간(초)"><input type="number" value={f.max_seconds} onChange={(e) => set("max_seconds", Number(e.target.value))} /></Field>
-          <Field label="최대 비용(USD)"><input type="number" step={0.01} value={f.max_cost_usd} onChange={(e) => set("max_cost_usd", Number(e.target.value))} /></Field>
+          <Field label="최대 시간(초)" error={err("max_seconds")}><input type="number" value={f.max_seconds} onChange={(e) => set("max_seconds", Number(e.target.value))} /></Field>
+          <Field label="최대 비용(USD)" error={err("max_cost_usd")}><input type="number" step={0.01} value={f.max_cost_usd} onChange={(e) => set("max_cost_usd", Number(e.target.value))} /></Field>
         </div>
-        <div><h4>이 업무에서 쓸 도구</h4><ToolPicker opts={opts} level={worker.permission_level} value={f.tools} onChange={(v) => set("tools", v)} within={worker.allowed_tools} /></div>
+        <label className="check"><input type="checkbox" checked={f.requires_approval} onChange={(e) => set("requires_approval", e.target.checked)} />결과물 확정에 사용자 승인 필요</label>
+        <label className="check"><input type="checkbox" checked={f.requires_materials} onChange={(e) => set("requires_materials", e.target.checked)} />자료가 없으면 지어내지 않고 자료를 요청</label>
+        <label className="check"><input type="checkbox" checked={f.allow_agents} onChange={(e) => set("allow_agents", e.target.checked)} />기존 에이전트 토론 결과를 근거로 사용 허용 (새 토론은 시작하지 않음)</label>
+      </FormSection>
+      <FormSection title="도구와 보고서">
+        <div><h4 style={{ marginTop: 0 }}>이 업무에서 쓸 도구</h4><ToolPicker opts={opts} level={worker.permission_level} value={f.tools} onChange={(v) => set("tools", v)} within={worker.allowed_tools} /></div>
         <div className="grid g4">
           <Field label="보고서 종류"><select value={f.report_kind} onChange={(e) => set("report_kind", e.target.value)}><option value="generic">일반 문서</option><option value="news">뉴스 조사 보고서 (코드가 출처·날짜·검증 상태 기록)</option></select></Field>
           <Field label="도구 호출 상한(건)"><input type="number" min={1} max={30} value={f.max_tool_calls} onChange={(e) => set("max_tool_calls", Number(e.target.value))} /></Field>
           <Field label="도구 계획 라운드"><input type="number" min={1} max={3} value={f.tool_rounds} onChange={(e) => set("tool_rounds", Number(e.target.value))} /></Field>
           {f.report_kind === "news" && <Field label="기사 최대 연령(시간)"><input type="number" value={f.max_age_hours} placeholder="48" onChange={(e) => set("max_age_hours", e.target.value)} /></Field>}
         </div>
-        <label className="check"><input type="checkbox" checked={f.requires_approval} onChange={(e) => set("requires_approval", e.target.checked)} />결과물 확정에 사용자 승인 필요</label>
-        <label className="check"><input type="checkbox" checked={f.requires_materials} onChange={(e) => set("requires_materials", e.target.checked)} />자료가 없으면 지어내지 않고 자료를 요청</label>
-        <label className="check"><input type="checkbox" checked={f.allow_agents} onChange={(e) => set("allow_agents", e.target.checked)} />기존 에이전트 토론 결과를 근거로 사용 허용 (새 토론은 시작하지 않음)</label>
-        <div>
-          <h4>제공 자료</h4>
-          <div className="stack tight">
-            {f.materials.map((m, i) => (
-              <div key={i} className="card flat stack tight">
-                <div className="row"><input className="grow" value={m.name} placeholder="자료 이름 (예: devlog.md)" onChange={(e) => set("materials", f.materials.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
-                  <button className="ghost" onClick={() => set("materials", f.materials.filter((_, j) => j !== i))} aria-label="자료 삭제">✕</button></div>
-                <textarea rows={4} value={m.content} placeholder="자료 내용" onChange={(e) => set("materials", f.materials.map((x, j) => (j === i ? { ...x, content: e.target.value } : x)))} />
-              </div>
-            ))}
-            <div><button className="secondary sm" onClick={() => set("materials", [...f.materials, { name: "", content: "" }])}>＋ 자료 추가</button></div>
-          </div>
-          <Field label="작업 공간 입력 파일 이름 (쉼표로 구분)"><input value={f.input_files} onChange={(e) => set("input_files", e.target.value)} placeholder="입력 파일 탭에 올린 파일: devlog.md" /></Field>
+      </FormSection>
+      <FormSection title="제공 자료">
+        <div className="stack tight">
+          {f.materials.map((m, i) => (
+            <div key={i} className="card flat stack tight">
+              <div className="row"><input className="grow" value={m.name} placeholder="자료 이름 (예: devlog.md)" aria-label="자료 이름" onChange={(e) => set("materials", f.materials.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
+                <button type="button" className="ghost" onClick={() => set("materials", f.materials.filter((_, j) => j !== i))} aria-label="자료 삭제">✕</button></div>
+              <textarea rows={4} value={m.content} placeholder="자료 내용" aria-label="자료 내용" onChange={(e) => set("materials", f.materials.map((x, j) => (j === i ? { ...x, content: e.target.value } : x)))} />
+            </div>
+          ))}
+          <div><button type="button" className="secondary sm" onClick={() => set("materials", [...f.materials, { name: "", content: "" }])}>＋ 자료 추가</button></div>
         </div>
-      </div>
-    </Modal>
+        <Field label="작업 공간 입력 파일 이름 (쉼표로 구분)"><input value={f.input_files} onChange={(e) => set("input_files", e.target.value)} placeholder="입력 파일 탭에 올린 파일: devlog.md" /></Field>
+      </FormSection>
+    </CrudDialog>
   );
 }
-
 function RunDetail({ id, version, nav, onChanged }: { id: number; version: number; nav: Nav; onChanged: () => void }) {
   const run = useApi<WorkerRunRow>(`/workers/runs/${id}`, version);
   const [error, setError] = useState<string | null>(null);
