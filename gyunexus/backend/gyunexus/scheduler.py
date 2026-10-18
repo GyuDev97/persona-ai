@@ -28,7 +28,9 @@ class Scheduler:
         proactive: ProactiveEngine,
         activity: Activity,
         workers=None,
+        workflows=None,
     ):
+        self.workflows = workflows  # WorkflowService: 실행 중인 워크플로를 주기적으로 진행(이벤트 누락·재시작 복구)
         self.workers = workers  # WorkerService: 정기 업무 실행(자율 토론 on/off와 무관하게 업무별 설정을 따른다)
         self.settings, self.db, self.llm = settings, db, llm
         self.orchestrator, self.proactive, self.activity = orchestrator, proactive, activity
@@ -58,6 +60,8 @@ class Scheduler:
             return
         if self.workers is not None:
             await self.workers.tick()
+        if self.workflows is not None:
+            await self.workflows.tick()
         if not self.autonomous_enabled():
             return
         await self.proactive.tick()

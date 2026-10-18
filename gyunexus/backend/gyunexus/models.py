@@ -288,6 +288,11 @@ class WorkerRun(Base):
     summary: Mapped[str] = mapped_column(Text, default="")  # 결과물에서 코드가 뽑은 발췌(LLM이 쓴 요약이 아님)
     approval_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     artifact_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    inputs: Mapped[list | None] = mapped_column(JSON, default=list, nullable=True)  # 입력으로 참조한 Artifact: [{artifact_id, sha256, version, filename, from_run_id}] (고정 해시 참조)
+    directive: Mapped[str] = mapped_column(Text, default="", server_default="")  # 워크플로 단계가 이번 실행에만 덧붙인 지시(업무 정의는 바꾸지 않는다)
+    workflow_step_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    # 이 실행이 속한 워크플로. 비용 집계의 기준이다(단계 행은 계획 수정으로 삭제될 수 있지만 실행 기록과 그 비용은 남는다)
+    workflow_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
     notify_state: Mapped[str] = mapped_column(String(10), default="none")  # none | pending | sent | skipped (GYUVIS 알림)
     notified_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
@@ -308,6 +313,89 @@ class WorkerArtifact(Base):
     sha256: Mapped[str] = mapped_column(String(64))
     verified: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class Workflow(Base):
+    """사용자의 자연어 목표를 여러 AI 직원이 나눠 수행하도록 만든 실행 계획(DAG)과 그 진행 상태."""
+
+    __tablename__ = "workflows"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(200), default="")
+    goal: Mapped[str] = mapped_column(Text)
+    # planned(계획 확인 대기) | running | paused | completed | failed(재시도 필요한 단계 있음) | cancelled
+    status: Mapped[str] = mapped_column(String(12), default="planned")
+    auto_run: Mapped[bool] = mapped_column(Boolean, default=False)  # 사용자가 계획 확인 없이 자동 실행을 명시적으로 허용했는가
+    budget_usd: Mapped[float] = mapped_column(Float, default=0.5)  # 계획+모든 단계 실행의 총비용 상한
+    planning_cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
+    plan_notes: Mapped[str] = mapped_column(Text, default="")  # 플래너의 설명·경고
+    plan_version: Mapped[int] = mapped_column(Integer, default=1)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)  # 실행 단계의 실패 원인(계획 생성 실패는 아래 plan_* 에 따로 둔다)
+    # 계획 생성 상태: ok(유효한 계획이 있음) | failed(계획 생성·검증에 실패해 단계가 없음). 실패 기록은 WorkflowPlanAttempt 에 이력으로 남는다
+    plan_state: Mapped[str] = mapped_column(String(12), default="ok", server_default="ok")
+    plan_error: Mapped[str | None] = mapped_column(Text, nullable=True)  # 현재 유효한 계획 생성 실패 원인(해소되면 비워지고 이력만 남는다)
+    plan_error_kind: Mapped[str | None] = mapped_column(String(12), nullable=True)  # budget(예산 때문에만 실패) | invalid(그 밖의 검증 실패)
+    plan_error_budget_usd: Mapped[float | None] = mapped_column(Float, nullable=True)  # 실패 메시지를 만든 시점의 예산
+    proposed_steps: Mapped[list | None] = mapped_column(JSON, nullable=True)  # 실패한 플래너 제안 원본(새 LLM 호출 없이 재검증하는 데 쓴다)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class WorkflowPlanAttempt(Base):
+    """계획 생성·재검증·재생성 시도 이력(성공·실패 모두). 계획이 복구돼도 과거 실패 기록은 지우지 않는다."""
+
+    __tablename__ = "workflow_plan_attempts"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    workflow_id: Mapped[int] = mapped_column(ForeignKey("workflows.id", ondelete="CASCADE"), index=True)
+    kind: Mapped[str] = mapped_column(String(12), default="initial")  # initial | auto(예산 증액 후 자동 재검증) | revalidate | replan | manual(사용자가 직접 계획 저장)
+    source: Mapped[str] = mapped_column(String(12), default="llm")  # llm(새 제안) | proposal(저장된 제안 재검증) | user | legacy(이전 버전 기록 이전)
+    status: Mapped[str] = mapped_column(String(12), default="failed")  # succeeded | failed
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    error_kind: Mapped[str | None] = mapped_column(String(12), nullable=True)
+    budget_usd: Mapped[float] = mapped_column(Float, default=0.0)  # 시도 당시의 예산
+    cost_usd: Mapped[float] = mapped_column(Float, default=0.0)  # 이 시도에서 새로 쓴 계획 생성 비용(재검증은 0)
+    step_count: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class WorkflowBudgetChange(Base):
+    """워크플로 총예산 변경 이력. 변경 전후 값, 당시 사용액·남은 단계 요구량, 상태, 시각을 남긴다(실행 이력·비용 기록은 건드리지 않는다)."""
+
+    __tablename__ = "workflow_budget_changes"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    workflow_id: Mapped[int] = mapped_column(ForeignKey("workflows.id", ondelete="CASCADE"), index=True)
+    old_usd: Mapped[float] = mapped_column(Float)
+    new_usd: Mapped[float] = mapped_column(Float)
+    spent_usd: Mapped[float] = mapped_column(Float, default=0.0)  # 변경 시점까지 사용한 비용(계획 생성 포함)
+    required_usd: Mapped[float] = mapped_column(Float, default=0.0)  # 변경 시점에 남은 단계가 앞으로 쓸 수 있는 최대 비용
+    status: Mapped[str] = mapped_column(String(12), default="")  # 변경 시점의 워크플로 상태
+    source: Mapped[str] = mapped_column(String(12), default="budget")  # budget(예산 변경) | plan(계획 수정과 함께)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class WorkflowStep(Base):
+    __tablename__ = "workflow_steps"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    workflow_id: Mapped[int] = mapped_column(ForeignKey("workflows.id", ondelete="CASCADE"), index=True)
+    key: Mapped[str] = mapped_column(String(40))  # 계획 안에서의 단계 식별자
+    title: Mapped[str] = mapped_column(String(200))
+    directive: Mapped[str] = mapped_column(Text, default="")  # 이 단계에서 수행할 구체적 지시(목표 반영)
+    worker_id: Mapped[int] = mapped_column(Integer)
+    task_id: Mapped[int] = mapped_column(Integer)  # 기존 업무 템플릿(실행 엔진은 Worker 의 것을 그대로 쓴다)
+    depends_on: Mapped[list] = mapped_column(JSON, default=list)
+    reason: Mapped[str] = mapped_column(Text, default="")  # 플래너가 이 직원·업무를 고른 이유
+    # pending | running | awaiting_approval | completed | failed | cancelled | removed(계획에서 삭제됨: 실행 이력이 있어 행은 보존)
+    status: Mapped[str] = mapped_column(String(20), default="pending")
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    run_id: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 가장 최근 실행
+    model: Mapped[str] = mapped_column(String(80), default="")
+    cost_usd: Mapped[float] = mapped_column(Float, default=0.0)  # 모든 시도의 누적 비용
+    error_kind: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    inputs: Mapped[list] = mapped_column(JSON, default=list)  # 마지막 시도에 연결된 Artifact 참조(고정 해시)
+    output_artifact_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
 class LlmUsage(Base):

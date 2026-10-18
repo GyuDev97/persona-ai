@@ -1,10 +1,11 @@
-﻿import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api, useApi, useServerEvents, type Approval, type Health } from "./api";
 import { ConfirmDialog } from "./components/ui";
 import Dashboard from "./views/Dashboard";
 import Chat from "./views/Chat";
 import Agents from "./views/Agents";
 import Workers from "./views/Workers";
+import Workflows from "./views/Workflows";
 import Debates from "./views/Debates";
 import Ideas from "./views/Ideas";
 import Memories from "./views/Memories";
@@ -17,6 +18,7 @@ export const PAGES = [
   { id: "chat", label: "대화", ico: "✉" },
   { id: "agents", label: "에이전트", ico: "◎" },
   { id: "workers", label: "직원", ico: "☰" },
+  { id: "workflows", label: "워크플로", ico: "⇄" },
   { id: "debates", label: "토론", ico: "❖" },
   { id: "ideas", label: "아이디어", ico: "✦" },
   { id: "memories", label: "기억", ico: "▣" },
@@ -128,6 +130,7 @@ export default function App() {
           {page === "chat" && <Chat version={version} nav={nav} llmConfigured={h?.llm_configured ?? true} />}
           {page === "agents" && <Agents version={version} />}
           {page === "workers" && <Workers version={version} nav={nav} />}
+          {page === "workflows" && <Workflows version={version} nav={nav} />}
           {page === "debates" && <Debates version={version} nav={nav} />}
           {page === "ideas" && <Ideas version={version} nav={nav} />}
           {page === "memories" && <Memories version={version} />}

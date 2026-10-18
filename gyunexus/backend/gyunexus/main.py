@@ -26,6 +26,8 @@ from .scheduler import Scheduler
 from .tools import ToolRegistry, build_registry
 from .workers import WorkerService
 from .workers_api import router as workers_router
+from .workflows import WorkflowService
+from .workflows_api import router as workflows_router
 
 FRONTEND_DIST = ROOT / "frontend" / "dist"
 
@@ -46,6 +48,7 @@ class Services:
     proactive: ProactiveEngine
     scheduler: Scheduler
     workers: WorkerService
+    workflows: WorkflowService
     background: set = field(default_factory=set)
 
 
@@ -70,9 +73,10 @@ def build_services(
     workers = WorkerService(settings, db, llm, policy, tools, bus, activity)
     workers.notifier = proactive.on_worker_event  # 직원 업무 결과를 GYUVIS가 알린다
     proactive.workers = workers
-    scheduler = Scheduler(settings, db, llm, orchestrator, proactive, activity, workers)
+    workflows = WorkflowService(settings, db, llm, workers, bus, activity)
+    scheduler = Scheduler(settings, db, llm, orchestrator, proactive, activity, workers, workflows)
     return Services(
-        settings, db, bus, activity, llm, tools, policy, memory, context, conversation, orchestrator, proactive, scheduler, workers
+        settings, db, bus, activity, llm, tools, policy, memory, context, conversation, orchestrator, proactive, scheduler, workers, workflows
     )
 
 
@@ -91,6 +95,7 @@ def create_app(
         svc.db.create_all()
         svc.orchestrator.register_agents()
         svc.workers.recover()  # 이전 실행이 중단된 채 남은 업무 실행을 정리(자동 재실행하지 않음)
+        svc.workflows.recover()  # 실행 중이던 워크플로의 단계 상태를 실행 기록에 맞춰 복구
         task = asyncio.create_task(svc.scheduler.run()) if run_scheduler else None
         svc.activity.record(
             "system", "startup", llm_configured=svc.llm.configured, model=svc.llm.model, autonomous=svc.scheduler.autonomous_enabled()
@@ -117,6 +122,7 @@ def create_app(
 
     app.include_router(router)
     app.include_router(workers_router)
+    app.include_router(workflows_router)
     if FRONTEND_DIST.is_dir():
         app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
     return app

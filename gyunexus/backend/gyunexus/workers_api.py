@@ -10,7 +10,7 @@ from .workers import WorkerError
 from .workspace import WorkspaceError
 
 router = APIRouter(prefix="/api/workers")
-STATUS = {"validation": 422, "not_found": 404, "duplicate": 409, "disabled": 409, "llm": 503}
+STATUS = {"validation": 422, "not_found": 404, "duplicate": 409, "disabled": 409, "conflict": 409, "llm": 503}
 
 
 def svc(request: Request):

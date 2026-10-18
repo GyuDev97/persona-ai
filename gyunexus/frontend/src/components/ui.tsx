@@ -12,7 +12,7 @@ export const STATUS: Record<string, [string, Tone]> = {
   held: ["보류", "warn"], candidate: ["후보", "info"], awaiting_approval: ["승인 대기", "warn"], needs_input: ["자료 필요", "warn"],
   active: ["활성", "ok"], paused: ["일시정지", "warn"], disabled: ["비활성", "muted"], working: ["작업 중", "info"], waiting_approval: ["승인 대기", "warn"],
   accepted: ["채택", "ok"], needs_research: ["추가 조사", "warn"], discarded: ["폐기", "muted"],
-  fired: ["발송됨", "ok"], info: ["정보", "muted"], warn: ["경고", "warn"],
+  planned: ["계획 확인 대기", "info"], fired: ["발송됨", "ok"], info: ["정보", "muted"], warn: ["경고", "warn"],
 };
 export const MODE_LABEL: Record<string, string> = { manual: "수동", schedule: "자율", event: "이벤트", scheduled: "정기", discovery: "자동 발굴" };
 

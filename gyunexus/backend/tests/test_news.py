@@ -481,6 +481,167 @@ def test_old_database_gets_new_task_columns_with_defaults(tmp_path):
     assert row == (4, 1, "generic")
 
 
+# ---------------------------------------------------------------- 회귀: 업무에 설정한 필수 섹션(조사 개요·추가 확인 사항)이 누락되어 실행 #2가 검증 실패한 사례
+
+CUSTOM_SECTIONS = ["## 조사 개요", "## 선정 뉴스", "## 추가 확인 사항"]
+
+
+def test_regression_custom_required_sections_are_always_assembled_by_the_server(news_client, provider):
+    provider.overrides.update(worker_plan=news_plan, worker_draft=news_draft, worker_review=good_review)
+    w, t = make_news_task(news_client, checks={"min_chars": 300, "required_sections": CUSTOM_SECTIONS, "max_age_hours": 48})
+    run = run_and_wait(news_client, t["id"])
+    md = run["content"]
+    assert run["status"] == "awaiting_approval" and run["verification"]["passed"] is True, run.get("error")  # 이전에는 required_sections 실패
+    heads = [l for l in md.splitlines() if l.startswith("## ")]
+    assert heads[:3] == ["## 조사 개요", "## 선정 뉴스 (2건)", "## 추가 확인 사항"]  # 요구한 이름·순서 그대로
+    assert "수집된 후보" in md.split("## 선정 뉴스")[0] and "선정 2건" in md  # 개요는 코드가 수집 결과에서 채운 값
+    assert provider.calls.count("worker_draft") == 1 and V_UNVERIFIED in md  # 재생성 없이 통과, 출처·검증 상태 유지
+    open_part = md.split("## 추가 확인 사항")[1].split("\n## ")[0]
+    assert "foo-raises" not in open_part and "미검증" in open_part and "가격 정책" in open_part  # 원문 미확인 항목과 모델이 보고한 확인 사항이 모인다
+
+
+def test_sections_without_content_say_not_applicable_instead_of_inventing(news_client, provider):
+    def draft(m):
+        d = news_draft(m)
+        d["items"] = d["items"][:1]
+        d["items"][0]["open_questions"] = []
+        d["excluded"] = []
+        return d
+    provider.overrides.update(worker_plan=news_plan, worker_draft=draft, worker_review=good_review)
+    w, t = make_news_task(news_client, checks={"min_chars": 300, "required_sections": ["## 조사 개요", "## 선정 뉴스", "## 제외·보류한 뉴스", "## 추가 확인 사항", "## 비고"], "max_age_hours": 48})
+    md = run_and_wait(news_client, t["id"])["content"]
+    assert "해당 없음" in md.split("## 추가 확인 사항")[1].split("\n## ")[0] or "확인 필요" in md.split("## 추가 확인 사항")[1]
+    note = md.split("## 비고")[1].split("\n## ")[0]
+    assert "해당 없음" in note and "추가 확인 필요" in note and "http" not in note  # 모르는 섹션은 내용을 지어내지 않는다
+
+
+def test_structure_or_review_failures_do_not_regenerate_the_whole_report(news_client, provider):
+    calls = {"review": 0}
+
+    def review(messages):
+        calls["review"] += 1
+        if calls["review"] <= 2:  # 첫 시도: 최초 검수와 재요청 모두 본문에 없는 인용
+            return {"results": [{"index": 0, "passed": True, "quote": "본문에 없는 지어낸 인용 문장입니다"}]}
+        return {"results": [{"index": 0, "passed": True, "quote": "기술적 의미 (AI 해석)**: 코딩 에이전트가 저장소 단위 변경을 계획한다는 점이"}]}
+
+    provider.overrides.update(worker_plan=news_plan, worker_draft=news_draft, worker_review=review)
+    w, t = make_news_task(news_client, completion_criteria=["기술적 해석이 적절하다"])  # 의미 판단 기준은 코드로 검사할 수 없어 LLM 검수가 남는다
+    run = run_and_wait(news_client, t["id"])
+    assert run["status"] == "awaiting_approval" and run["verification"]["attempt"] == 2
+    assert provider.calls.count("worker_draft") == 1  # 초안은 한 번만 생성(전체 재생성 없음)
+    assert any(s["kind"] == "draft_reused" for s in run["steps"])
+
+
+def test_content_failures_still_regenerate_the_draft(news_client, provider):
+    provider.overrides.update(worker_plan=news_plan, worker_draft=news_draft, worker_review=good_review)
+    w, t = make_news_task(news_client, checks={"min_chars": 300, "required_sections": CUSTOM_SECTIONS, "max_age_hours": 48, "min_items": 4})  # 선정 2건뿐이라 내용 기준 미달
+    run = run_and_wait(news_client, t["id"])
+    assert run["status"] == "failed" and run["error_kind"] == "verification_failed" and provider.calls.count("worker_draft") == 2
+    assert any(c["name"] == "news_items" and not c["passed"] for c in run["verification"]["checks"])
+
+
+# ---------------------------------------------------------------- 회귀: 구조적 완료 기준(중복 사건 제거, 블로그 제목 후보·추가 확인 포함)이 LLM 본문 인용 검수에서 반복 실패한 사례
+
+USER_CRITERIA = ["선정된 모든 뉴스에 제목, 발표일, 출처 URL, 검증 상태가 포함되어 있다.", "확인된 핵심 사실과 AI의 기술적 해석이 구분되어 있다.", "동일한 사건의 중복 뉴스가 제거되어 있다.",
+                 "각 뉴스에 블로그 제목 후보와 추가 확인 사항이 포함되어 있다.", "최종 결과물이 한국어 Markdown 형식이다."]
+USER_SECTIONS = ["조사 개요", "선정 뉴스", "기술적 의미", "추가 확인 사항", "출처"]
+
+
+def failing_reviewer(messages):
+    """실제 실행 #3처럼, 집합 전체의 성질을 문장 하나로 증명하지 못하는 검수자(어떤 기준에도 본문에 없는 인용을 낸다)."""
+    return {"results": [{"index": i, "passed": True, "quote": "본문에 없는 증명용 문장입니다 가나다"} for i in range(5)]}
+
+
+def test_regression_structural_criteria_are_checked_from_data_not_by_llm_quotes(news_client, provider):
+    provider.overrides.update(worker_plan=news_plan, worker_draft=news_draft, worker_review=failing_reviewer)
+    w, t = make_news_task(news_client, completion_criteria=USER_CRITERIA, checks={"min_chars": 300, "required_sections": USER_SECTIONS, "max_age_hours": 48})
+    run = run_and_wait(news_client, t["id"])
+    assert run["status"] == "awaiting_approval" and run["verification"]["passed"] is True, [c for c in run["verification"]["checks"] if not c["passed"]]
+    names = {c["name"]: c for c in run["verification"]["checks"]}
+    assert all(names[f"criterion:{i}:code"]["passed"] for i in range(1, 6))  # 다섯 기준 모두 구조화 데이터로 판정
+    assert "worker_review" not in provider.calls  # 구조적 기준을 LLM 인용 검수에 중복으로 맡기지 않는다
+    assert provider.calls.count("worker_draft") == 1
+    md = run["content"]
+    assert "증명용" not in md and "본문에 없는" not in md  # 통과를 위한 형식적 문장을 덧붙이지 않았다
+    assert "## 출처" in md and "## 기술적 의미" in md and "해당 없음 — 이 보고서는 이 섹션" not in md  # 출처·기술적 의미 섹션도 실제 데이터로 채운다
+    assert A_URL in md.split("## 출처")[1] and "AI의 해석" in md.split("## 기술적 의미")[1]
+
+
+def test_semantic_criteria_still_use_llm_quote_review_while_structural_ones_do_not(news_client, provider):
+    seen = []
+
+    def review(messages):
+        seen.append(messages[-1]["content"])
+        return {"results": [{"index": 0, "passed": True, "quote": "기술적 의미 (AI 해석)**: 코딩 에이전트가 저장소 단위 변경을 계획한다는 점이"}]}
+
+    provider.overrides.update(worker_plan=news_plan, worker_draft=news_draft, worker_review=review)
+    w, t = make_news_task(news_client, completion_criteria=["동일한 사건의 중복 뉴스가 제거되어 있다.", "기술적 해석이 적절하고 논리적이다."])
+    run = run_and_wait(news_client, t["id"])
+    assert run["status"] == "awaiting_approval" and len(seen) == 1
+    assert "[0] 기술적 해석이 적절하고 논리적이다." in seen[0] and "중복 뉴스" not in seen[0].split("[결과물]")[0]  # 의미 기준만 검수 대상
+    names = [c["name"] for c in run["verification"]["checks"] if c["name"].startswith("criterion")]
+    assert names == ["criterion:1:code", "criterion:2"]  # 원래 기준 번호가 유지된다
+
+
+def test_same_event_duplicates_are_removed_by_event_identity(news_client, provider, world):
+    dup_url = "https://techcrunch.com/2026/10/17/atlas-agent-coverage"
+    world.routes["https://techcrunch.com/feed/"] = (200, "application/rss+xml", rss([
+        ("OpenAI releases Atlas coding agent for developers worldwide", dup_url, "Sat, 17 Oct 2026 21:30:00 +0000", "OpenAI announced Atlas, a coding agent for developers."),
+        ("Startup Foo raises $50 million for AI chips", B_URL, "Sat, 17 Oct 2026 18:00:00 +0000", "Foo raised funding.")]))
+
+    def draft(m):
+        d = news_draft(m)
+        d["items"].insert(1, {"url": dup_url, "facts": [{"text": "OpenAI announced Atlas, a coding agent for developers"}], "significance": "같은 사건의 다른 매체 보도",
+                              "blog_titles": ["Atlas 후속"], "open_questions": ["가격"]})
+        return d
+
+    provider.overrides.update(worker_plan=news_plan, worker_draft=draft, worker_review=good_review)
+    w, t = make_news_task(news_client, completion_criteria=["동일한 사건의 중복 뉴스가 제거되어 있다."])
+    run = run_and_wait(news_client, t["id"])
+    md = run["content"]
+    assert run["status"] == "awaiting_approval" and md.count("### ") == 2 and dup_url not in md.split("## 제외")[0]
+    assert "동일 사건 중복" in md and A_URL in md.split("## 제외")[0]  # 원문을 확인한 쪽이 남고, 중복은 제외 사유와 함께 기록된다
+
+
+def test_duplicate_or_missing_blog_titles_fail_code_criteria_and_regenerate(news_client, provider):
+    from gyunexus.news_criteria import classify, evaluate
+    base = {"url": "https://a.test/1", "title": "OpenAI releases Atlas coding agent", "status": V_FETCHED, "published_at": "2026-10-17T20:00:00Z", "org": "OpenAI", "source": "x", "collected_at": "z",
+            "facts": ["Atlas is a coding agent"], "significance": "s", "blog_titles": ["제목"], "open": ["확인"]}
+    twin = {**base, "url": "https://b.test/2", "title": "OpenAI unveils Atlas coding agent", "facts": ["Atlas is a coding agent"]}
+    other = {**base, "url": "https://c.test/3", "title": "Foo raises 50 million", "facts": ["Foo raised funding"]}
+    text = "동일한 사건의 중복 뉴스가 제거되어 있다."
+    assert evaluate(classify(text), text, [base, twin], "")[0] is False  # 같은 사건 쌍을 찾아낸다
+    assert evaluate(classify(text), text, [base, other], "")[0] is True
+    blog = "각 뉴스에 블로그 제목 후보와 추가 확인 사항이 포함되어 있다."
+    assert classify(blog) == ["blog_titles", "open_items"]
+    ok, detail = evaluate(classify(blog), blog, [base, {**other, "blog_titles": [], "open": []}], "")
+    assert ok is False and "블로그 제목 후보 없는" in detail and "추가 확인 사항이 비어" in detail  # 구조화 데이터의 빈 필드를 직접 잡는다
+    assert classify("해석이 정확하고 근거가 충분하다") is None and classify("뉴스 품질이 높다") is None  # 의미 판단은 코드가 판정하지 않는다
+    assert classify("선정한 뉴스가 5건 이하이다") == ["count_max"] and evaluate(["count_max"], "선정한 뉴스가 3건 이하이다", [base] * 4, "")[0] is False
+    assert classify("최종 결과물이 한국어 Markdown 형식이다.") == ["korean", "markdown"]
+    assert evaluate(["korean"], "", [base], "# Title\n## Section\nThis is entirely english text without hangul at all")[0] is False
+    # 검사 조건을 만족하지 못하면 재작성한다: 블로그 제목 후보가 비면 코드 기준 실패 -> 초안 재생성
+    def draft(m):
+        d = news_draft(m)
+        for it in d["items"]:
+            it["blog_titles"] = []
+        return d
+    provider.overrides.update(worker_plan=news_plan, worker_draft=draft, worker_review=good_review)
+    w, t = make_news_task(news_client, completion_criteria=[blog])
+    run = run_and_wait(news_client, t["id"])
+    assert run["status"] == "failed" and provider.calls.count("worker_draft") == 2  # 내용 문제는 다시 쓰게 하되, 기준은 완화되지 않는다
+    assert any(c["name"] == "criterion:1:code" and not c["passed"] for c in run["verification"]["checks"])
+
+
+def test_build_report_requires_sections_in_any_name_form():
+    idx = NewsIndex()
+    md, meta = build_report(title="t", intro="", idx=idx, now=NOW, tz="Asia/Seoul", max_age_hours=48, excluded=[], items=[], missing=["가격"],
+                            sections=["조사 개요", "### 추가 확인 사항", "선정 뉴스", "알 수 없는 섹션"])
+    assert "## 조사 개요" in md and "### 추가 확인 사항" in md and "## 선정 뉴스 (0건)" in md and "## 알 수 없는 섹션" in md
+    assert "## 제외·보류한 뉴스" in md and "## 검증 방법과 한계" in md  # 요구하지 않아도 핵심 섹션은 포함
+    assert meta["kept"] == 0 and "- 가격" in md
+
+
 def test_date_only_metadata_does_not_make_fresh_articles_look_old():
     idx = NewsIndex()
     idx.add_listing("rss.fetch", {"collected_at": "2026-10-18T12:00:00Z", "items": [

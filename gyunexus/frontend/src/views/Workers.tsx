@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, useApi, type WorkerDetailT, type WorkerOptions, type WorkerRow, type WorkerRunRow, type WorkerTaskRow } from "../api";
 import type { Nav } from "../App";
+import { MarkdownPane } from "../components/Markdown";
 import { Async, Collapse, ConfirmDialog, EmptyState, Field, fmtAgo, fmtTime, MasterDetail, Modal, PageHeader, StatusBadge, Tabs } from "../components/ui";
 
 const ERR: Record<string, string> = {
@@ -428,7 +429,7 @@ function RunDetail({ id, version, nav, onChanged }: { id: number; version: numbe
         <div>
           <div className="row between wrap"><b>결과물 {r.artifact.filename}</b><StatusBadge status={r.artifact.verified ? "completed" : "failed"} label={r.artifact.verified ? "검증됨" : "검증 실패(미확정)"} /></div>
           <div className="small muted">{r.artifact.size}B · sha256 {r.artifact.sha256.slice(0, 12)}… · {r.artifact.rel_path}</div>
-          <pre>{r.content ?? "(파일을 읽을 수 없습니다)"}</pre>
+          {r.content == null ? <pre>(파일을 읽을 수 없습니다)</pre> : r.artifact.filename.endsWith(".md") ? <MarkdownPane source={r.content} /> : <pre>{r.content}</pre>}
         </div>
       )}
       {r.verification && (

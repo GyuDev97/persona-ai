@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export async function api<T>(path: string, init?: RequestInit & { json?: unknown }): Promise<T> {
   const res = await fetch(`/api${path}`, {
@@ -30,7 +30,7 @@ export function useServerEvents(): number {
     };
     for (const t of ["log", "agent.status", "debate.started", "debate.message", "debate.updated", "debate.completed",
       "proactive.message", "proactive.suggestion", "proactive.reaction", "approval.created", "approval.updated", "memory.updated", "topic.created",
-      "worker.updated", "worker.run"]) {
+      "worker.updated", "worker.run", "workflow.updated"]) {
       es.addEventListener(t, bump);
     }
     return () => {
@@ -172,3 +172,40 @@ export interface WorkerOptions {
 }
 export interface Topic { id: number; title: string; source: string; status: string; debate_id: number | null }
 
+
+export interface WorkflowStepT {
+  id: number; key: string; title: string; directive: string; worker_id: number; task_id: number; depends_on: string[]; reason: string;
+  status: "pending" | "running" | "awaiting_approval" | "completed" | "failed" | "cancelled"; attempts: number; run_id: number | null; model: string; cost_usd: number;
+  error_kind: string | null; error: string | null; inputs: { artifact_id: number; sha256: string; version: number; filename: string; from_run_id: number }[];
+  output_artifact_id: number | null; level: number; worker_name: string | null; task_title: string | null; requires_approval: boolean; worker_enabled: boolean;
+  run: { id: number; status: string; cost_usd: number; error_kind: string | null; approval_id: number | null; llm_calls: number } | null;
+  artifact: { id: number; filename: string; title: string; verified: boolean; sha256: string; media_type: string } | null;
+  started_at: string | null; ended_at: string | null;
+}
+export interface WorkflowRow {
+  id: number; title: string; goal: string; status: "planned" | "running" | "paused" | "completed" | "failed" | "cancelled"; auto_run: boolean; budget_usd: number;
+  planning_cost_usd: number; plan_notes: string; plan_version: number; error: string | null; created_at: string; started_at: string | null; ended_at: string | null;
+  cost_usd: number; step_count?: number; done_count?: number; awaiting_approval?: number;
+}
+export interface WorkflowDetailT extends WorkflowRow {
+  steps: WorkflowStepT[]; remaining_budget_usd: number; counts: Record<string, number>;
+  budget_info: { spent_usd: number; required_usd: number; min_budget_usd: number; max_budget_usd: number; editable: boolean; removed_steps_usd: number };
+  removed_steps: { step_id: number; key: string | null; title: string | null; cost_usd: number; runs: { run_id: number; status: string; cost_usd: number; artifact_id: number | null }[] }[];
+  budget_history: BudgetChangeT[];
+  plan_state: "ok" | "failed"; plan_error: string | null; plan_error_kind: "budget" | "invalid" | null;
+  /** 계획 생성 자체가 실패해 단계가 없을 때만 있다(유효한 계획이 있으면 null). stale_budget: 실패 이후 예산이 늘어 메시지의 예산이 과거 값인 경우 */
+  plan_failure: { message: string | null; kind: "budget" | "invalid" | null; budget_at_failure_usd: number | null; has_proposal: boolean; stale_budget: boolean; can_replan: boolean } | null;
+  plan_attempts: PlanAttemptT[];
+  /** 유효한 계획이 있을 때, 지금 저장된 예산으로 시작할 수 있는가 */
+  start_check: { ok: boolean; error: string | null; kind: "budget" | "invalid" | null } | null;
+}
+export interface PlanAttemptT { id: number; kind: "initial" | "auto" | "revalidate" | "replan" | "manual"; source: "llm" | "proposal" | "user" | "legacy"; status: "succeeded" | "failed"; error: string | null; error_kind: string | null; budget_usd: number; cost_usd: number; step_count: number; created_at: string }
+export interface BudgetChangeT { id: number; old_usd: number; new_usd: number; spent_usd: number; required_usd: number; status: string; source: "budget" | "plan"; created_at: string }
+export interface WorkflowOptions { currency: string; default_budget_usd: number; max_budget_usd: number; max_steps: number }
+export interface ArtifactDetailT {
+  id: number; run_id: number; worker_id: number; filename: string; title: string; size: number; sha256: string; verified: boolean; media_type: string; content: string | null; version: number;
+}
+export interface LineageNode {
+  artifact_id: number; filename: string; sha256: string; verified: boolean; run_id: number; run_status: string; worker: string; task: string; workflow_step_id: number | null;
+  inputs: { artifact_id: number; sha256: string; version: number; upstream: LineageNode | null }[];
+}

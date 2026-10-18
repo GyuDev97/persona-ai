@@ -56,6 +56,13 @@ class Settings(BaseSettings):
     worker_max_tool_calls: int = 4  # 실행 1회당 도구 호출 상한
     worker_materials_max_chars: int = 20000  # 업무에 직접 붙이는 자료의 총 글자 수 상한
     worker_output_max_chars: int = 30000
+    worker_input_max_chars: int = 30000  # 선행 단계 Artifact 를 입력으로 받을 때의 총 글자 수 상한
+
+    # 워크플로(여러 AI 직원의 협업 실행)
+    workflow_max_steps: int = 12
+    workflow_max_parallel: int = 3  # 한 워크플로에서 동시에 실행하는 단계 수
+    workflow_default_budget_usd: float = 0.5
+    workflow_max_budget_usd: float = 5.0
     worker_notify_gap_minutes: int = 60  # 같은 업무의 '완료' 알림 최소 간격(승인 필요·실패는 별도 규칙)
 
     # 뉴스 수집 도구(rss.fetch / news.search / web.fetch)

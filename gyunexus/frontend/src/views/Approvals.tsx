@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api, useApi, type Approval } from "../api";
+import { MarkdownPane } from "../components/Markdown";
 import { Async, Collapse, ConfirmDialog, EmptyState, fmtTime, PageHeader, StatusBadge, Tabs } from "../components/ui";
 
 const TOOL_LABEL: Record<string, string> = { "worker.finalize": "AI 직원 결과물 확정", "notes.write": "노트 파일 저장" };
@@ -54,7 +55,7 @@ export default function Approvals({ version }: { version: number }) {
                     {a.reason && <><dt>이유</dt><dd>{a.reason}</dd></>}
                     <dt>예상 영향</dt><dd style={{ color: "var(--warn)" }}>{impact}</dd>
                   </dl>
-                  {preview && <Collapse title="결과물 미리보기" open={a.status === "pending"}><pre>{preview}</pre></Collapse>}
+                  {preview && <Collapse title="결과물 미리보기" open={a.status === "pending"}>{a.tool === "worker.finalize" && /\.md$/.test(String(args.artifact ?? "")) ? <MarkdownPane source={preview} maxHeight={320} /> : <pre>{preview}</pre>}</Collapse>}
                   <div style={{ marginTop: 8 }}><Collapse title="인자 전체 (JSON)"><pre>{JSON.stringify(a.args, null, 2)}</pre></Collapse></div>
                   {a.result != null && <div style={{ marginTop: 8 }}><Collapse title="실행 결과"><pre>{JSON.stringify(a.result, null, 2)}</pre></Collapse></div>}
                   {a.status === "pending" && (
