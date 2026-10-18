@@ -12,6 +12,8 @@ from fastapi.staticfiles import StaticFiles
 from .activity import Activity
 from .agents.orchestrator import AgentOrchestrator
 from .api import router
+from .autonomy import AutonomyService
+from .autonomy_api import router as autonomy_router
 from .config import ROOT, Settings
 from .context import ContextManager
 from .conversation import ConversationEngine
@@ -49,6 +51,7 @@ class Services:
     scheduler: Scheduler
     workers: WorkerService
     workflows: WorkflowService
+    autonomy: AutonomyService
     background: set = field(default_factory=set)
 
 
@@ -74,9 +77,11 @@ def build_services(
     workers.notifier = proactive.on_worker_event  # 직원 업무 결과를 GYUVIS가 알린다
     proactive.workers = workers
     workflows = WorkflowService(settings, db, llm, workers, bus, activity)
-    scheduler = Scheduler(settings, db, llm, orchestrator, proactive, activity, workers, workflows)
+    autonomy = AutonomyService(settings, db, workflows, workers, policy, bus, activity)
+    proactive.on_delivered = autonomy.on_proactive  # 능동 제안 전달을 상시 자율 운영의 트리거로 쓴다
+    scheduler = Scheduler(settings, db, llm, orchestrator, proactive, activity, workers, workflows, autonomy)
     return Services(
-        settings, db, bus, activity, llm, tools, policy, memory, context, conversation, orchestrator, proactive, scheduler, workers, workflows
+        settings, db, bus, activity, llm, tools, policy, memory, context, conversation, orchestrator, proactive, scheduler, workers, workflows, autonomy
     )
 
 
@@ -96,6 +101,7 @@ def create_app(
         svc.orchestrator.register_agents()
         svc.workers.recover()  # 이전 실행이 중단된 채 남은 업무 실행을 정리(자동 재실행하지 않음)
         svc.workflows.recover()  # 실행 중이던 워크플로의 단계 상태를 실행 기록에 맞춰 복구
+        svc.autonomy.recover()  # 시작 도중 끊긴 자율 발동 정리(같은 발동을 다시 실행하지 않는다)
         task = asyncio.create_task(svc.scheduler.run()) if run_scheduler else None
         svc.activity.record(
             "system", "startup", llm_configured=svc.llm.configured, model=svc.llm.model, autonomous=svc.scheduler.autonomous_enabled()
@@ -123,6 +129,7 @@ def create_app(
     app.include_router(router)
     app.include_router(workers_router)
     app.include_router(workflows_router)
+    app.include_router(autonomy_router)
     if FRONTEND_DIST.is_dir():
         app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
     return app

@@ -89,7 +89,7 @@ export interface ChatTrace {
 }
 export interface Message {
   id: number; role: "user" | "assistant"; content: string; proactive: boolean;
-  meta: { kind?: string; reason?: string; debate_id?: number; run_id?: number; suggestion_id?: number; topic_key?: string; trace?: ChatTrace }; created_at: string; conversation_id?: number;
+  meta: { kind?: string; reason?: string; debate_id?: number; run_id?: number; suggestion_id?: number; topic_key?: string; trace?: ChatTrace; workflow_id?: number; state?: string }; created_at: string; conversation_id?: number;
 }
 export interface Memory {
   id: number; kind: string; content: string; importance: number; use_count: number; source: string;
@@ -128,7 +128,7 @@ export interface DebateDetail extends Debate {
 }
 export interface Approval {
   id: number; tool: string; args: Record<string, unknown>; reason: string; requested_by: string;
-  status: string; result: unknown; created_at: string; decided_at?: string | null; debate_id: number | null;
+  status: string; result: unknown; created_at: string; decided_at?: string | null; decided_by?: string | null; debate_id: number | null;
 }
 export interface Log { id: number; ts: string; source: string; agent_id: string | null; debate_id: number | null; level: string; event: string; detail: Record<string, unknown> }
 export interface ProactivePrefs {
@@ -182,12 +182,24 @@ export interface WorkflowStepT {
   artifact: { id: number; filename: string; title: string; verified: boolean; sha256: string; media_type: string } | null;
   started_at: string | null; ended_at: string | null;
 }
+export type ExecMode = "manual" | "supervised" | "autonomous";
+export type WorkflowOrigin = "user" | "chat" | "schedule" | "event" | "proactive" | "chain";
+/** 서버(autonomy.py annotate)가 코드로 계산한 자율 실행 상태. 화면은 이 값을 그대로 보여 주기만 한다. */
+export interface AutonomyView {
+  mode: ExecMode; mode_label: string; origin: WorkflowOrigin; trigger: { id: number; name: string } | null; trigger_reason: string | null;
+  decision: { mode?: ExecMode; started?: boolean; auto_start?: boolean; blockers?: string[]; reason?: string; paused_by?: string; checked_at?: string };
+  auto_started: boolean; current: { key: string; title: string; worker: string; status: string }[];
+  next: { key: string; title: string; worker: string; waiting_for: string[] }[]; attention: string[];
+  auto_retries: number; retry_limit: number; max_mode: ExecMode; conversation_id: number | null; auto_approval_possible: boolean;
+}
 export interface WorkflowRow {
   id: number; title: string; goal: string; status: "planned" | "running" | "paused" | "completed" | "failed" | "cancelled"; auto_run: boolean; budget_usd: number;
+  exec_mode: ExecMode; origin: WorkflowOrigin; trigger_id: number | null; trigger_reason: string | null; conversation_id: number | null;
   planning_cost_usd: number; plan_notes: string; plan_version: number; error: string | null; created_at: string; started_at: string | null; ended_at: string | null;
   cost_usd: number; step_count?: number; done_count?: number; awaiting_approval?: number;
 }
 export interface WorkflowDetailT extends WorkflowRow {
+  autonomy: AutonomyView;
   steps: WorkflowStepT[]; remaining_budget_usd: number; counts: Record<string, number>;
   budget_info: { spent_usd: number; required_usd: number; min_budget_usd: number; max_budget_usd: number; editable: boolean; removed_steps_usd: number };
   removed_steps: { step_id: number; key: string | null; title: string | null; cost_usd: number; runs: { run_id: number; status: string; cost_usd: number; artifact_id: number | null }[] }[];
@@ -202,6 +214,33 @@ export interface WorkflowDetailT extends WorkflowRow {
 export interface PlanAttemptT { id: number; kind: "initial" | "auto" | "revalidate" | "replan" | "manual"; source: "llm" | "proposal" | "user" | "legacy"; status: "succeeded" | "failed"; error: string | null; error_kind: string | null; budget_usd: number; cost_usd: number; step_count: number; created_at: string }
 export interface BudgetChangeT { id: number; old_usd: number; new_usd: number; spent_usd: number; required_usd: number; status: string; source: "budget" | "plan"; created_at: string }
 export interface WorkflowOptions { currency: string; default_budget_usd: number; max_budget_usd: number; max_steps: number }
+
+export interface AutonomyConfig {
+  enabled: boolean; max_mode: Exclude<ExecMode, "manual">; auto_approve: boolean; max_concurrent: number; daily_cost_cap_usd: number; spent_today_usd: number;
+  modes: { id: ExecMode; label: string }[]; min_interval_minutes: number; max_chain_depth: number; builtin_events: Record<string, string>;
+  request_max_retries: number; retry_delay_minutes: number;
+}
+export type TriggerKind = "once" | "interval" | "daily" | "event" | "proactive" | "chain";
+export interface TriggerRow {
+  id: number; name: string; kind: TriggerKind; goal: string; enabled: boolean; config: Record<string, unknown>; exec_mode: ExecMode; budget_usd: number;
+  cooldown_minutes: number; max_runs_per_day: number; daily_cost_cap_usd: number; max_retries: number; next_fire_at: string | null; last_fired_at: string | null;
+  fire_count: number; live_workflows: number; spent_today_usd: number; last_run: AutonomyRunRow | null;
+}
+export interface AutonomyRunRow {
+  id: number; trigger_id: number; trigger_name?: string | null; workflow_id: number | null; workflow_title?: string | null; workflow_status?: string | null;
+  slot_key: string | null; reason: string; status: "starting" | "started" | "blocked" | "skipped" | "failed" | "completed" | "cancelled"; skip_reason: string | null;
+  detail: { message?: string; error?: string; reason?: string; blockers?: string[] }; created_at: string;
+}
+export interface AutonomyCard {
+  id: number; title: string; status: WorkflowRow["status"]; mode: ExecMode; origin: WorkflowOrigin; trigger_reason: string | null; done: number; total: number;
+  current: { key: string; title: string; worker: string; status: string }[]; attention: string[]; ended_at: string | null; created_at: string;
+}
+export interface AutonomyOverview {
+  config: Pick<AutonomyConfig, "enabled" | "max_mode" | "auto_approve" | "max_concurrent" | "daily_cost_cap_usd">;
+  running: AutonomyCard[]; needs_attention: AutonomyCard[]; completed: AutonomyCard[];
+  upcoming: { id: number; name: string; kind: TriggerKind; next_fire_at: string; mode: ExecMode }[];
+  event_triggers: { id: number; name: string; kind: TriggerKind; config: Record<string, unknown> }[]; recent_runs: AutonomyRunRow[];
+}
 export interface ArtifactDetailT {
   id: number; run_id: number; worker_id: number; filename: string; title: string; size: number; sha256: string; verified: boolean; media_type: string; content: string | null; version: number;
 }

@@ -6,6 +6,7 @@ import Chat from "./views/Chat";
 import Agents from "./views/Agents";
 import Workers from "./views/Workers";
 import Workflows from "./views/Workflows";
+import Autonomy from "./views/Autonomy";
 import Debates from "./views/Debates";
 import Ideas from "./views/Ideas";
 import Memories from "./views/Memories";
@@ -19,6 +20,7 @@ export const PAGES = [
   { id: "agents", label: "에이전트" },
   { id: "workers", label: "직원" },
   { id: "workflows", label: "워크플로" },
+  { id: "autonomy", label: "자율 운영" },
   { id: "debates", label: "토론" },
   { id: "ideas", label: "아이디어" },
   { id: "memories", label: "기억" },
@@ -38,6 +40,8 @@ export interface Nav {
   go: (page: PageId) => void;
   openDebate: (id: number) => void;
   focusDebate: number | null;
+  openWorkflow: (id: number) => void;
+  focusWorkflow: number | null;
 }
 
 export default function App() {
@@ -45,6 +49,7 @@ export default function App() {
   const [page, setPage] = useState<PageId>(readHash);
   const [menu, setMenu] = useState(false);
   const [focusDebate, setFocusDebate] = useState<number | null>(null);
+  const [focusWorkflow, setFocusWorkflow] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [confirmAuto, setConfirmAuto] = useState(false);
   // 데스크톱 사이드바 접기(아이콘만 표시). 선택은 이 브라우저에만 기억한다.
@@ -83,7 +88,7 @@ export default function App() {
     setPage(p);
     setMenu(false);
   }, []);
-  const nav: Nav = { go, focusDebate, openDebate: (id) => (setFocusDebate(id), go("debates")) };
+  const nav: Nav = { go, focusDebate, openDebate: (id) => (setFocusDebate(id), go("debates")), focusWorkflow, openWorkflow: (id) => (setFocusWorkflow(id), go("workflows")) };
 
   const run = async () => {
     try {
@@ -145,6 +150,7 @@ export default function App() {
           {page === "agents" && <Agents version={version} />}
           {page === "workers" && <Workers version={version} nav={nav} />}
           {page === "workflows" && <Workflows version={version} nav={nav} />}
+          {page === "autonomy" && <Autonomy version={version} nav={nav} />}
           {page === "debates" && <Debates version={version} nav={nav} />}
           {page === "ideas" && <Ideas version={version} nav={nav} />}
           {page === "memories" && <Memories version={version} />}

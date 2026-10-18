@@ -26,6 +26,7 @@ from .models import (
 )
 from .runtime_settings import set_value
 from .suggestions import TOPIC_LABELS, parse_quiet, set_prefs
+from .workflows import WorkflowError
 
 router = APIRouter(prefix="/api")
 
@@ -33,6 +34,9 @@ router = APIRouter(prefix="/api")
 class ChatIn(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
     conversation_id: int | None = None
+    delegate: bool = False  # true 면 이 메시지를 "직원에게 맡기는 목표"로 처리한다(계획 -> 정책 검사 -> 모드에 따라 자동 실행)
+    mode: str = "supervised"  # delegate 일 때의 실행 모드: manual | supervised | autonomous
+    budget_usd: float | None = None
 
 
 class MemoryIn(BaseModel):
@@ -76,10 +80,19 @@ async def health(request: Request):
 
 @router.post("/chat")
 async def chat(body: ChatIn, request: Request):
+    v = svc(request)
     try:
-        return await svc(request).conversation.chat(body.message, body.conversation_id)
+        if body.delegate or v.autonomy.is_delegation(body.message):  # 요청형 자동 실행: 사용자가 명시적으로 맡긴 목표만 워크플로가 된다
+            if not v.llm.configured:
+                raise HTTPException(503, "OPENAI_API_KEY is not set")
+            return await v.autonomy.chat_delegate(body.message, body.conversation_id, body.mode, body.budget_usd)
+        if v.autonomy.is_status_query(body.message, body.conversation_id):  # 진행 상황은 DB 사실로만 답한다(LLM 호출 없음)
+            return v.autonomy.chat_status(body.message, body.conversation_id)
+        return await v.conversation.chat(body.message, body.conversation_id)
     except KeyError:
         raise HTTPException(404, "conversation not found")
+    except WorkflowError as e:
+        raise HTTPException({"llm": 503, "validation": 422}.get(e.code, 400), str(e))
 
 
 @router.get("/conversations")
@@ -132,6 +145,8 @@ async def delete_memory(memory_id: int, request: Request):
 async def activity_heartbeat(request: Request):
     v = svc(request)
     hb = v.context.heartbeat()
+    if hb["returned"] and v.llm.configured:
+        v.autonomy.emit_event_bg("dashboard_opened")  # 상시 자율 운영의 등록된 이벤트(전체 스위치와 트리거별 활성화는 발동 시 검사)
     if hb["returned"] and v.llm.configured and v.scheduler.autonomous_enabled():
         task = asyncio.create_task(v.proactive.on_event("dashboard_opened"))
         v.background.add(task)

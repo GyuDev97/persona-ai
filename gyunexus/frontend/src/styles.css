@@ -292,7 +292,8 @@ details.collapse[open] > summary::after { content: "▴"; } details.collapse > .
 .menu-pop { position: absolute; right: 0; top: calc(100% + 4px); min-width: 150px; background: var(--panel); border: 1px solid var(--line2); border-radius: 10px; box-shadow: var(--shadow-pop); padding: 4px; z-index: 30; display: flex; flex-direction: column; }
 .menu-item { background: none; color: var(--text); border: none; text-align: left; justify-content: flex-start; font-weight: 500; padding: 7px 10px; border-radius: 6px; width: 100%; }
 .menu-item:hover:not(:disabled), .menu-item:focus-visible { background: var(--panel3); } .menu-item.danger { color: var(--bad); } .menu-item.danger:hover:not(:disabled) { background: var(--bad-bg); }
-.table-wrap { overflow-x: auto; }
+.table-wrap { overflow-x: auto; position: relative; } /* sr-only 같은 절대 위치 요소가 좁은 화면에서 가로 스크롤을 만들지 않게 한다 */
+.table-wrap:has(.menu-pop) { overflow: visible; } /* 행이 적을 때 열린 ⋯ 메뉴가 표 영역에 잘리지 않게 한다 */
 .crud-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .crud-table th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 700; padding: 10px 12px; border-bottom: 1px solid var(--line2); background: var(--panel2); white-space: nowrap; }
 .crud-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }

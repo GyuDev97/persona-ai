@@ -1,8 +1,24 @@
 import { useEffect, useRef, useState } from "react";
-import { api, useApi, type ChatTrace, type Conversation, type Message } from "../api";
+import { api, useApi, type AutonomyConfig, type ChatTrace, type Conversation, type ExecMode, type Message, type WorkflowDetailT } from "../api";
 import type { Nav } from "../App";
+import { MODE_DESC, ModeSelect } from "../components/autonomy";
 import { DeleteConfirmDialog } from "../components/crud/DeleteConfirmDialog";
-import { EmptyState, fmtAgo, Icon, PageHeader } from "../components/ui";
+import { EmptyState, fmtAgo, Icon, PageHeader, StatusBadge } from "../components/ui";
+
+/** 대화 속 워크플로 메시지에 붙는 실시간 상태 줄(서버 값 그대로). 누르면 워크플로 화면으로 이동한다. */
+function WorkflowChip({ id, version, nav }: { id: number; version: number; nav: Nav }) {
+  const q = useApi<WorkflowDetailT>(`/workflows/${id}`, version);
+  const w = q.data;
+  if (!w) return q.error ? <div className="links"><span className="small muted">워크플로 #{id}를 불러오지 못했습니다</span></div> : null;
+  const cur = w.autonomy.current[0];
+  return (
+    <div className="links" style={{ alignItems: "center" }}>
+      <StatusBadge status={w.status} />
+      <span className="small muted">{w.counts.completed ?? 0}/{w.steps.length}단계{cur ? ` · 현재 ${cur.worker}` : ""}{w.autonomy.attention.length ? " · 확인 필요" : ""}</span>
+      <button className="link" onClick={() => nav.go("workflows")}>워크플로 #{id} 보기</button>
+    </div>
+  );
+}
 
 const fmt = (topic: string | null, slots: Record<string, unknown>) =>
   [topic, ...Object.entries(slots).map(([k, v]) => `${k}=${String(v)}`)].filter(Boolean).join(", ");
@@ -35,7 +51,8 @@ function TraceView({ trace }: { trace: ChatTrace }) {
   );
 }
 
-const PRO_LABEL: Record<string, string> = { worker_result: "AI 직원 업무 알림", suggestion: "GYUVIS 능동 제안", idea: "토론 아이디어 제안" };
+const isWork = (m: Message) => m.meta.kind === "worker_result" || m.meta.kind === "workflow";
+const PRO_LABEL: Record<string, string> = { worker_result: "AI 직원 업무 알림", suggestion: "GYUVIS 능동 제안", idea: "토론 아이디어 제안", workflow: "워크플로 진행 알림" };
 
 export default function Chat({ version, nav, llmConfigured }: { version: number; nav: Nav; llmConfigured: boolean }) {
   const convs = useApi<Conversation[]>("/conversations", version);
@@ -43,6 +60,9 @@ export default function Chat({ version, nav, llmConfigured }: { version: number;
   const [pendingText, setPendingText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [text, setText] = useState("");
+  const [delegate, setDelegate] = useState(false); // 켜면 이 메시지를 "직원에게 맡기는 목표"로 보낸다(일반 대화는 그대로)
+  const [mode, setMode] = useState<ExecMode>("supervised");
+  const cfg = useApi<AutonomyConfig>("/autonomy/settings", version);
   const [mobileList, setMobileList] = useState(false);
   const [del, setDel] = useState<Conversation | null>(null);
   const msgs = useApi<Message[]>(convId ? `/conversations/${convId}/messages` : null, version);
@@ -62,7 +82,7 @@ export default function Chat({ version, nav, llmConfigured }: { version: number;
     setError(null);
     setPendingText(message);
     try {
-      const res = await api<{ conversation_id: number }>("/chat", { method: "POST", json: { message, conversation_id: convId } });
+      const res = await api<{ conversation_id: number }>("/chat", { method: "POST", json: { message, conversation_id: convId, ...(delegate ? { delegate: true, mode } : {}) } });
       setConvId(res.conversation_id);
       convs.reload();
       msgs.reload();
@@ -107,12 +127,13 @@ export default function Chat({ version, nav, llmConfigured }: { version: number;
             {!convId && pendingText === null && <EmptyState title="GYUVIS에게 말을 걸어보세요" desc="날씨·천문 조회, 기억 활용, 직원 결과 확인 등을 물어볼 수 있습니다." />}
             {msgs.data?.map((m) => (
               <div key={m.id} className={`msg-row ${m.role}`}>
-              {m.role !== "user" && <span className={`av ${m.proactive && m.meta.kind === "worker_result" ? "work" : m.proactive ? "sug" : ""}`} aria-hidden="true">{m.proactive && m.meta.kind === "worker_result" ? "AI" : "G"}</span>}
-              <div className={`msg ${m.role} ${m.proactive ? `proactive ${m.meta.kind ?? ""}` : ""}`}>
+              {m.role !== "user" && <span className={`av ${isWork(m) ? "work" : m.proactive ? "sug" : ""}`} aria-hidden="true">{isWork(m) ? "AI" : "G"}</span>}
+              <div className={`msg ${m.role} ${m.proactive ? `proactive ${m.meta.kind === "workflow" ? "worker_result" : m.meta.kind ?? ""}` : ""}`}>
                 {m.proactive && (
-                  <div className="tag">{m.meta.kind === "worker_result" ? "AI 직원" : "✦"} {PRO_LABEL[m.meta.kind ?? ""] ?? "GYUVIS가 먼저 말을 걸었어요"}</div>
+                  <div className="tag">{isWork(m) ? "AI 직원" : "✦"} {PRO_LABEL[m.meta.kind ?? ""] ?? "GYUVIS가 먼저 말을 걸었어요"}</div>
                 )}
-                {m.content}
+                <div style={{ whiteSpace: m.meta.kind === "workflow" ? "pre-wrap" : undefined }}>{m.content}</div>
+                {m.meta.kind === "workflow" && m.meta.workflow_id && <WorkflowChip id={m.meta.workflow_id} version={version} nav={nav} />}
                 {m.proactive && (m.meta.debate_id || m.meta.run_id || m.meta.suggestion_id) && (
                   <div className="links">
                     {m.meta.debate_id && <button className="link" onClick={() => nav.openDebate(m.meta.debate_id!)}>토론 #{m.meta.debate_id} 보기</button>}
@@ -134,8 +155,17 @@ export default function Chat({ version, nav, llmConfigured }: { version: number;
           </div>
           {error && <div className="notice bad" style={{ margin: "0 12px 8px" }}>{error}</div>}
           {!llmConfigured && <div className="notice" style={{ margin: "0 12px 8px" }}>OPENAI_API_KEY가 설정되지 않아 대화할 수 없습니다. README를 참고하세요.</div>}
+          <div className="row wrap" style={{ padding: "0 12px 6px" }}>
+            <label className="check"><input type="checkbox" checked={delegate} onChange={(e) => setDelegate(e.target.checked)} /><span>직원에게 맡기기</span></label>
+            {delegate && (
+              <>
+                <ModeSelect value={mode} onChange={setMode} max={cfg.data?.max_mode ?? "supervised"} label="맡길 때의 실행 모드" />
+                <span className="small muted">{MODE_DESC[mode]} 입력한 문장은 대화가 아니라 목표로 처리됩니다(승인 대기·실패·완료는 이 대화로 알려 드립니다).</span>
+              </>
+            )}
+          </div>
           <form className="composer" onSubmit={(e) => (e.preventDefault(), send())}>
-            <textarea value={text} placeholder="메시지를 입력하세요 (Enter 전송, Shift+Enter 줄바꿈)" onChange={(e) => setText(e.target.value)} aria-label="메시지 입력"
+            <textarea value={text} placeholder={delegate ? "직원에게 맡길 목표를 입력하세요 (예: 최근 개발 기록을 조사해 정리해 줘)" : "메시지를 입력하세요 (Enter 전송, Shift+Enter 줄바꿈)"} onChange={(e) => setText(e.target.value)} aria-label="메시지 입력"
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && (e.preventDefault(), send())} rows={2} />
             <button disabled={pendingText !== null || !text.trim()}>전송</button>
           </form>

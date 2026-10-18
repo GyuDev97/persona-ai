@@ -81,7 +81,8 @@ class Policy:
         self.bus.publish("approval.created", payload)
         return approval_id
 
-    async def decide_approval(self, approval_id: int, approve: bool) -> dict:
+    async def decide_approval(self, approval_id: int, approve: bool, decided_by: str | None = None) -> dict:
+        """승인/반려. decided_by 가 None 이면 사용자의 결정이다(자동 승인 정책은 "autonomy:policy" 를 남겨 구분한다)."""
         with self.db.session() as s:
             a = s.get(Approval, approval_id)
             if a is None:
@@ -90,6 +91,7 @@ class Policy:
                 raise ValueError(f"approval already {a.status}")
             tool, args = a.tool, dict(a.args)
             a.decided_at = utcnow()
+            a.decided_by = decided_by
             if not approve:
                 a.status = "rejected"
         handler = self.internal.get(tool)
@@ -106,7 +108,7 @@ class Policy:
                     a = s.get(Approval, approval_id)
                     a.status, a.result = status, result
         self.activity.record(
-            "policy", "approval.approved" if approve else "approval.rejected", id=approval_id, tool=tool
+            "policy", "approval.approved" if approve else "approval.rejected", id=approval_id, tool=tool, decided_by=decided_by or "user"
         )
         with self.db.session() as s:
             payload = row_dict(s.get(Approval, approval_id))

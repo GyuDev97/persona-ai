@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { useApi, type Agent, type Approval, type Debate, type Health, type IdeaT, type Log, type SuggestionRow, type WorkerRow, type WorkerRunRow } from "../api";
+import { useApi, type Agent, type Approval, type AutonomyCard, type AutonomyOverview, type Debate, type Health, type IdeaT, type Log, type SuggestionRow, type WorkerRow, type WorkerRunRow } from "../api";
 import type { Nav, PageId } from "../App";
+import { describeTrigger, KIND_NAME, ModeBadge, ORIGIN_NAME } from "../components/autonomy";
 import { actorLabel, EmptyState, eventLabel, fmtAgo, Icon, PageHeader, SectionCard, StatCard, StatusBadge } from "../components/ui";
 
 function Stat({ icon, label, num, sub, to, nav, tone }: { icon: string; label: string; num: number | string; sub: string; to: PageId; nav: Nav; tone?: "cyan" | "mint" | "violet" | "warn" | "bad" }) {
@@ -15,6 +16,43 @@ const QUICK: { icon: string; label: string; to: PageId }[] = [
   { icon: "approvals", label: "승인 확인", to: "approvals" },
 ];
 
+function CardRow({ c, nav, extra }: { c: AutonomyCard; nav: Nav; extra?: string }) {
+  return (
+    <button className="sel-item" onClick={() => nav.go("workflows")}>
+      <div className="row between"><span className="t">#{c.id} {c.title}</span><span className="row"><ModeBadge mode={c.mode} /><StatusBadge status={c.status} /></span></div>
+      <div className="small muted">{ORIGIN_NAME[c.origin] ?? c.origin} · {c.done}/{c.total}단계{c.current[0] ? ` · 담당 ${c.current[0].worker}` : ""}{extra ? ` · ${extra}` : ""}</div>
+      {c.attention[0] && <div className="small" style={{ color: "var(--warn)" }}>{c.attention[0]}</div>}
+    </button>
+  );
+}
+
+/** 자율 업무 현황: 실행 중 / 다음 예약 / 완료 / 사용자 확인 필요. 모두 /api/autonomy/overview 의 서버 값이다. */
+function AutonomyBoard({ ov, nav }: { ov: AutonomyOverview | null; nav: Nav }) {
+  if (!ov) return null;
+  return (
+    <div className="grid g2" aria-label="자율 업무 현황">
+      <SectionCard title={<>실행 중인 자율 업무 <span className="muted small">{ov.running.length}건</span></>} aside={<button className="link" onClick={() => nav.go("autonomy")}>자율 운영 <span className={`badge plain ${ov.config.enabled ? "ok" : ""}`}>{ov.config.enabled ? "ON" : "OFF"}</span></button>}>
+        {ov.running.length === 0 ? <EmptyState icon="autonomy" title="실행 중인 자율 업무가 없습니다" desc="감독 자동·자율 모드로 시작했거나 트리거가 시작한 워크플로가 여기에 표시됩니다." /> : ov.running.map((c) => <CardRow key={c.id} c={c} nav={nav} />)}
+      </SectionCard>
+      <SectionCard title={<>사용자 확인이 필요한 업무 <span className="muted small">{ov.needs_attention.length}건</span></>}>
+        {ov.needs_attention.length === 0 ? <EmptyState icon="check" title="확인할 업무가 없습니다" desc="승인 대기·자동 실행 차단·실패한 업무가 생기면 사유와 함께 표시됩니다." /> : ov.needs_attention.map((c) => <CardRow key={c.id} c={c} nav={nav} />)}
+      </SectionCard>
+      <SectionCard title="다음 예약 업무" aside={<button className="link" onClick={() => nav.go("autonomy")}>트리거 관리</button>}>
+        {ov.upcoming.length === 0 && ov.event_triggers.length === 0 ? <EmptyState icon="clock" title="예약된 업무가 없습니다" /> : (
+          <>
+            {ov.upcoming.map((u) => <div key={u.id} className="item row between wrap"><span><b>{u.name}</b> <span className="muted small">{KIND_NAME[u.kind]}</span></span><span className="small muted nowrap">{new Date(u.next_fire_at).toLocaleString("ko-KR", { hour12: false, month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span></div>)}
+            {ov.event_triggers.map((u) => <div key={u.id} className="item row between wrap"><span><b>{u.name}</b></span><span className="small muted">{describeTrigger(u)}</span></div>)}
+            {!ov.config.enabled && <div className="small muted">상시 자율 운영이 꺼져 있어 예약은 실행되지 않습니다.</div>}
+          </>
+        )}
+      </SectionCard>
+      <SectionCard title="완료된 자율 업무">
+        {ov.completed.length === 0 ? <EmptyState title="아직 완료된 업무가 없습니다" /> : ov.completed.map((c) => <CardRow key={c.id} c={c} nav={nav} extra={c.ended_at ? `완료 ${fmtAgo(c.ended_at)}` : undefined} />)}
+      </SectionCard>
+    </div>
+  );
+}
+
 /** 실제로 조회되는 API 값만 조합해 보여 준다(없는 통계는 만들지 않는다). */
 export default function Dashboard({ version, nav, health }: { version: number; nav: Nav; health: Health | null }) {
   const agents = useApi<Agent[]>("/agents", version);
@@ -25,6 +63,7 @@ export default function Dashboard({ version, nav, health }: { version: number; n
   const runs = useApi<WorkerRunRow[]>("/workers/runs?limit=30", version);
   const debates = useApi<Debate[]>("/debates", version);
   const sugg = useApi<SuggestionRow[]>("/proactive/suggestions?limit=30", version);
+  const auto = useApi<AutonomyOverview>("/autonomy/overview", version);
   const [now, setNow] = useState(new Date());
   useEffect(() => { const t = window.setInterval(() => setNow(new Date()), 30_000); return () => window.clearInterval(t); }, []);
 
@@ -55,6 +94,8 @@ export default function Dashboard({ version, nav, health }: { version: number; n
         <span className="small muted">빠른 작업</span>
         {QUICK.map((q) => <button key={q.to + q.label} className="secondary sm" onClick={() => nav.go(q.to)}><Icon name={q.icon} size={14} />{q.label}</button>)}
       </div>
+
+      <AutonomyBoard ov={auto.data} nav={nav} />
 
       <div className="grid g2">
         <SectionCard title={<>진행 중인 업무 <span className="muted small">{inProgress}건</span></>}>

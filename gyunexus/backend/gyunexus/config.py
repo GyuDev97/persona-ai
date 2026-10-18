@@ -65,6 +65,18 @@ class Settings(BaseSettings):
     workflow_max_budget_usd: float = 5.0
     worker_notify_gap_minutes: int = 60  # 같은 업무의 '완료' 알림 최소 간격(승인 필요·실패는 별도 규칙)
 
+    # 통합 자율 실행(autonomy.py). 기본값은 모두 보수적이다: 상시 자율 운영은 꺼져 있고, 자동 승인은 자율(autonomous) 모드에서만 가능하다.
+    autonomy_enabled: bool = False  # 상시 자율 운영(트리거) 전체 on/off 의 초기값(화면에서 바꾸면 DB 값이 우선)
+    autonomy_max_mode: str = "supervised"  # 자동 실행을 허용하는 최대 모드(supervised | autonomous). 요청·트리거의 모드는 이 값을 넘지 못한다
+    autonomy_auto_approve: bool = True  # autonomous 모드에서 정책을 통과한 읽기 전용 결과물의 자동 승인을 허용할지
+    autonomy_max_concurrent: int = 2  # 트리거가 시작한 워크플로의 동시 실행 상한
+    autonomy_daily_cost_cap_usd: float = 1.0  # 트리거가 시작한 모든 워크플로의 하루 비용 상한
+    autonomy_min_interval_minutes: int = 5  # 반복 트리거의 최소 간격
+    autonomy_max_chain_depth: int = 3  # 선행 업무 완료로 이어지는 연쇄의 최대 깊이
+    autonomy_retry_delay_minutes: int = 2  # 실패한 워크플로를 자동 재시도하기 전 대기
+    autonomy_request_max_retries: int = 1  # 요청형(대화·화면) 자율 실행의 자동 재시도 상한
+    autonomy_missed_grace_minutes: int = 60  # 한 번만 실행하는 트리거가 이 시간 넘게 늦으면 실행하지 않고 건너뜀으로 기록
+
     # 뉴스 수집 도구(rss.fetch / news.search / web.fetch)
     web_fetch_max_bytes: int = 1_500_000  # 원문 HTML 응답 크기 상한
     web_fetch_timeout_seconds: float = 10.0

@@ -28,9 +28,13 @@ async def list_workflows(request: Request):
 @router.post("/workflows", status_code=201)
 async def create_workflow(request: Request, body: dict = Body(...)):
     """자연어 목표로 실행 계획(DAG)을 만든다. auto_run=true 를 명시한 경우에만 계획 확인 없이 바로 시작한다."""
-    wf = svc(request).workflows
+    v = svc(request)
+    wf = v.workflows
     try:
-        wid = await wf.plan(str(body.get("goal", "")), budget=body.get("budget_usd"), auto_run=bool(body.get("auto_run", False)))
+        if body.get("exec_mode") is not None:  # 요청형 자동 실행: 모드와 정책 검사를 거쳐 시작한다(기본 manual 은 기존 동작과 같다)
+            wid = await v.autonomy.submit_goal(str(body.get("goal", "")), mode=str(body["exec_mode"]), budget=body.get("budget_usd"), origin="user")
+        else:
+            wid = await wf.plan(str(body.get("goal", "")), budget=body.get("budget_usd"), auto_run=bool(body.get("auto_run", False)))
     except WorkflowError as e:
         raise _err(e) from e
     return wf.detail(wid)

@@ -174,6 +174,7 @@ class Approval(Base):
     result: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     decided_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    decided_by: Mapped[str | None] = mapped_column(String(60), nullable=True)  # 결정 주체: 비어 있으면 사용자, "autonomy:policy" 는 자동 승인 정책(기존 승인 이력은 수정하지 않는다)
 
 
 class Suggestion(Base):
@@ -336,9 +337,58 @@ class Workflow(Base):
     plan_error_kind: Mapped[str | None] = mapped_column(String(12), nullable=True)  # budget(예산 때문에만 실패) | invalid(그 밖의 검증 실패)
     plan_error_budget_usd: Mapped[float | None] = mapped_column(Float, nullable=True)  # 실패 메시지를 만든 시점의 예산
     proposed_steps: Mapped[list | None] = mapped_column(JSON, nullable=True)  # 실패한 플래너 제안 원본(새 LLM 호출 없이 재검증하는 데 쓴다)
+    # --- 통합 자율 실행(autonomy.py). 모두 기본값이 있어 기존 행·기존 동작은 그대로다(manual = 기존 수동 방식)
+    exec_mode: Mapped[str] = mapped_column(String(12), default="manual", server_default="manual")  # manual | supervised | autonomous
+    origin: Mapped[str] = mapped_column(String(12), default="user", server_default="user")  # user | chat | schedule | event | proactive | chain
+    trigger_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)  # 이 워크플로를 시작시킨 상시 자율 운영 트리거
+    trigger_reason: Mapped[str | None] = mapped_column(Text, nullable=True)  # 시작 사유(사람이 읽는 문장)
+    conversation_id: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 진행·결과를 알릴 GYUVIS 대화
+    chain_depth: Mapped[int] = mapped_column(Integer, default=0, server_default="0")  # 선행 업무 완료로 이어진 횟수(무한 연쇄 방지)
+    auto_retries: Mapped[int] = mapped_column(Integer, default=0, server_default="0")  # 자동 재시도한 횟수(상한 적용)
+    policy_decision: Mapped[dict | None] = mapped_column(JSON, nullable=True)  # 코드가 내린 자동 실행 판정(단계별 사유 포함)
+    notified_state: Mapped[str | None] = mapped_column(String(80), nullable=True)  # 마지막으로 대화에 알린 상태(같은 알림 반복 방지)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class AutonomyTrigger(Base):
+    """상시 자율 운영 트리거: 조건이 맞으면 목표를 기존 Workflow Engine 에 전달한다(별도 실행 엔진 없음)."""
+
+    __tablename__ = "autonomy_triggers"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(120))
+    kind: Mapped[str] = mapped_column(String(12))  # once | interval | daily | event | proactive | chain
+    goal: Mapped[str] = mapped_column(Text)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    config: Mapped[dict] = mapped_column(JSON, default=dict)  # kind 별 설정(run_at | minutes | time/weekdays | event | topic_key | after_trigger_id/after_workflow_id)
+    exec_mode: Mapped[str] = mapped_column(String(12), default="supervised")  # manual(계획만 준비) | supervised | autonomous
+    budget_usd: Mapped[float] = mapped_column(Float, default=0.3)  # 실행 1회(워크플로 1건)의 총예산
+    cooldown_minutes: Mapped[int] = mapped_column(Integer, default=60)
+    max_runs_per_day: Mapped[int] = mapped_column(Integer, default=6)
+    daily_cost_cap_usd: Mapped[float] = mapped_column(Float, default=0.5)  # 이 트리거가 하루에 쓸 수 있는 비용 상한
+    max_retries: Mapped[int] = mapped_column(Integer, default=1)  # 실패한 워크플로당 자동 재시도 상한
+    next_fire_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_fired_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    fire_count: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class AutonomyRun(Base):
+    """트리거 발동 1회의 기록(시작 사유와 결과). slot_key 가 유일해 같은 발동이 서버 재시작 뒤에도 두 번 실행되지 않는다."""
+
+    __tablename__ = "autonomy_runs"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    trigger_id: Mapped[int] = mapped_column(Integer, index=True)
+    workflow_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    slot_key: Mapped[str | None] = mapped_column(String(160), unique=True, nullable=True)  # 실제 시작을 시도한 발동만 슬롯을 점유한다(건너뜀은 NULL)
+    reason: Mapped[str] = mapped_column(Text, default="")  # 시작 사유
+    status: Mapped[str] = mapped_column(String(12), default="starting")  # starting | started | blocked | skipped | failed | completed | cancelled
+    skip_reason: Mapped[str | None] = mapped_column(String(30), nullable=True)  # cooldown | already_running | daily_budget | disabled ...
+    detail: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
 
 class WorkflowPlanAttempt(Base):

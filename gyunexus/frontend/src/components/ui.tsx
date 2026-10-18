@@ -15,6 +15,7 @@ const ICON_PATHS: Record<string, string> = {
   proactive: "M22 2 11 13M22 2l-7 20-4-9-9-4z",
   approvals: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4",
   logs: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
+  autonomy: "M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
   search: "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.3-4.3",
   menu: "M4 6h16M4 12h16M4 18h16",
   panel: "M3 4h18v16H3zM9 4v16",
@@ -41,6 +42,7 @@ export const STATUS: Record<string, [string, Tone]> = {
   active: ["활성", "ok"], paused: ["일시정지", "warn"], disabled: ["비활성", "muted"], working: ["작업 중", "info"], waiting_approval: ["승인 대기", "warn"],
   accepted: ["채택", "ok"], needs_research: ["추가 조사", "warn"], discarded: ["폐기", "muted"],
   planned: ["계획 확인 대기", "info"], fired: ["발송됨", "ok"], info: ["정보", "muted"], warn: ["경고", "warn"],
+  starting: ["시작 중", "info"], started: ["진행 중", "info"], blocked: ["사용자 확인 필요", "warn"], skipped: ["건너뜀", "muted"],
 };
 export const MODE_LABEL: Record<string, string> = { manual: "수동", schedule: "자율", event: "이벤트", scheduled: "정기", discovery: "자동 발굴" };
 
@@ -249,7 +251,13 @@ export const EVENT_LABEL: Record<string, string> = {
   "worker.created": "직원 등록", "worker.updated": "직원 수정", "task.created": "업무 등록", "run.started": "업무 실행 시작", "run.completed": "업무 완료",
   "run.failed": "업무 실패", "run.awaiting_approval": "결과물 승인 대기", "run.rejected": "결과물 반려", "run.cancelled": "업무 취소", "run.recovered": "중단된 실행 정리",
   "run.skipped": "정기 실행 건너뜀", "run.needs_input": "자료 필요",
+  "autonomy.config_changed": "자율 운영 설정 변경", "autonomy.trigger_created": "트리거 등록", "autonomy.trigger_updated": "트리거 수정", "autonomy.trigger_deleted": "트리거 삭제",
+  "autonomy.goal_submitted": "자율 목표 접수", "autonomy.auto_started": "워크플로 자동 시작", "autonomy.blocked": "자동 실행 차단(사용자 확인 필요)",
+  "autonomy.auto_approved": "결과물 자동 승인(정책)", "autonomy.fire_started": "트리거 발동: 시작", "autonomy.fire_blocked": "트리거 발동: 사용자 확인 필요",
+  "autonomy.fire_failed": "트리거 발동: 실패", "autonomy.skipped": "트리거 건너뜀", "autonomy.duplicate_slot": "중복 발동 차단", "autonomy.retry": "실패 자동 재시도",
+  "autonomy.paused": "자율 운영 꺼져 일시정지", "autonomy.mode_changed": "실행 모드 변경", "autonomy.chat_delegated": "대화로 맡긴 목표", "autonomy.chat_notified": "대화로 진행 알림",
+  "autonomy.event": "이벤트 수신", "autonomy.recovered": "중단된 발동 정리", "autonomy.auto_approve_error": "자동 승인 오류",
 };
 export const eventLabel = (e: string) => EVENT_LABEL[e] ?? e;
-export const SOURCE_LABEL: Record<string, string> = { research: "Research", idea: "Idea", developer: "Developer", critic: "Critic", gyuvis: "GYUVIS", system: "시스템", scheduler: "스케줄러", tool: "도구", policy: "정책", worker: "AI 직원" };
+export const SOURCE_LABEL: Record<string, string> = { research: "Research", idea: "Idea", developer: "Developer", critic: "Critic", gyuvis: "GYUVIS", system: "시스템", scheduler: "스케줄러", tool: "도구", policy: "정책", worker: "AI 직원", autonomy: "자율 운영", workflow: "워크플로" };
 export const actorLabel = (a: string | null, source: string) => SOURCE_LABEL[a ?? ""] ?? (a?.startsWith("worker:") ? "AI 직원" : SOURCE_LABEL[source] ?? a ?? source);

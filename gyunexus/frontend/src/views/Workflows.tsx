@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { api, useApi, type ArtifactDetailT, type LineageNode, type WorkerDetailT, type WorkerRow, type WorkflowDetailT, type WorkflowOptions, type WorkflowRow, type WorkflowStepT } from "../api";
+import { api, useApi, type ArtifactDetailT, type AutonomyConfig, type ExecMode, type LineageNode, type WorkerDetailT, type WorkerRow, type WorkflowDetailT, type WorkflowOptions, type WorkflowRow, type WorkflowStepT } from "../api";
 import type { Nav } from "../App";
+import { AutonomyPanel, MODE_DESC, ModeBadge, ModeSelect } from "../components/autonomy";
 import { MarkdownPane } from "../components/Markdown";
 import { CrudDialog } from "../components/crud/CrudDialog";
 import { DeleteConfirmDialog } from "../components/crud/DeleteConfirmDialog";
@@ -29,6 +30,7 @@ export default function Workflows({ version, nav }: { version: number; nav: Nav 
   const [sel, setSel] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
   const opts = useApi<WorkflowOptions>("/workflows/options", 0);
+  useEffect(() => { if (nav.focusWorkflow !== null) setSel(nav.focusWorkflow); }, [nav.focusWorkflow]); // 다른 화면(자율 운영 등)에서 특정 워크플로로 이동
   useEffect(() => {
     if (sel === null && list.data?.length && window.matchMedia("(min-width: 901px)").matches) setSel(list.data[0].id);
   }, [list.data, sel]);
@@ -45,7 +47,7 @@ export default function Workflows({ version, nav }: { version: number; nav: Nav 
           <MasterDetail hasDetail={sel !== null}
             list={rows.map((w) => (
               <button key={w.id} className={`sel-item ${sel === w.id ? "active" : ""}`} onClick={() => setSel(w.id)}>
-                <div className="row between"><span className="t">{w.title || w.goal}</span><StatusBadge status={w.status} /></div>
+                <div className="row between"><span className="t">{w.title || w.goal}</span><span className="row">{w.exec_mode !== "manual" && <ModeBadge mode={w.exec_mode} />}<StatusBadge status={w.status} /></span></div>
                 <div className="small muted">{w.done_count ?? 0}/{w.step_count ?? 0}단계 완료{w.awaiting_approval ? ` · 승인 대기 ${w.awaiting_approval}` : ""} · {usd(w.cost_usd)} / {usd(w.budget_usd)}</div>
                 <div className="small muted">{fmtAgo(w.created_at)}</div>
               </button>
@@ -59,18 +61,21 @@ export default function Workflows({ version, nav }: { version: number; nav: Nav 
 }
 
 function NewModal({ maxBudget, defaultBudget, onClose, onCreated }: { maxBudget: number; defaultBudget: number; onClose: () => void; onCreated: (id: number) => void }) {
-  const form = useCrudForm({ goal: "", budget: String(defaultBudget), auto: false }, (v) => ({
+  const cfg = useApi<AutonomyConfig>("/autonomy/settings", 0);
+  const form = useCrudForm({ goal: "", budget: String(defaultBudget), mode: "manual" as ExecMode }, (v) => ({
     goal: v.goal.trim().length >= 3 ? undefined : "목표를 3자 이상 입력하세요",
     budget: budgetError(v.budget, maxBudget) ?? undefined,
   }));
   const f = form.values;
   return (
-    <CrudDialog mode="create" title="새 워크플로" submitLabel="계획 생성" busyLabel="계획 생성 중…" dirty={form.dirty} validate={form.check} onClose={onClose}
-      onSubmit={async () => { const wf = await api<WorkflowDetailT>("/workflows", { method: "POST", json: { goal: f.goal, budget_usd: Number(f.budget), auto_run: f.auto } }); onCreated(wf.id); }}>
+    <CrudDialog mode="create" title="새 워크플로" submitLabel={f.mode === "manual" ? "계획 생성" : "계획 생성 후 자동 실행"} busyLabel="계획 생성 중…" dirty={form.dirty} validate={form.check} onClose={onClose}
+      onSubmit={async () => { const wf = await api<WorkflowDetailT>("/workflows", { method: "POST", json: { goal: f.goal, budget_usd: Number(f.budget), exec_mode: f.mode } }); onCreated(wf.id); }}>
       <Field label="목표" required error={form.errorOf("goal")} hint="예: 최근 IT·AI 뉴스를 조사하고, 개발자에게 의미 있는 기사 한 건을 골라 기술 블로그 초안을 써 줘"><textarea rows={4} value={f.goal} aria-invalid={!!form.errorOf("goal")} onBlur={() => form.touch("goal")} onChange={(e) => form.set("goal", e.target.value)} /></Field>
       <Field label="총 예산(USD)" error={form.errorOf("budget")} hint={`계획 생성과 모든 단계 실행의 합계 상한입니다(최대 ${fmtMax(maxBudget)}). 단계 상한의 합이 예산을 넘는 계획은 시작 전에 차단됩니다.`}><input type="number" min={0} max={maxBudget} step={0.05} value={f.budget} aria-invalid={!!form.errorOf("budget")} onBlur={() => form.touch("budget")} onChange={(e) => form.set("budget", e.target.value)} /></Field>
-      <div className={f.auto ? "danger-zone" : "card flat"}>
-        <label className="check"><input type="checkbox" checked={f.auto} onChange={(e) => form.set("auto", e.target.checked)} /><span>계획 확인 없이 자동 실행 허용<div className="small muted">체크하지 않으면 계획을 확인·수정한 뒤 직접 실행합니다. 체크해도 승인이 필요한 단계는 승인 전에 멈추고, 각 직원의 도구 권한과 비용 한도는 그대로 적용됩니다.</div></span></label>
+      <div className={f.mode === "autonomous" ? "danger-zone" : "card flat"}>
+        <Field label="실행 모드" hint={<>{MODE_DESC[f.mode]} 읽기 전용이 아닌 직원·도구가 하나라도 있으면 어떤 모드에서도 자동 시작하지 않고 사용자 확인을 기다립니다. 직원별 도구 권한과 비용 한도는 그대로 적용됩니다.{cfg.data && ` 현재 허용 범위: ${cfg.data.max_mode === "autonomous" ? "자율까지" : "감독 자동까지"}(자율 운영 화면에서 변경).`}</>}>
+          <ModeSelect value={f.mode} onChange={(m) => form.set("mode", m)} max={cfg.data?.max_mode ?? "supervised"} />
+        </Field>
       </div>
     </CrudDialog>
   );
@@ -106,7 +111,7 @@ function WorkflowView({ id, version, nav, maxBudget, onBack, onChanged }: { id: 
     <div className="stack">
       <div className="card">
         <div className="row between wrap">
-          <div className="row wrap"><button className="ghost back-btn" onClick={onBack}>← 목록</button><h2>{wf.title || "워크플로"}</h2><StatusBadge status={wf.status} />{wf.auto_run && <span className="badge plain warn">자동 실행 허용</span>}</div>
+          <div className="row wrap"><button className="ghost back-btn" onClick={onBack}>← 목록</button><h2>{wf.title || "워크플로"}</h2><StatusBadge status={wf.status} /><ModeBadge mode={wf.exec_mode} /></div>
           <div className="row wrap">
             {wf.status === "planned" && <><button className="secondary" onClick={() => setEditing(true)}>계획 수정</button><button onClick={() => act("start")} disabled={busy || wf.steps.length === 0 || wf.plan_state !== "ok" || wf.start_check?.ok === false}>실행</button></>}
             {wf.status === "running" && <button className="secondary" onClick={() => act("pause")}>일시정지</button>}
@@ -126,6 +131,19 @@ function WorkflowView({ id, version, nav, maxBudget, onBack, onChanged }: { id: 
       {wf.start_check && !wf.start_check.ok && (
         <div className="notice bad">계획은 유효하지만 현재 예산 {usd(wf.budget_usd)}으로는 시작할 수 없습니다. {wf.start_check.error}{wf.start_check.kind === "budget" && wf.budget_info.editable && <> <button className="link" onClick={() => setBudgetOpen(true)}>예산 변경</button></>}</div>
       )}
+      <AutonomyPanel a={wf.autonomy} status={wf.status}>
+        {!["completed", "cancelled"].includes(wf.status) && (
+          <div className="row wrap">
+            <span className="small muted">실행 모드 변경</span>
+            <ModeSelect value={wf.exec_mode} max={wf.autonomy.max_mode} disabled={busy} onChange={async (m) => {
+              setBusy(true);
+              try { await api(`/autonomy/workflows/${wf.id}/mode`, { method: "PUT", json: { exec_mode: m } }); setError(null); } catch (e) { setError((e as Error).message); }
+              setBusy(false); q.reload(); onChanged();
+            }} />
+            <span className="small muted">모드를 바꿔도 이미 끝난 단계·승인 기록은 바뀌지 않습니다.</span>
+          </div>
+        )}
+      </AutonomyPanel>
       {wf.plan_notes && <Collapse title="플래너 설명" open={wf.steps.length === 0}><p style={{ whiteSpace: "pre-wrap" }} className="muted">{wf.plan_notes}</p></Collapse>}
       {wf.counts.awaiting_approval > 0 && <div className="notice">승인 대기 {wf.counts.awaiting_approval}건 — 승인하면 다음 단계가 자동으로 이어집니다. <button className="link" onClick={() => nav.go("approvals")}>승인 화면으로</button></div>}
 

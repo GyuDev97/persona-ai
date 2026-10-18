@@ -70,8 +70,8 @@ export default function Approvals({ version, nav }: { version: number; nav: Nav 
               return (
                 <div key={a.id} className="card">
                   <div className="row between wrap">
-                    <div className="row wrap"><h3>{TOOL_LABEL[a.tool] ?? a.tool}</h3><StatusBadge status={a.status} /></div>
-                    <span className="small muted">요청 {fmtTime(a.created_at)}{a.decided_at ? ` · 처리 ${fmtTime(a.decided_at)}` : ""}</span>
+                    <div className="row wrap"><h3>{TOOL_LABEL[a.tool] ?? a.tool}</h3><StatusBadge status={a.status} />{a.decided_by === "autonomy:policy" && <span className="badge plain info" title="자율 모드에서 읽기 전용·검증 통과·경고 없음 조건을 코드가 확인하고 승인했습니다">자동 승인</span>}</div>
+                    <span className="small muted">요청 {fmtTime(a.created_at)}{a.decided_at ? ` · 처리 ${fmtTime(a.decided_at)}${a.decided_by === "autonomy:policy" ? "(정책)" : ""}` : ""}</span>
                   </div>
                   <dl className="kv" style={{ marginTop: 8 }}>
                     <dt>요청자</dt><dd>{a.requested_by}{a.debate_id ? ` · 토론 #${a.debate_id}` : ""}</dd>

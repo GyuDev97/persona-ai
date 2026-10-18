@@ -88,6 +88,7 @@ class ProactiveEngine:
         self.store = SuggestionStore(db)
         self._lock = asyncio.Lock()  # 이벤트 처리를 직렬화해 같은 후보가 동시에 두 번 전달되지 않게 한다
         self.workers = None  # WorkerService(main.py에서 연결): AI 직원 업무 결과 알림·후속 질문 문맥에 쓴다
+        self.on_delivered = None  # (suggestion_id, topic_key, title) -> None : 제안이 실제로 전달됐을 때 상시 자율 운영 트리거에 알린다
 
     # ------------------------------------------------------------ 시간 도우미(모두 ContextManager의 단일 시계를 쓴다)
 
@@ -564,6 +565,11 @@ class ProactiveEngine:
         self.activity.record("gyuvis", "proactive.suggested", trigger=TRIGGER_LABEL.get(c.event), reason=meta.get("reason", c.reason), suggestion_id=sid,
                              topic=c.topic_key)
         self._emit(sid)
+        if self.on_delivered is not None and c.type != "worker_result":  # 직원 결과 알림이 다시 직원 업무를 시작시키는 순환을 막는다
+            try:
+                self.on_delivered(sid, c.topic_key, c.title)
+            except Exception:
+                logging.getLogger("gyunexus").exception("proactive on_delivered hook failed")
         return payload
 
     def _seed_state(self, c: Candidate, conv_id: int) -> None:

@@ -62,6 +62,8 @@ class WorkflowService:
         self.now = utcnow
         self._locks: dict[int, asyncio.Lock] = {}
         self._bg: set[asyncio.Task] = set()
+        self.progress_hook = None  # async (workflow_id) -> None : AutonomyService 가 연결한다(없으면 기존 동작 그대로)
+        self.annotate = None  # (workflow_id) -> dict : detail() 에 덧붙일 자율 실행 상태
         workers.run_hook = self._on_run_event
 
     # ---------------------------------------------------------- 공통
@@ -738,6 +740,12 @@ class WorkflowService:
                 logger.exception("workflow advance failed")
                 self.activity.record("workflow", "workflow.error", level="error", workflow_id=wid)
         self._emit(wid)
+        if self.progress_hook is not None:  # 자율 실행 정책(자동 승인·대화 알림·연쇄/재시도)은 락 밖에서 처리한다: 승인이 다시 advance 를 부르기 때문
+            try:
+                await self.progress_hook(wid)
+            except Exception:
+                logger.exception("workflow progress hook failed")
+                self.activity.record("workflow", "workflow.hook_error", level="error", workflow_id=wid)
 
     async def _launch_ready(self, wid: int) -> None:
         wf = self.get(wid)
@@ -878,7 +886,8 @@ class WorkflowService:
                 start_check = {"ok": True, "error": None, "kind": None}
             except WorkflowError as e:
                 start_check = {"ok": False, "error": str(e), "kind": e.kind or "invalid"}
-        return {**row_dict(wf), "steps": out, "budget_history": hist, "removed_steps": removed, "plan_failure": plan_failure, "plan_attempts": attempts, "start_check": start_check,
+        extra = {"autonomy": self.annotate(wid)} if self.annotate is not None else {}
+        return {**row_dict(wf), **extra, "steps": out, "budget_history": hist, "removed_steps": removed, "plan_failure": plan_failure, "plan_attempts": attempts, "start_check": start_check,
                 "budget_info": {"spent_usd": round(spent, 6), "required_usd": round(required, 6), "min_budget_usd": round(spent + required, 6), "removed_steps_usd": round(sum(x["cost_usd"] for x in removed), 6),
                                 "max_budget_usd": self.settings.workflow_max_budget_usd, "editable": wf.status not in ("completed", "cancelled")}, "cost_usd": round(spent, 6), "remaining_budget_usd": round(max(wf.budget_usd - spent, 0.0), 6),
                 "counts": {k: sum(1 for x in sts if x.status == k) for k in ("pending", "running", "awaiting_approval", "completed", "failed", "cancelled")}}
