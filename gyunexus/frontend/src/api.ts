@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useRef, useState } from "react";
 
 export async function api<T>(path: string, init?: RequestInit & { json?: unknown }): Promise<T> {
   const res = await fetch(`/api${path}`, {
@@ -29,7 +29,8 @@ export function useServerEvents(): number {
       timer = window.setTimeout(() => setVersion((v) => v + 1), 250);
     };
     for (const t of ["log", "agent.status", "debate.started", "debate.message", "debate.updated", "debate.completed",
-      "proactive.message", "approval.created", "approval.updated", "memory.updated", "topic.created"]) {
+      "proactive.message", "proactive.suggestion", "proactive.reaction", "approval.created", "approval.updated", "memory.updated", "topic.created",
+      "worker.updated", "worker.run"]) {
       es.addEventListener(t, bump);
     }
     return () => {
@@ -88,9 +89,12 @@ export interface ChatTrace {
 }
 export interface Message {
   id: number; role: "user" | "assistant"; content: string; proactive: boolean;
-  meta: { kind?: string; reason?: string; debate_id?: number; trace?: ChatTrace }; created_at: string;
+  meta: { kind?: string; reason?: string; debate_id?: number; run_id?: number; suggestion_id?: number; topic_key?: string; trace?: ChatTrace }; created_at: string; conversation_id?: number;
 }
-export interface Memory { id: number; kind: string; content: string; importance: number; use_count: number; source: string }
+export interface Memory {
+  id: number; kind: string; content: string; importance: number; use_count: number; source: string;
+  created_at: string; last_seen_at: string; last_used_at: string | null;
+}
 export interface Agent {
   id: string; name: string; role: string; description: string; status: string;
   current_task: string | null; last_active_at: string | null;
@@ -110,20 +114,61 @@ export interface DebateMessage { id: number; round: number; agent_id: string; co
 export interface IdeaT {
   id: number; title: string; description: string; feasibility: string; risks: string[];
   next_steps: string[]; confidence: number; debate_id: number; debate_title?: string;
-  status?: "accepted" | "needs_research" | "discarded" | null; rationale?: string | null;
+  status?: "accepted" | "needs_research" | "discarded" | null; rationale?: string | null; evidence_ids?: number[] | null; created_at?: string;
 }
 export interface DebateDetail extends Debate {
+  plan?: unknown; progress?: unknown;
   messages: DebateMessage[];
   ideas: IdeaT[];
   evidence: { id: number; tool: string; source: string; summary: string }[];
   result: {
     summary: string; decision: string; verified_facts: { text: string; evidence_ids: number[] }[];
-    unverified_claims: string[]; open_questions: string[];
+    unverified_claims: string[]; open_questions: string[]; warnings?: string[];
   } | null;
 }
 export interface Approval {
   id: number; tool: string; args: Record<string, unknown>; reason: string; requested_by: string;
-  status: string; result: unknown; created_at: string; debate_id: number | null;
+  status: string; result: unknown; created_at: string; decided_at?: string | null; debate_id: number | null;
 }
 export interface Log { id: number; ts: string; source: string; agent_id: string | null; debate_id: number | null; level: string; event: string; detail: Record<string, unknown> }
+export interface ProactivePrefs {
+  enabled: boolean; daily_max: number; quiet_hours: string; topics: Record<string, boolean>; topic_labels: Record<string, string>;
+}
+export interface SuggestionRow {
+  id: number; type: string; topic_key: string; status: string; decision: string | null; decision_reason: string; score: number | null;
+  score_detail: Record<string, unknown>; confidence: string; title: string; reason: string; needed_action: string;
+  event: string; reaction: string | null; created_at: string; valid_until: string | null; delivered_at: string | null;
+}
+export interface ReminderRow { id: number; topic_key: string; due_at: string; status: string; attempts: number; note: string }
+export interface WorkerRow {
+  id: number; name: string; role: string; description: string; model: string; allowed_tools: string[];
+  permission_level: "read_only" | "write_with_approval"; max_cost_usd: number; enabled: boolean;
+  task_count: number; awaiting_approval: number; running: number; state: "idle" | "working" | "waiting_approval" | "disabled";
+  last_run: { id: number; status: string; ended_at: string | null } | null;
+}
+export interface WorkerTaskRow {
+  id: number; worker_id: number; title: string; instructions: string; completion_criteria: string[];
+  checks: { min_chars?: number; required_sections?: string[]; required_keys?: string[]; max_age_hours?: number; min_items?: number };
+  max_tool_calls: number; tool_rounds: number; report_kind: "generic" | "news"; mode: "manual" | "scheduled";
+  interval_minutes: number | null; tools: string[]; max_seconds: number; max_cost_usd: number; output_type: "markdown" | "text" | "json";
+  requires_approval: boolean; allow_agents: boolean; requires_materials: boolean; materials: { name: string; content: string }[];
+  input_files: string[]; status: "active" | "paused"; next_run_at: string | null; last_run_at: string | null;
+}
+export interface WorkerDetailT extends WorkerRow { tasks: WorkerTaskRow[]; inputs: { name: string; size: number }[] }
+export interface VerifyCheck { name: string; passed: boolean; detail: string }
+export interface WorkerRunRow {
+  id: number; task_id: number; worker_id: number; task_title: string | null; worker_name: string | null; trigger: string; status: string;
+  cost_usd: number; tokens: number; llm_calls: number; error_kind: string | null; error: string | null; summary: string;
+  approval_id: number | null; approval_status: string | null; created_at: string; started_at: string | null; ended_at: string | null;
+  artifact: { id: number; filename: string; title: string; size: number; sha256: string; verified: boolean; rel_path: string } | null;
+  steps?: { t: string; kind: string; ok: boolean; [k: string]: unknown }[];
+  verification?: { passed: boolean; checks: VerifyCheck[]; warnings: string[]; attempt: number } | null;
+  content?: string | null;
+}
+export interface WorkerOptions {
+  models: string[]; output_types: string[]; permission_levels: string[]; min_interval_minutes: number;
+  tools: { name: string; description: string; risk: string; available_read_only: boolean; available_with_write: boolean; unavailable_reason: string }[];
+  templates: { id: string; label: string; worker: Partial<WorkerRow>; task: Partial<WorkerTaskRow> }[];
+}
 export interface Topic { id: number; title: string; source: string; status: string; debate_id: number | null }
+

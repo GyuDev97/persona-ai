@@ -51,6 +51,9 @@ class Database:
                 for col in table.columns:
                     if col.name not in existing:
                         ddl = col.type.compile(dialect=self.engine.dialect)
+                        if col.server_default is not None:  # 기존 행에도 기본값이 채워지게 한다
+                            d = str(getattr(col.server_default, "arg", ""))
+                            ddl += f" DEFAULT {d if d.lstrip('-').isdigit() else repr(d)}"
                         conn.execute(text(f"ALTER TABLE {table.name} ADD COLUMN {col.name} {ddl}"))
 
     @contextmanager

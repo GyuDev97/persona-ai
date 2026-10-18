@@ -1,0 +1,91 @@
+import { useEffect, useState } from "react";
+import { useApi, type Agent, type Approval, type Debate, type Health, type IdeaT, type Log, type SuggestionRow, type WorkerRow, type WorkerRunRow } from "../api";
+import type { Nav, PageId } from "../App";
+import { actorLabel, EmptyState, eventLabel, fmtAgo, PageHeader, StatusBadge } from "../components/ui";
+
+function Stat({ ico, label, num, sub, to, nav }: { ico: string; label: string; num: number | string; sub: string; to: PageId; nav: Nav }) {
+  return (
+    <button className="stat" onClick={() => nav.go(to)}>
+      <span style={{ fontSize: 22, color: "var(--accent)" }}>{ico}</span>
+      <span><div className="lbl">{label}</div><div className="num">{num}</div><div className="sub">{sub}</div></span>
+    </button>
+  );
+}
+
+/** 실제로 조회되는 API 값만 조합해 보여 준다(없는 통계는 만들지 않는다). */
+export default function Dashboard({ version, nav, health }: { version: number; nav: Nav; health: Health | null }) {
+  const agents = useApi<Agent[]>("/agents", version);
+  const workers = useApi<WorkerRow[]>("/workers", version);
+  const ideas = useApi<IdeaT[]>("/ideas?status=all", version);
+  const approvals = useApi<Approval[]>("/approvals", version);
+  const logs = useApi<Log[]>("/logs?limit=60", version);
+  const runs = useApi<WorkerRunRow[]>("/workers/runs?limit=30", version);
+  const debates = useApi<Debate[]>("/debates", version);
+  const sugg = useApi<SuggestionRow[]>("/proactive/suggestions?limit=30", version);
+  const [now, setNow] = useState(new Date());
+  useEffect(() => { const t = window.setInterval(() => setNow(new Date()), 30_000); return () => window.clearInterval(t); }, []);
+
+  const ag = agents.data ?? [];
+  const busyAgents = ag.filter((a) => a.status === "thinking");
+  const ws = workers.data ?? [];
+  const id = ideas.data ?? [];
+  const st = (i: IdeaT) => i.status ?? "needs_research";
+  const pending = (approvals.data ?? []).filter((a) => a.status === "pending");
+  const activeRuns = (runs.data ?? []).filter((r) => ["pending", "running", "reviewing"].includes(r.status));
+  const runningDebates = (debates.data ?? []).filter((d) => d.status === "running");
+  const proactive = (sugg.data ?? []).filter((s) => s.status === "delivered").slice(0, 5);
+  const activity = (logs.data ?? []).filter((l) => !(l.source === "tool" && l.level === "info") && l.event !== "chat.trace").slice(0, 10);
+  const inProgress = busyAgents.length + activeRuns.length + runningDebates.length;
+
+  return (
+    <div className="page-inner">
+      <PageHeader title="안녕하세요" desc={health?.llm_configured === false ? "OPENAI_API_KEY가 설정되지 않았습니다. README를 참고하세요." : "오늘의 GyuNexus 현황입니다."}
+        actions={<div className="muted" style={{ textAlign: "right" }}>{now.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "short" })}<div style={{ fontSize: 22, color: "var(--text)", fontWeight: 700 }}>{now.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false })}</div></div>} />
+      <div className="grid g4">
+        <Stat nav={nav} to="agents" ico="◎" label="에이전트" num={`${ag.length}명`} sub={`실행 중 ${busyAgents.length} · 대기 ${ag.length - busyAgents.length}`} />
+        <Stat nav={nav} to="workers" ico="☰" label="AI 직원" num={`${ws.filter((w) => w.enabled).length}명`} sub={`작업 중 ${ws.filter((w) => w.state === "working").length} · 승인 대기 ${ws.reduce((s, w) => s + w.awaiting_approval, 0)}`} />
+        <Stat nav={nav} to="ideas" ico="✦" label="아이디어" num={`${id.length}건`} sub={`채택 ${id.filter((i) => st(i) === "accepted").length} · 추가 조사 ${id.filter((i) => st(i) === "needs_research").length} · 폐기 ${id.filter((i) => st(i) === "discarded").length}`} />
+        <Stat nav={nav} to="approvals" ico="✔" label="승인 대기" num={`${pending.length}건`} sub={pending.length ? "검토가 필요합니다" : "대기 중인 요청 없음"} />
+      </div>
+
+      <div className="grid g2">
+        <div className="card">
+          <div className="card-title"><h3>진행 중인 업무 <span className="muted small">{inProgress}건</span></h3></div>
+          {inProgress === 0 && <EmptyState title="진행 중인 업무가 없습니다" />}
+          {runningDebates.map((d) => <button key={`d${d.id}`} className="sel-item" onClick={() => nav.openDebate(d.id)}><div className="row between"><span className="t">토론 #{d.id} {d.title}</span><StatusBadge status="running" /></div></button>)}
+          {activeRuns.map((r) => <button key={`r${r.id}`} className="sel-item" onClick={() => nav.go("workers")}><div className="row between"><span className="t">{r.worker_name} · {r.task_title}</span><StatusBadge status={r.status} /></div></button>)}
+          {busyAgents.map((a) => <button key={a.id} className="sel-item" onClick={() => nav.go("agents")}><div className="row between"><span className="t">{a.name}: {a.current_task ?? "작업 중"}</span><StatusBadge status="thinking" /></div></button>)}
+        </div>
+        <div className="card">
+          <div className="card-title"><h3>GYUVIS의 능동 제안</h3><button className="link" onClick={() => nav.go("proactive")}>전체 보기</button></div>
+          {proactive.length === 0 && <EmptyState title="전달된 제안이 없습니다" desc="조건이 맞을 때만 먼저 말을 겁니다." />}
+          {proactive.map((s) => (
+            <div key={s.id} className="item">
+              <div className="row between wrap"><b>{s.title}</b><span className="small muted">{fmtAgo(s.delivered_at)}</span></div>
+              <div className="small muted">{s.reason}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid g2">
+        {pending.length > 0 && (
+          <div className="card">
+            <div className="card-title"><h3>승인이 필요한 요청</h3><button className="link" onClick={() => nav.go("approvals")}>승인 화면</button></div>
+            {pending.slice(0, 5).map((a) => <div key={a.id} className="item row between"><span>{a.reason || a.tool}</span><span className="small muted">{fmtAgo(a.created_at)}</span></div>)}
+          </div>
+        )}
+        <div className="card" style={pending.length === 0 ? { gridColumn: "1 / -1" } : undefined}>
+          <div className="card-title"><h3>최근 활동</h3><button className="link" onClick={() => nav.go("logs")}>로그</button></div>
+          {activity.length === 0 && <EmptyState title="활동 기록이 없습니다" />}
+          {activity.map((l) => (
+            <div key={l.id} className="item row between wrap">
+              <span>{l.level !== "info" && <StatusBadge status={l.level === "error" ? "error" : "warn"} />} {eventLabel(l.event)} <span className="muted small">· {actorLabel(l.agent_id, l.source)}</span></span>
+              <span className="small muted">{fmtAgo(l.ts)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

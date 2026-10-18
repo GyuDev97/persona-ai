@@ -1,94 +1,92 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { api, useApi, type Agent, type Log, type Topic } from "../api";
+import { Async, Collapse, EmptyState, eventLabel, actorLabel, fmtAgo, MODE_LABEL, PageHeader, StatusBadge } from "../components/ui";
 
-const time = (iso: string | null) => (iso ? new Date(iso).toLocaleString("ko-KR", { hour12: false }) : "-");
-
-export function Agents({ version }: { version: number }) {
+export default function Agents({ version }: { version: number }) {
   const agents = useApi<Agent[]>("/agents", version);
   const topics = useApi<Topic[]>("/topics", version);
-  const logs = useApi<Log[]>("/logs?limit=12", version);
+  const logs = useApi<Log[]>("/logs?limit=200", version);
   const [title, setTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const submit = async () => {
+    setBusy(true);
     try {
       await api("/debates/run", { method: "POST", json: { topic: title.trim() } });
       setTitle("");
       setError(null);
     } catch (e) {
       setError((e as Error).message);
+    } finally {
+      setBusy(false);
     }
   };
+  // 에이전트의 가장 최근 로그가 오류면 ‘오류’, 실행 중이면 ‘실행 중’, 아니면 ‘대기’로 구분한다.
+  const state = useMemo(() => {
+    const out: Record<string, "idle" | "thinking" | "error"> = {};
+    for (const a of agents.data ?? []) {
+      const last = (logs.data ?? []).find((l) => l.agent_id === a.id);
+      out[a.id] = a.status === "thinking" ? "thinking" : last && last.level === "error" ? "error" : "idle";
+    }
+    return out;
+  }, [agents.data, logs.data]);
+  const activity = (logs.data ?? []).filter((l) => l.source !== "tool" || l.level !== "info").slice(0, 14);
 
   return (
-    <div className="stack">
-      <div className="cards">
-        {agents.data?.map((a) => (
-          <div key={a.id} className="card">
-            <h3>
-              <span className={`dot ${a.status === "thinking" ? "busy" : "ok"}`} /> {a.name}
-            </h3>
-            <div className="muted">{a.role}</div>
-            <p>{a.description}</p>
-            <div className="small">{a.status === "thinking" ? a.current_task : `대기 중 · 마지막 활동 ${time(a.last_active_at)}`}</div>
+    <div className="page-inner">
+      <PageHeader title="에이전트" desc="Research · Idea · Developer · Critic 의 현재 상태와 토론 주제 큐입니다." />
+      <Async q={agents}>
+        {(rows) => (
+          <div className="grid g2">
+            {rows.map((a) => {
+              const s = state[a.id] ?? "idle";
+              return (
+                <div key={a.id} className="card">
+                  <div className="row between"><h3>{a.name}</h3><StatusBadge status={s} /></div>
+                  <div className="muted" style={{ margin: "2px 0 8px" }}>{a.role}</div>
+                  <div className="small">
+                    {s === "thinking" ? <span style={{ color: "var(--info)" }}>지금 실행 중: {a.current_task ?? "작업 중"}</span> : <span className="muted">대기 중 · 마지막 활동 {fmtAgo(a.last_active_at)}</span>}
+                  </div>
+                  {s === "error" && <div className="small" style={{ color: "var(--bad)" }}>최근 로그에 오류가 있습니다. 로그 화면에서 확인하세요.</div>}
+                  <div style={{ marginTop: 8 }}><Collapse title="상세 설명"><p className="muted">{a.description}</p></Collapse></div>
+                </div>
+              );
+            })}
           </div>
-        ))}
-      </div>
+        )}
+      </Async>
       <div className="card">
-        <h3>주제 직접 던지기</h3>
-        <form className="row" onSubmit={(e) => (e.preventDefault(), title.trim().length >= 3 && submit())}>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="에이전트들이 토론할 주제 (비워 두면 자동 발굴)" />
-          <button disabled={title.trim().length < 3}>토론 시작</button>
+        <div className="card-title"><h3>주제 직접 던지기</h3></div>
+        <form className="row wrap" onSubmit={(e) => (e.preventDefault(), title.trim().length >= 3 && submit())}>
+          <input className="grow" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="에이전트들이 토론할 주제 (3자 이상)" aria-label="토론 주제" />
+          <button disabled={title.trim().length < 3 || busy}>토론 시작</button>
         </form>
-        {error && <div className="notice">{error}</div>}
+        <div className="small muted" style={{ marginTop: 6 }}>비워 두고 상단의 ‘지금 토론’을 누르면 주제를 자동으로 발굴합니다.</div>
+        {error && <div className="notice bad" style={{ marginTop: 8 }}>{error}</div>}
       </div>
-      <div className="two">
+      <div className="grid g2">
         <div className="card">
-          <h3>주제 큐</h3>
+          <div className="card-title"><h3>주제 큐</h3></div>
+          {topics.data?.length === 0 && <EmptyState title="아직 주제가 없습니다" />}
           {topics.data?.slice(0, 10).map((t) => (
-            <div key={t.id} className="line">
-              <span className={`pill ${t.status}`}>{t.status}</span> <span className="muted">[{t.source}]</span> {t.title}
+            <div key={t.id} className="item">
+              <div className="row wrap"><StatusBadge status={t.status} /><span className="badge plain">{MODE_LABEL[t.source] ?? t.source}</span></div>
+              <div style={{ marginTop: 2 }}>{t.title}</div>
             </div>
           ))}
-          {topics.data?.length === 0 && <p className="muted">아직 주제가 없습니다.</p>}
         </div>
         <div className="card">
-          <h3>최근 활동</h3>
-          {logs.data?.map((l) => (
-            <div key={l.id} className="line small">
-              <span className="muted">{time(l.ts)}</span> {l.agent_id ?? l.source} · {l.event}
+          <div className="card-title"><h3>최근 활동</h3></div>
+          {activity.length === 0 && <EmptyState title="활동 기록이 없습니다" />}
+          {activity.map((l) => (
+            <div key={l.id} className="item small">
+              <div className="row between"><b>{eventLabel(l.event)}</b><span className="muted">{fmtAgo(l.ts)}</span></div>
+              <div className="muted">{actorLabel(l.agent_id, l.source)}{l.debate_id ? ` · 토론 #${l.debate_id}` : ""}</div>
             </div>
           ))}
         </div>
       </div>
-    </div>
-  );
-}
-
-export function Logs({ version }: { version: number }) {
-  const [agent, setAgent] = useState("");
-  const logs = useApi<Log[]>(`/logs?limit=200${agent ? `&agent_id=${agent}` : ""}`, version);
-  return (
-    <div className="card">
-      <div className="row">
-        <h3>실행 로그</h3>
-        <select value={agent} onChange={(e) => setAgent(e.target.value)}>
-          <option value="">전체</option>
-          {["research", "idea", "developer", "critic", "gyuvis"].map((a) => <option key={a}>{a}</option>)}
-        </select>
-      </div>
-      <table>
-        <tbody>
-          {logs.data?.map((l) => (
-            <tr key={l.id} className={l.level}>
-              <td className="muted nowrap">{time(l.ts)}</td>
-              <td>{l.agent_id ?? l.source}</td>
-              <td>{l.event}{l.debate_id ? ` (#${l.debate_id})` : ""}</td>
-              <td className="small muted">{JSON.stringify(l.detail).slice(0, 160)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

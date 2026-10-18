@@ -27,7 +27,9 @@ class Scheduler:
         orchestrator: AgentOrchestrator,
         proactive: ProactiveEngine,
         activity: Activity,
+        workers=None,
     ):
+        self.workers = workers  # WorkerService: 정기 업무 실행(자율 토론 on/off와 무관하게 업무별 설정을 따른다)
         self.settings, self.db, self.llm = settings, db, llm
         self.orchestrator, self.proactive, self.activity = orchestrator, proactive, activity
         self._started = self._last_attempt = utcnow()
@@ -52,7 +54,11 @@ class Scheduler:
             await asyncio.sleep(self.settings.scheduler_tick_seconds)
 
     async def tick(self) -> None:
-        if not self.llm.configured or not self.autonomous_enabled():
+        if not self.llm.configured:
+            return
+        if self.workers is not None:
+            await self.workers.tick()
+        if not self.autonomous_enabled():
             return
         await self.proactive.tick()
         if self.orchestrator.busy:

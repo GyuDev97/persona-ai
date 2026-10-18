@@ -43,6 +43,28 @@ class Settings(BaseSettings):
     proactive_cooldown_minutes: int = 360
     proactive_daily_max: int = 3
     proactive_check_minutes: int = 30
+    proactive_enabled: bool = True  # 능동 제안 전체 on/off(대시보드에서 바꾸면 DB 값이 우선)
+    proactive_quiet_hours: str = "23:00-07:00"  # 이 시간대에는 제안을 보류한다. 빈 문자열이면 사용 안 함
+    proactive_deliver_threshold: float = 0.62  # 점수 이상이면 전달 후보, 아래 drop 임계값 미만이면 폐기, 사이는 LLM이 판단
+    proactive_drop_threshold: float = 0.40
+    proactive_dashboard_event_gap_minutes: int = 10  # 같은 접속 이벤트가 짧은 시간에 반복 처리되지 않도록
+    proactive_sky_horizon_nights: int = 3  # 오늘 밤부터 몇 밤까지 출사 후보를 살필지
+    proactive_candidate_ttl_hours: int = 6  # 날씨 조회에 기반한 후보의 유효 시간
+
+    # AI 직원(Workers)
+    worker_min_interval_minutes: int = 5  # 정기 업무의 최소 주기
+    worker_max_tool_calls: int = 4  # 실행 1회당 도구 호출 상한
+    worker_materials_max_chars: int = 20000  # 업무에 직접 붙이는 자료의 총 글자 수 상한
+    worker_output_max_chars: int = 30000
+    worker_notify_gap_minutes: int = 60  # 같은 업무의 '완료' 알림 최소 간격(승인 필요·실패는 별도 규칙)
+
+    # 뉴스 수집 도구(rss.fetch / news.search / web.fetch)
+    web_fetch_max_bytes: int = 1_500_000  # 원문 HTML 응답 크기 상한
+    web_fetch_timeout_seconds: float = 10.0
+    web_fetch_max_redirects: int = 4
+    news_cache_seconds: float = 300.0  # 같은 피드를 이 시간 안에 다시 받지 않는다
+    feed_timeout_seconds: float = 15.0
+    feed_max_bytes: int = 3_000_000  # RSS/Atom 응답 크기 상한(가장 큰 공식 피드가 약 1.5MB)
 
     # 대화 / 기억
     chat_history_limit: int = 20
@@ -58,6 +80,10 @@ class Settings(BaseSettings):
     @property
     def db_url(self) -> str:
         return self.database_url or f"sqlite:///{(self.data_dir / 'gyunexus.db').as_posix()}"
+
+    @property
+    def workspace_dir(self) -> Path:
+        return self.data_dir / "workspace"
 
     @property
     def notes_dir(self) -> Path:

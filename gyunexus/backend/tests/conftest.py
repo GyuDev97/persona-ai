@@ -109,6 +109,7 @@ def settings(tmp_path):
         latitude=None,  # 사용자의 .env 값에 테스트가 영향받지 않도록 고정
         longitude=None,
         autonomous_enabled=True,
+        proactive_quiet_hours="",  # 기본 조용한 시간(23~07시)이 테스트 실행 시각에 좌우되지 않게 끈다
         daily_budget_usd=0.50,
         proactive_cooldown_minutes=360,
         scheduler_tick_seconds=3600,
@@ -122,6 +123,41 @@ def client(settings, provider):
     with TestClient(app) as c:
         c.app_state = app.state.svc
         yield c
+
+
+def patch_sky(client, cloud=10, precip=5, moon=10, fail=False, by_date=None):
+    """날씨·달 위상 도구를 고정 값으로 대체한다(실제 날짜의 달 위상에 테스트가 좌우되지 않게). 호출 인자를 돌려준다.
+
+    by_date: {"YYYY-MM-DD": {"cloud":..,"precip":..,"moon":..}} 날짜별 값. fail=True면 날씨 조회가 실패한다.
+    """
+    from gyunexus.tools import ToolError
+
+    svc = client.app.state.svc
+    svc.settings.latitude, svc.settings.longitude = 37.5, 127.0
+    calls = []
+
+    def vals(args):
+        v = {"cloud": cloud, "precip": precip, "moon": moon}
+        v.update((by_date or {}).get(args.get("date"), {}))
+        return v
+
+    async def weather(args):
+        calls.append(("weather", dict(args)))
+        if fail:
+            raise ToolError("upstream 503", kind="http_503", attempts=3)
+        v = vals(args)
+        return {"date": args.get("date"), "period": args.get("period"), "location": "기본 위치(설정값)", "avg_cloud_cover_pct": v["cloud"],
+                "max_precip_prob_pct": v["precip"], "avg_temp_c": 14.0, "hours_sampled": 5, "window_passed": False, "source": "test"}
+
+    async def moon_phase(args):
+        calls.append(("moon", dict(args)))
+        v = vals(args)
+        return {"phase": "초승달", "age_days": 3.0, "illumination_pct": v["moon"], "days_to_next_new_moon": 26.0,
+                "dark_sky_friendly": v["moon"] < 25, "for": {"date": args.get("date"), "period": args.get("period")}, "source": "test"}
+
+    svc.tools.get("weather.forecast").handler = weather
+    svc.tools.get("astro.moon_phase").handler = moon_phase
+    return calls
 
 
 def wait_for(fn, timeout=5.0):

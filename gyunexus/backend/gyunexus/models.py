@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any
@@ -176,6 +176,140 @@ class Approval(Base):
     decided_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
+class Suggestion(Base):
+    """능동 제안 후보와 그 처리 결과. 후보 생성 -> 점수·게이트 -> 전달/보류/폐기 -> 사용자 반응까지 한 행에 남겨 나중에 검증할 수 있다."""
+
+    __tablename__ = "suggestions"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    type: Mapped[str] = mapped_column(String(30))  # sky_observation | idea
+    topic_key: Mapped[str] = mapped_column(String(30), index=True)  # sky | idea (주제별 허용 설정의 단위)
+    dedupe_key: Mapped[str] = mapped_column(String(160), index=True)
+    event: Mapped[str] = mapped_column(String(30))  # dashboard_opened | scheduled | manual | idea_created | reminder_due
+    status: Mapped[str] = mapped_column(String(20), default="candidate")  # candidate|held|dropped|delivered|expired
+    decision: Mapped[str | None] = mapped_column(String(20), nullable=True)  # deliver | hold | drop | llm_judge | llm_declined
+    decision_reason: Mapped[str] = mapped_column(Text, default="")
+    score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    score_detail: Mapped[dict] = mapped_column(JSON, default=dict)  # 구성 요소·패널티·게이트·임계값
+    confidence: Mapped[str] = mapped_column(String(10), default="low")  # high | medium | low (근거 신뢰 수준)
+    title: Mapped[str] = mapped_column(String(300), default="")
+    reason: Mapped[str] = mapped_column(Text, default="")  # 제안 이유
+    needed_action: Mapped[str] = mapped_column(Text, default="")  # 사용자에게 필요한 행동
+    params: Mapped[dict] = mapped_column(JSON, default=dict)  # 날짜, 시간대, 장소 이름 등
+    evidence: Mapped[dict] = mapped_column(JSON, default=dict)  # 사용한 기억, 도구 결과(facts, flags), 관측/추정 상황
+    user_requested: Mapped[bool] = mapped_column(Boolean, default=False)  # 사용자가 요청한 재알림에서 나온 후보
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    valid_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    message_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    conversation_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    reaction: Mapped[str | None] = mapped_column(String(20), nullable=True)  # interested|details|declined|snoozed|muted|chat
+    reaction_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    blocked_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)  # 거절/연기 후 같은 주제 제안 금지 시각
+
+
+class Reminder(Base):
+    __tablename__ = "reminders"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    topic_key: Mapped[str] = mapped_column(String(30), index=True)
+    suggestion_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    due_at: Mapped[datetime] = mapped_column(DateTime, index=True)  # UTC
+    status: Mapped[str] = mapped_column(String(12), default="pending")  # pending | fired | cancelled
+    attempts: Mapped[int] = mapped_column(Integer, default=0)  # 데이터 조회 실패로 미룬 횟수
+    note: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    fired_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class Worker(Base):
+    """AI 직원: 상시 실행되는 LLM이 아니라, 업무가 실행될 때만 기존 LLM Provider를 호출하는 '책임 단위'."""
+
+    __tablename__ = "workers"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(80), unique=True)
+    role: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str] = mapped_column(Text, default="")
+    model: Mapped[str] = mapped_column(String(80))
+    allowed_tools: Mapped[list] = mapped_column(JSON, default=list)  # 이 직원이 쓸 수 있는 도구의 상한(업무별 허용 목록은 이 안에서만 고른다)
+    permission_level: Mapped[str] = mapped_column(String(30), default="read_only")  # read_only | write_with_approval
+    max_cost_usd: Mapped[float] = mapped_column(Float, default=0.05)  # 업무 1회 실행당 상한의 상한
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class WorkerTask(Base):
+    __tablename__ = "worker_tasks"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    worker_id: Mapped[int] = mapped_column(ForeignKey("workers.id", ondelete="CASCADE"), index=True)
+    title: Mapped[str] = mapped_column(String(200))
+    instructions: Mapped[str] = mapped_column(Text)
+    completion_criteria: Mapped[list] = mapped_column(JSON, default=list)  # 자연어 완료 기준(검토 호출이 인용으로 증명해야 통과)
+    checks: Mapped[dict] = mapped_column(JSON, default=dict)  # 코드가 검사하는 기준: min_chars, required_sections, required_keys
+    mode: Mapped[str] = mapped_column(String(12), default="manual")  # manual | scheduled
+    interval_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    tools: Mapped[list] = mapped_column(JSON, default=list)  # 이 업무의 도구 허용 목록(직원 허용 도구의 부분집합)
+    max_seconds: Mapped[int] = mapped_column(Integer, default=120)
+    max_cost_usd: Mapped[float] = mapped_column(Float, default=0.03)
+    output_type: Mapped[str] = mapped_column(String(12), default="markdown")  # markdown | text | json
+    requires_approval: Mapped[bool] = mapped_column(Boolean, default=True)
+    allow_agents: Mapped[bool] = mapped_column(Boolean, default=False)  # 기존 토론 결과(에이전트 산출물)를 근거로 가져다 쓸지
+    requires_materials: Mapped[bool] = mapped_column(Boolean, default=False)  # 자료가 없으면 지어내지 않고 자료를 요청한다
+    materials: Mapped[list] = mapped_column(JSON, default=list)  # [{"name","content"}] 사용자가 직접 제공한 자료
+    input_files: Mapped[list] = mapped_column(JSON, default=list)  # 작업 공간 inputs/ 안의 파일 이름
+    status: Mapped[str] = mapped_column(String(10), default="active")  # active | paused
+    max_tool_calls: Mapped[int] = mapped_column(Integer, default=4, server_default="4")  # 실행 1회당 도구 호출 총량 상한
+    tool_rounds: Mapped[int] = mapped_column(Integer, default=1, server_default="1")  # 도구 계획 라운드 수(2라운드: 후보 수집 -> 원문 확인)
+    report_kind: Mapped[str] = mapped_column(String(12), default="generic", server_default="generic")  # generic | news(뉴스 조사 보고서: 코드가 URL·날짜·검증 상태를 기록)
+    next_run_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class WorkerRun(Base):
+    """업무 1회 실행 기록. pending -> running -> reviewing -> awaiting_approval -> completed 와 예외 상태를 명시적으로 가진다."""
+
+    __tablename__ = "worker_runs"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    task_id: Mapped[int] = mapped_column(ForeignKey("worker_tasks.id", ondelete="CASCADE"), index=True)
+    worker_id: Mapped[int] = mapped_column(Integer, index=True)
+    trigger: Mapped[str] = mapped_column(String(12), default="manual")  # manual | schedule
+    # pending|running|reviewing|awaiting_approval|completed|failed|cancelled|rejected|needs_input
+    status: Mapped[str] = mapped_column(String(20), default="pending")
+    slot_key: Mapped[str | None] = mapped_column(String(120), unique=True, nullable=True)  # 정기 실행 슬롯 하나는 한 번만 실행(재시작 중복 방지)
+    cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
+    tokens: Mapped[int] = mapped_column(Integer, default=0)
+    llm_calls: Mapped[int] = mapped_column(Integer, default=0)
+    error_kind: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    steps: Mapped[list] = mapped_column(JSON, default=list)  # 단계별 추적(권한·예산·도구·LLM·검증)
+    evidence: Mapped[list] = mapped_column(JSON, default=list)  # 증거 번들(도구 결과·자료 요약)
+    verification: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    summary: Mapped[str] = mapped_column(Text, default="")  # 결과물에서 코드가 뽑은 발췌(LLM이 쓴 요약이 아님)
+    approval_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    artifact_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    notify_state: Mapped[str] = mapped_column(String(10), default="none")  # none | pending | sent | skipped (GYUVIS 알림)
+    notified_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class WorkerArtifact(Base):
+    __tablename__ = "worker_artifacts"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_id: Mapped[int] = mapped_column(ForeignKey("worker_runs.id", ondelete="CASCADE"), index=True)
+    worker_id: Mapped[int] = mapped_column(Integer, index=True)
+    filename: Mapped[str] = mapped_column(String(160))
+    rel_path: Mapped[str] = mapped_column(String(300))  # 작업 공간 루트 기준 상대 경로
+    media_type: Mapped[str] = mapped_column(String(40))
+    title: Mapped[str] = mapped_column(String(300), default="")
+    size: Mapped[int] = mapped_column(Integer, default=0)
+    sha256: Mapped[str] = mapped_column(String(64))
+    verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
 class LlmUsage(Base):
     __tablename__ = "llm_usage"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -199,3 +333,4 @@ class ActivityLog(Base):
     level: Mapped[str] = mapped_column(String(10), default="info")
     event: Mapped[str] = mapped_column(String(60))
     detail: Mapped[dict] = mapped_column(JSON, default=dict)
+

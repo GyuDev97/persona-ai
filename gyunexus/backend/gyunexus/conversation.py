@@ -75,6 +75,8 @@ class ConversationEngine:
         self.router = router
         self.bus, self.activity, self.settings = bus, activity, settings
         self.on_new_memories = on_new_memories
+        # 직전 능동 제안에 대한 반응 처리·문맥 연결 훅: (conversation_id, text) -> {"block","note","reaction","skip_routing","suggestion_id"} | None
+        self.proactive_hook: Callable[[int | None, str], dict | None] | None = None
         self._background: set[asyncio.Task] = set()
 
     async def _execute_plan(self, routing: Routing, trace: dict) -> tuple[dict, list[str]]:
@@ -111,7 +113,7 @@ class ConversationEngine:
         trace["steps"].append(f"도구 {len(routing.plan)}건 실행, {len(routing.skipped)}건 건너뜀")
         return facts, unavailable
 
-    def _system_prompt(self, query: str, facts: dict, missing: list[str], conditions: str | None) -> tuple[str, list[Memory]]:
+    def _system_prompt(self, query: str, facts: dict, missing: list[str], conditions: str | None, extra: str | None = None) -> tuple[str, list[Memory]]:
         ctx = self.context.snapshot()
         mems = self.memory.retrieve(query)
         parts = [
@@ -138,6 +140,8 @@ class ConversationEngine:
                 )
         if lines:
             parts.append("[최근 에이전트 토론 결과]\n" + "\n".join(lines[:3]))
+        if extra:
+            parts.append(extra)
         if conditions:
             parts.append(f"[이번 질문의 해석] {conditions}\n(이전 질문의 조건 중 바뀌지 않은 것은 유지된 값입니다)")
         if facts or missing:
@@ -197,12 +201,26 @@ class ConversationEngine:
             )
             hist_msgs = [{"role": m.role, "content": m.content} for m in history]
 
+        # 직전 능동 제안에 대한 반응(거절/재알림/중지 등)을 처리하고, 후속 질문이 제안의 근거를 이어받게 한다
+        pro = None
+        if self.proactive_hook is not None:
+            try:
+                pro = self.proactive_hook(conversation_id, text)
+            except Exception:
+                logger.exception("proactive hook failed")
+        if pro:
+            trace["proactive"] = {k: pro.get(k) for k in ("suggestion_id", "reaction", "note")}
+            trace["steps"].append(f"능동 제안 #{pro['suggestion_id']} 문맥 연결, 반응={pro.get('reaction')}")
+
         # 라우팅(대화 상태 + 이전 대화 기반 해석)과 도구 실행. 어떤 실패도 대화 자체를 막지 않는다.
         routing: Routing | None = None
         facts: dict = {}
         missing: list[str] = []
         try:
-            routing = await self.router.route(text, self.router.load_state(conversation_id), hist_msgs)
+            if pro and pro.get("skip_routing"):  # 거절·재알림·중지 발화는 날씨 조회 요청이 아니다("다음 주 금요일에 다시 알려줘")
+                routing = Routing("chat", "rules", "능동 제안에 대한 반응으로 처리하여 도구 조회를 건너뜀", None)
+            else:
+                routing = await self.router.route(text, self.router.load_state(conversation_id), hist_msgs)
             facts, missing = await self._execute_plan(routing, trace)
             trace["routing"] = routing.trace()
         except Exception:
@@ -214,7 +232,7 @@ class ConversationEngine:
         trace["missing_data"] = missing
 
         conditions = describe_conditions(routing.state) if routing and routing.state else None
-        system, mems = self._system_prompt(text, facts, missing, conditions)
+        system, mems = self._system_prompt(text, facts, missing, conditions, extra=pro.get("block") if pro else None)
         trace["memories"] = [{"id": m.id, "kind": m.kind, "content": m.content} for m in mems]
         trace["steps"].append(f"기억 {len(mems)}건 검색해 시스템 프롬프트에 포함")
         msgs = [{"role": "system", "content": system}, *hist_msgs, {"role": "user", "content": text}]

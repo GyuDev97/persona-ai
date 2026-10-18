@@ -24,6 +24,8 @@ from .proactive import ProactiveEngine
 from .routing import ConversationRouter
 from .scheduler import Scheduler
 from .tools import ToolRegistry, build_registry
+from .workers import WorkerService
+from .workers_api import router as workers_router
 
 FRONTEND_DIST = ROOT / "frontend" / "dist"
 
@@ -43,6 +45,7 @@ class Services:
     orchestrator: AgentOrchestrator
     proactive: ProactiveEngine
     scheduler: Scheduler
+    workers: WorkerService
     background: set = field(default_factory=set)
 
 
@@ -63,9 +66,13 @@ def build_services(
         db, llm, memory, context, policy, router, bus, activity, settings, on_new_memories=orchestrator.on_new_memories
     )
     proactive = ProactiveEngine(settings, db, llm, memory, context, policy, conversation, activity)
-    scheduler = Scheduler(settings, db, llm, orchestrator, proactive, activity)
+    conversation.proactive_hook = proactive.on_user_message
+    workers = WorkerService(settings, db, llm, policy, tools, bus, activity)
+    workers.notifier = proactive.on_worker_event  # 직원 업무 결과를 GYUVIS가 알린다
+    proactive.workers = workers
+    scheduler = Scheduler(settings, db, llm, orchestrator, proactive, activity, workers)
     return Services(
-        settings, db, bus, activity, llm, tools, policy, memory, context, conversation, orchestrator, proactive, scheduler
+        settings, db, bus, activity, llm, tools, policy, memory, context, conversation, orchestrator, proactive, scheduler, workers
     )
 
 
@@ -83,6 +90,7 @@ def create_app(
     async def lifespan(app: FastAPI):
         svc.db.create_all()
         svc.orchestrator.register_agents()
+        svc.workers.recover()  # 이전 실행이 중단된 채 남은 업무 실행을 정리(자동 재실행하지 않음)
         task = asyncio.create_task(svc.scheduler.run()) if run_scheduler else None
         svc.activity.record(
             "system", "startup", llm_configured=svc.llm.configured, model=svc.llm.model, autonomous=svc.scheduler.autonomous_enabled()
@@ -108,6 +116,7 @@ def create_app(
         return JSONResponse({"detail": str(e)}, status_code=502)
 
     app.include_router(router)
+    app.include_router(workers_router)
     if FRONTEND_DIST.is_dir():
         app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
     return app

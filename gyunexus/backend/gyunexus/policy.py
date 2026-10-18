@@ -29,6 +29,8 @@ class Policy:
         self.db = db
         self.bus = bus
         self.activity = activity
+        # 도구 레지스트리에 노출하지 않는 내부 승인 항목(예: AI 직원 결과물 확정)의 처리기: 이름 -> async (args, approve) -> result
+        self.internal: dict = {}
 
     def decide(self, tool_name: str) -> str:
         tool = self.registry.get(tool_name)
@@ -90,14 +92,19 @@ class Policy:
             a.decided_at = utcnow()
             if not approve:
                 a.status = "rejected"
-        if approve:
+        handler = self.internal.get(tool)
+        if approve or handler is not None:
             try:
-                result, status = await self.registry.execute(tool, args), "executed"
+                if handler is not None:  # 반려도 처리기에 알려 상태를 정리하게 한다
+                    result, status = await handler(args, approve, approval_id), "executed" if approve else "rejected"
+                else:
+                    result, status = await self.registry.execute(tool, args), "executed"
             except ToolError as e:
                 result, status = {"error": str(e)}, "failed"
-            with self.db.session() as s:
-                a = s.get(Approval, approval_id)
-                a.status, a.result = status, result
+            if status != "rejected":
+                with self.db.session() as s:
+                    a = s.get(Approval, approval_id)
+                    a.status, a.result = status, result
         self.activity.record(
             "policy", "approval.approved" if approve else "approval.rejected", id=approval_id, tool=tool
         )

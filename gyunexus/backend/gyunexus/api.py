@@ -19,10 +19,13 @@ from .models import (
     Idea,
     Memory,
     Message,
+    Reminder,
+    Suggestion,
     Topic,
     row_dict,
 )
 from .runtime_settings import set_value
+from .suggestions import TOPIC_LABELS, parse_quiet, set_prefs
 
 router = APIRouter(prefix="/api")
 
@@ -130,7 +133,7 @@ async def activity_heartbeat(request: Request):
     v = svc(request)
     hb = v.context.heartbeat()
     if hb["returned"] and v.llm.configured and v.scheduler.autonomous_enabled():
-        task = asyncio.create_task(v.proactive.maybe_suggest("user_returned"))
+        task = asyncio.create_task(v.proactive.on_event("dashboard_opened"))
         v.background.add(task)
         task.add_done_callback(v.background.discard)
     return hb
@@ -149,6 +152,55 @@ async def proactive_check(request: Request):
         raise HTTPException(503, "OPENAI_API_KEY is not set")
     msg = await v.proactive.maybe_suggest("manual_check")
     return {"suggested": msg is not None, "message": msg}
+
+
+class ProactiveSettingsIn(BaseModel):
+    enabled: bool | None = None
+    daily_max: int | None = Field(None, ge=0, le=20)
+    quiet_hours: str | None = Field(None, max_length=11)  # "23:00-07:00", 빈 문자열이면 조용한 시간 없음
+    topics: dict[str, bool] | None = None
+
+
+@router.get("/proactive/settings")
+async def proactive_settings(request: Request):
+    v = svc(request)
+    return {**v.proactive.prefs(), "topic_labels": TOPIC_LABELS}
+
+
+@router.put("/proactive/settings")
+async def put_proactive_settings(body: ProactiveSettingsIn, request: Request):
+    v = svc(request)
+    if body.quiet_hours not in (None, "") and parse_quiet(body.quiet_hours) is None:
+        raise HTTPException(422, "quiet_hours must look like 23:00-07:00 (or empty)")
+    if body.topics and set(body.topics) - set(TOPIC_LABELS):
+        raise HTTPException(422, f"unknown topic; allowed: {list(TOPIC_LABELS)}")
+    set_prefs(v.db, enabled=body.enabled, daily_max=body.daily_max, quiet_hours=body.quiet_hours, topics=body.topics)
+    v.activity.record("system", "proactive.settings_changed", **body.model_dump(exclude_none=True))
+    return {**v.proactive.prefs(), "topic_labels": TOPIC_LABELS}
+
+
+@router.get("/proactive/suggestions")
+async def proactive_suggestions(request: Request, limit: int = Query(50, ge=1, le=200)):
+    """제안 후보와 판단 기록(점수 구성, 게이트, 이유, 사용자 반응). 나중에 판단을 검증하는 용도."""
+    with svc(request).db.session() as s:
+        return [row_dict(r) for r in s.scalars(select(Suggestion).order_by(Suggestion.id.desc()).limit(limit))]
+
+
+@router.get("/proactive/reminders")
+async def proactive_reminders(request: Request):
+    with svc(request).db.session() as s:
+        return [row_dict(r) for r in s.scalars(select(Reminder).order_by(Reminder.due_at.desc()).limit(50))]
+
+
+@router.post("/proactive/reminders/{reminder_id}/cancel")
+async def cancel_reminder(reminder_id: int, request: Request):
+    with svc(request).db.session() as s:
+        r = s.get(Reminder, reminder_id)
+        if r is None:
+            raise HTTPException(404, "reminder not found")
+        if r.status == "pending":
+            r.status = "cancelled"
+        return row_dict(r)
 
 
 # ---------- 에이전트 / 토론 ----------

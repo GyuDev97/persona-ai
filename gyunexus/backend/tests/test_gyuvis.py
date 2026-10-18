@@ -1,4 +1,4 @@
-from conftest import wait_for
+from conftest import patch_sky, wait_for
 
 
 def test_chat_persists_history_and_learns_memory(client, provider):
@@ -81,6 +81,7 @@ def test_unknown_conversation_404(client):
 
 
 def test_proactive_suggestion_requires_presence_and_respects_cooldown(client, provider):
+    patch_sky(client)  # 관측 조건이 좋은 날로 고정(조건이 나쁘면 제안하지 않는 것이 새 동작)
     client.post("/api/memories", json={"kind": "interest", "content": "사용자는 은하수 촬영을 즐긴다", "importance": 9})
 
     assert client.post("/api/proactive/check").json()["suggested"] is False  # 아직 사용자가 접속하지 않음
@@ -99,6 +100,7 @@ def test_proactive_suggestion_requires_presence_and_respects_cooldown(client, pr
 
 
 def test_proactive_declines_when_model_says_no(client, provider):
+    patch_sky(client)
     provider.proactive_speak = False
     client.post("/api/memories", json={"kind": "interest", "content": "사용자는 은하수 촬영을 즐긴다"})
     client.post("/api/context/activity")
