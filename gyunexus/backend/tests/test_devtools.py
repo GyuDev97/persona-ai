@@ -733,3 +733,27 @@ def test_system_reads_required_files_when_the_model_goes_idle_or_declares_done_e
     script(provider, [{}, {}, {}])
     r3 = run_task(c, dev_task(c, w, checks={"require_changes": True}))
     assert r3["status"] == "failed"
+
+
+def test_model_sees_the_whole_code_it_read_not_just_the_first_lines(dev, provider):
+    c, p, w, root = dev
+    setup_llm(provider)
+    provider.overrides["worker_draft"] = nochange_report
+    (root / "app" / "long.py").write_bytes(("\n".join(f"x{i} = {i}" for i in range(1, 401)) + "\n").encode())  # 400줄 ≈ 4KB: 이전에는 2500자에서 잘렸다
+    st = script(provider, [{"calls": [call_step("code.read", path="app/long.py")]}, {"calls": [call_step("code.read", path="app/calc.py")]}, {"done": True}])
+    r = run_task(c, dev_task(c, w, checks={"require_tests": False, "require_changes": False}))
+    assert r["status"] == "completed", (r["status"], r["error"])
+    second = st["prompts"][1]
+    assert "[읽은 코드]" in second and "x399 = 399" in second and "x400 = 400" in second  # 파일 끝까지 보인다
+    assert second.count("x399 = 399") == 1  # 작업 로그에는 머리말만 있고 본문이 중복되지 않는다
+    draft_prompt = [m for purpose, m in provider.prompts if purpose == "worker_draft"][-1][-1]["content"]
+    assert "x399 = 399" in draft_prompt  # 최종 보고서의 근거에도 본문이 들어간다
+    # 읽은 코드가 상한(5만 자)을 넘으면 오래된 구간부터 생략되고, 생략된 구간은 같은 호출을 다시 할 수 있다
+    (root / "app" / "big.py").write_bytes(("\n".join(f"y{i} = '" + "z" * 120 + "'" for i in range(1, 401)) + "\n").encode())  # 400줄 ≈ 50KB
+    (root / "app" / "big2.py").write_bytes(("\n".join(f"w{i} = '" + "z" * 120 + "'" for i in range(1, 401)) + "\n").encode())
+    st2 = script(provider, [{"calls": [call_step("code.read", path="app/big.py")]}, {"calls": [call_step("code.read", path="app/big2.py")]},
+                            {"calls": [call_step("code.read", path="app/big.py")]}, {"done": True}])
+    r2 = run_task(c, dev_task(c, w, checks={"require_tests": False, "require_changes": False}))
+    assert r2["status"] == "completed"
+    assert "y1 = " not in st2["prompts"][2] and "w1 = " in st2["prompts"][2]  # big.py 는 생략됨
+    assert not [s for s in r2["steps"] if s["kind"] == "dev_tool" and s.get("error_kind") == "duplicate_call"]  # 생략된 구간의 재읽기는 중복으로 막지 않는다

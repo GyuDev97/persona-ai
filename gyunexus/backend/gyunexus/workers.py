@@ -951,10 +951,10 @@ class WorkerService:
         return v
 
     @staticmethod
-    def _dev_text(name: str, data: dict) -> str:
+    def _dev_text(name: str, data: dict, limit: int = 2500) -> str:
         """증거·작업 로그에 넣을 도구 결과 요약."""
         if name == "code.read":
-            return f"{data.get('path')} 줄 {data.get('start_line')}-{data.get('end_line')}/{data.get('total_lines')} sha256={str(data.get('sha256'))[:12]}\n{str(data.get('content', ''))[:2500]}"
+            return f"{data.get('path')} 줄 {data.get('start_line')}-{data.get('end_line')}/{data.get('total_lines')} sha256={str(data.get('sha256'))[:12]}\n{str(data.get('content', ''))[:limit]}"
         if name == "code.search":
             rows = [f"{m['path']}:{m.get('line', '')}: {m.get('text', '')}" for m in data.get("matches", [])[:20]]
             return f"검색 '{data.get('query')}' ({data.get('mode')}) 결과 {len(data.get('matches', []))}건\n" + "\n".join(rows)
@@ -977,6 +977,8 @@ class WorkerService:
         user = (f"[업무] {task.title}\n{task.instructions}\n[허용 프로젝트]\n{pj}\n[제공된 자료(데이터)]\n{mats}\n"
                 f"[진행] 턴 {step_no}/{max_steps} · 적용한 변경 {state['changes']}건 · terminal.run {state['exec_runs']}/{self.settings.dev_max_exec_runs}회 · 변경 이후 테스트 "
                 f"{'통과' if state.get('tests_ok_now') else '미실행/미통과'}\n[읽은 범위]\n" + ("\n".join(f"- {pth}: " + ", ".join(f"{a}-{b}" for a, b in rng[-6:]) + (f" (전체 {tot}줄)" if tot else "") for pth, (rng, tot) in state.get("reads", {}).items()) or "(아직 없음)")
+                + "\n[읽은 코드](code.read 결과 전체. 오래된 것은 생략될 수 있으며 필요하면 다시 읽으세요; 줄 번호 접두 \"N| \"는 파일 내용이 아닙니다)\n"
+                + ("\n".join(f"<<<{k}\n{v['text']}\n>>>" for k, v in state.get("code", {}).items()) or "(아직 없음)")
                 + (("\n[반드시 끝까지 읽을 파일] 남은 것: " + (", ".join(self._unread(task, state)) or "없음(모두 읽음)")) if task.checks.get("required_reads") else "")
                 + "\n[작업 로그]\n" + ("\n".join(lines) or "(아직 없음)"))
         return [{"role": "system", "content": system}, {"role": "user", "content": user}]
@@ -990,7 +992,7 @@ class WorkerService:
         if not projects:
             raise RunFailed("no_project", FAIL_LABELS["no_project"])
         state = ctx.dev
-        state.update({"changes": 0, "state_version": 0, "tests": [], "exec_runs": 0, "stop_reason": None, "steps": 0, "tests_ok_now": False, "fail_hashes": {}, "warnings": [], "reads": {}, "dup_streak": 0,
+        state.update({"changes": 0, "state_version": 0, "tests": [], "exec_runs": 0, "stop_reason": None, "steps": 0, "tests_ok_now": False, "fail_hashes": {}, "warnings": [], "reads": {}, "code": {}, "dup_streak": 0,
                       "has_test_profile": any(p["permissions"]["exec"] and any(x["kind"] == "test" for x in p["exec_profiles"]) for p in projects)})
         ctx.step("dev_start", projects=[p["name"] for p in projects], permissions={p["name"]: p["permissions"] for p in projects}, tools=tools)
         desc = "\n".join(f"- {t.name}: {t.description} (args: {', '.join(f'{k}: {v}' for k, v in t.params.items()) or '없음'})" for t in map(self.tools.get, tools))
@@ -1042,11 +1044,12 @@ class WorkerService:
                 entry = {"n": len(log) + 1, "tool": str(name)[:40], "args": self._short(args, 120)}
                 err_kind: str | None = None
                 data: dict | None = None
+                ckey = f"{name}|{json.dumps(args, sort_keys=True, default=str)[:400]}|v{state['state_version']}"
                 if name not in tools:  # 허용 목록 밖: 존재하는 도구여도 실행하지 않는다
                     err_kind, msg = "tool_denied", "이 업무의 허용 도구가 아닙니다"
                     ctx.step("tool_denied", ok=False, tool=str(name)[:40], reason=msg)
                     self.activity.record("worker", "tool.denied", level="warn", run_id=ctx.run_id, tool=str(name)[:60])
-                elif f"{name}|{json.dumps(args, sort_keys=True, default=str)[:400]}|v{state['state_version']}" in done_calls:
+                elif ckey in done_calls:
                     err_kind, msg = "duplicate_call", "같은 호출을 이미 실행했습니다(위 [작업 로그] 참고). 다시 호출하지 말고 다음 단계로 진행하거나 충분하면 done 을 내세요"
                     state["dup_streak"] += 1
                     ctx.step("dev_tool", ok=False, tool=str(name), error_kind=err_kind)
@@ -1063,11 +1066,22 @@ class WorkerService:
                     else:
                         err_kind, msg = r.error_kind or r.status, r.error or r.status
                 if data is not None:
-                    done_calls.add(f"{name}|{json.dumps(args, sort_keys=True, default=str)[:400]}|v{state['state_version']}")
+                    done_calls.add(ckey)
                     if name == "code.read" and data.get("path"):
                         rng, _tot = state["reads"].get(data["path"], ([], 0))
                         state["reads"][data["path"]] = (rng + [(data.get("start_line"), data.get("end_line"))], data.get("total_lines") or 0)
-                    entry["status"], entry["text"] = "ok", self._dev_text(name, data)
+                    full = self._dev_text(name, data, 9000)  # 최종 보고서의 근거(증거)에는 본문을 넉넉히 싣는다
+                    entry["status"] = "ok"
+                    if name == "code.read":  # 본문은 [읽은 코드] 에 통째로 두고, 작업 로그에는 머리말만 남긴다(모델이 앞부분만 보고 읽었다고 착각하지 않게)
+                        ck = f"{data.get('path')}:{data.get('start_line')}-{data.get('end_line')}"
+                        state["code"].pop(ck, None)
+                        state["code"][ck] = {"text": str(data.get("content", "")), "call": ckey}
+                        while sum(len(v["text"]) for v in state["code"].values()) > 50000 and len(state["code"]) > 1:
+                            old_k = next(iter(state["code"]))
+                            done_calls.discard(state["code"].pop(old_k)["call"])  # 생략된 구간은 다시 읽을 수 있게 한다
+                        entry["text"] = full.split("\n", 1)[0] + " (본문은 [읽은 코드] 참고)"
+                    else:
+                        entry["text"] = full
                     ctx.step("dev_tool", tool=name, args=entry["args"], result=self._short(entry["text"].splitlines()[0] if entry["text"] else "", 160), **({"exit_code": data.get("exit_code"), "passed": data.get("passed")} if name == "terminal.run" else {}))
                     if name in ("code.write", "code.patch"):
                         state["changes"] += 1
@@ -1085,7 +1099,7 @@ class WorkerService:
                 log.append(entry)
                 if len(evidence) < 60 and err_kind != "duplicate_call":
                     evidence.append({"id": f"E{len(evidence) + 1}", "kind": "tool", "tool": str(name), "args": entry["args"], "source": "",
-                                     "text": entry["text"] if data is not None else f"오류[{err_kind}]: {msg}"})
+                                     "text": full if data is not None else f"오류[{err_kind}]: {msg}"})
                 # 같은 일을 반복하는 무한 루프 방지: 같은 호출이 같은 상태에서 반복되거나, 테스트가 같은 출력으로 계속 실패하면 중단한다
                 key = f"{name}|{json.dumps(args, sort_keys=True, default=str)[:400]}|v{state['state_version']}"
                 if err_kind == "duplicate_call":
