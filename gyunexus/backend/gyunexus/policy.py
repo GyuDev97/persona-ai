@@ -36,15 +36,30 @@ class Policy:
         tool = self.registry.get(tool_name)
         if tool is None:
             return "deny"
+        if tool.risk == "project":
+            return "project"  # 프로젝트 도구: 허용 여부는 직원의 프로젝트 권한(도구 안에서 검사)이 정한다
         return "allow" if tool.risk == "read" else "approval"
 
     async def invoke(
-        self, name: str, args: dict[str, Any], *, actor: str, reason: str = "", debate_id: int | None = None
+        self, name: str, args: dict[str, Any], *, actor: str, reason: str = "", debate_id: int | None = None, ctx: dict | None = None
     ) -> InvokeResult:
         verdict = self.decide(name)
         if verdict == "deny":
             self.activity.record("policy", "tool.denied", level="warn", agent_id=actor, debate_id=debate_id, tool=name)
             return InvokeResult("denied", error=f"unknown tool: {name}")
+        if verdict == "project":
+            # ctx(직원·실행 ID)는 서버가 넣는 값이다. 모델이 만든 인자에 같은 이름(_로 시작)이 있으면 위조 시도이므로 거부한다.
+            if not ctx or any(str(k).startswith("_") for k in args):
+                self.activity.record("policy", "tool.denied", level="warn", agent_id=actor, tool=name, reason="project tool needs server context")
+                return InvokeResult("denied", error="프로젝트 도구는 직원 업무 실행 안에서만 쓸 수 있습니다", error_kind="no_context")
+            try:
+                data = await self.registry.execute(name, {**args, "_ctx": ctx})
+            except Exception as e:
+                kind = e.kind if isinstance(e, ToolError) else "internal"
+                self.activity.record("tool", "tool.error", level="warn", agent_id=actor, tool=name, error_kind=kind, error=str(e) if isinstance(e, ToolError) else type(e).__name__)
+                return InvokeResult("error", error=str(e) if isinstance(e, ToolError) else type(e).__name__, error_kind=kind)
+            self.activity.record("tool", "tool.ok", agent_id=actor, tool=name, args={k: (v if not isinstance(v, str) or len(v) < 200 else v[:200] + "…") for k, v in args.items()})
+            return InvokeResult("ok", data=data)
         if verdict == "approval":
             return InvokeResult(
                 "approval_required", approval_id=self.request_approval(name, args, actor, reason, debate_id)

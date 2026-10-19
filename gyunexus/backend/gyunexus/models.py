@@ -448,6 +448,57 @@ class WorkflowStep(Base):
     ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
+class DevProject(Base):
+    """AI 개발 직원이 접근할 수 있는 로컬 프로젝트. 경로는 사용자가 등록하고(코드에 하드코딩하지 않음), 직원별 권한은 WorkerProjectGrant 가 정한다."""
+
+    __tablename__ = "dev_projects"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(80), unique=True)
+    root_path: Mapped[str] = mapped_column(String(1000))  # 등록 시 실제 경로(심볼릭 링크 해석 후)로 저장
+    description: Mapped[str] = mapped_column(Text, default="")
+    allow_read: Mapped[bool] = mapped_column(Boolean, default=True)
+    allow_write: Mapped[bool] = mapped_column(Boolean, default=False)
+    allow_exec: Mapped[bool] = mapped_column(Boolean, default=False)
+    allow_git: Mapped[bool] = mapped_column(Boolean, default=True)
+    # 실행 프로파일: [{name, kind(test|build|lint|other), argv[list], timeout_seconds, allow_args(bool), allowed_flags[list]}]. AI 는 이름으로만 고른다(임의 명령 불가)
+    exec_profiles: Mapped[list] = mapped_column(JSON, default=list)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class WorkerProjectGrant(Base):
+    """직원별 프로젝트 권한. 실제 권한은 프로젝트의 allow_* 와 이 값의 교집합이다."""
+
+    __tablename__ = "worker_project_grants"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    worker_id: Mapped[int] = mapped_column(ForeignKey("workers.id", ondelete="CASCADE"), index=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("dev_projects.id", ondelete="CASCADE"), index=True)
+    can_read: Mapped[bool] = mapped_column(Boolean, default=True)
+    can_write: Mapped[bool] = mapped_column(Boolean, default=False)
+    can_exec: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class ProjectChange(Base):
+    """개발 직원이 프로젝트 파일에 적용한 변경 기록(변경 전후 해시, diff). 실행 기록과 함께 남아 나중에 검토할 수 있다."""
+
+    __tablename__ = "project_changes"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(Integer, index=True)
+    worker_id: Mapped[int] = mapped_column(Integer, index=True)
+    run_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    path: Mapped[str] = mapped_column(String(500))  # 프로젝트 루트 기준 상대 경로(/ 구분)
+    action: Mapped[str] = mapped_column(String(10))  # create | modify
+    tool: Mapped[str] = mapped_column(String(20))  # code.write | code.patch
+    before_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    after_sha256: Mapped[str] = mapped_column(String(64))
+    before_text: Mapped[str | None] = mapped_column(Text, nullable=True)  # 변경 전 내용(상한 이하일 때만 보관: 복구·diff 용)
+    diff: Mapped[str] = mapped_column(Text, default="")
+    added_lines: Mapped[int] = mapped_column(Integer, default=0)
+    removed_lines: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
 class LlmUsage(Base):
     __tablename__ = "llm_usage"
     id: Mapped[int] = mapped_column(primary_key=True)

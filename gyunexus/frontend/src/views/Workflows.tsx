@@ -12,6 +12,7 @@ const ERR: Record<string, string> = {
   llm_error: "LLM 호출 실패", timeout: "제한 시간 초과", verification_failed: "결과물 검증 실패", no_input: "필요한 자료 없음", interrupted: "서버 재시작으로 중단",
   rejected: "승인 반려", cancelled: "취소됨", workflow_budget: "워크플로 예산 초과(시작 전 차단)", input_unavailable: "선행 결과물을 입력으로 연결할 수 없음",
   budget_exceeded: "업무 예산 초과", daily_budget: "오늘 자율 예산 소진", disabled: "직원·업무 비활성화", internal: "내부 오류", artifact_changed: "입력 결과물이 변경됨",
+  tests_failed: "테스트 실패(코드는 수정됨)", changes_failed: "코드 변경 실패", dev_incomplete: "개발 작업 미완료(한도·반복 오류)", no_project: "부여된 프로젝트 없음",
 };
 const usd = (n: number) => `$${n.toFixed(4)}`;
 const fmtMax = (n: number) => (Number.isInteger(n) ? n.toFixed(1) : String(n));

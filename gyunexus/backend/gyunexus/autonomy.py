@@ -152,9 +152,12 @@ class AutonomyService:
                         reasons.append(f"직원 '{w.name}'이(가) 비활성 상태")
                     if t.status != "active":
                         reasons.append(f"업무 '{t.title}'이(가) 일시정지 상태")
-                    if w.permission_level != "read_only":
+                    if w.permission_level == "developer":  # 개발 직원: 사전 부여된 프로젝트 범위 안의 작업은 자동 진행(범위 검사는 도구가 한다)
+                        if self.workers.dev is None or not self.workers.dev.worker_projects(w.id):
+                            reasons.append(f"개발 직원 '{w.name}'에게 부여된 프로젝트가 없음")
+                    elif w.permission_level != "read_only":
                         reasons.append(f"직원 '{w.name}'은(는) 쓰기 권한(승인 후 쓰기)이 있는 직원")
-                    risky = [n for n in t.tools if n in w.allowed_tools and (self.workers.tools.get(n) is None or self.workers.tools.get(n).risk != "read")]
+                    risky = [n for n in t.tools if n in w.allowed_tools and (self.workers.tools.get(n) is None or self.workers.tools.get(n).risk not in ("read", "project"))]
                     if risky:
                         reasons.append(f"읽기 전용이 아닌 도구 사용: {', '.join(risky)}")
                 out.append({"key": st.key, "title": st.title, "requires_approval": bool(t and t.requires_approval), "blockers": reasons})

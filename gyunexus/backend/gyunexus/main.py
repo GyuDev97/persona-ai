@@ -18,10 +18,12 @@ from .config import ROOT, Settings
 from .context import ContextManager
 from .conversation import ConversationEngine
 from .db import Database
+from .devtools import DevService
 from .events import EventBus
 from .llm import BudgetExceeded, LLMError, LLMGateway, LLMNotConfigured, LLMProvider, build_gateway
 from .memory import MemoryManager
 from .policy import Policy
+from .projects_api import router as projects_router
 from .proactive import ProactiveEngine
 from .routing import ConversationRouter
 from .scheduler import Scheduler
@@ -52,6 +54,7 @@ class Services:
     workers: WorkerService
     workflows: WorkflowService
     autonomy: AutonomyService
+    dev: DevService
     background: set = field(default_factory=set)
 
 
@@ -63,6 +66,8 @@ def build_services(
     activity = Activity(db, bus)
     llm = build_gateway(settings, db, provider)
     tools = build_registry(settings, http_transport)
+    dev = DevService(settings, db, activity)
+    dev.register(tools)  # project.* / code.* / terminal.run / git.* : 기존 Tool Registry 에 등록(프로젝트 권한은 도구가 직접 검사)
     policy = Policy(tools, db, bus, activity)
     memory = MemoryManager(db, llm, activity, settings.memory_top_k)
     context = ContextManager(db, settings)
@@ -75,13 +80,14 @@ def build_services(
     conversation.proactive_hook = proactive.on_user_message
     workers = WorkerService(settings, db, llm, policy, tools, bus, activity)
     workers.notifier = proactive.on_worker_event  # 직원 업무 결과를 GYUVIS가 알린다
+    workers.dev = dev
     proactive.workers = workers
     workflows = WorkflowService(settings, db, llm, workers, bus, activity)
     autonomy = AutonomyService(settings, db, workflows, workers, policy, bus, activity)
     proactive.on_delivered = autonomy.on_proactive  # 능동 제안 전달을 상시 자율 운영의 트리거로 쓴다
     scheduler = Scheduler(settings, db, llm, orchestrator, proactive, activity, workers, workflows, autonomy)
     return Services(
-        settings, db, bus, activity, llm, tools, policy, memory, context, conversation, orchestrator, proactive, scheduler, workers, workflows, autonomy
+        settings, db, bus, activity, llm, tools, policy, memory, context, conversation, orchestrator, proactive, scheduler, workers, workflows, autonomy, dev
     )
 
 
@@ -130,6 +136,7 @@ def create_app(
     app.include_router(workers_router)
     app.include_router(workflows_router)
     app.include_router(autonomy_router)
+    app.include_router(projects_router)
     if FRONTEND_DIST.is_dir():
         app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
     return app

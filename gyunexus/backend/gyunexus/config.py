@@ -77,6 +77,18 @@ class Settings(BaseSettings):
     autonomy_request_max_retries: int = 1  # 요청형(대화·화면) 자율 실행의 자동 재시도 상한
     autonomy_missed_grace_minutes: int = 60  # 한 번만 실행하는 트리거가 이 시간 넘게 늦으면 실행하지 않고 건너뜀으로 기록
 
+    # AI 개발 직원 도구(devtools.py)
+    dev_read_max_lines: int = 400  # code.read 1회 최대 줄 수
+    dev_write_max_bytes: int = 500_000  # code.write/patch 결과 파일 크기 상한
+    dev_search_max_files: int = 3000
+    dev_search_max_results: int = 50
+    dev_exec_max_seconds: int = 300  # terminal.run 프로파일 제한 시간의 상한
+    dev_exec_output_bytes: int = 20_000  # stdout/stderr 각각 보관하는 최대 크기
+    dev_max_steps: int = 30  # 개발 업무 1회의 도구 호출 루프 상한(업무의 max_tool_calls 와 작은 값 적용)
+    dev_max_exec_runs: int = 8  # 개발 업무 1회에서 terminal.run 을 호출할 수 있는 최대 횟수
+    dev_repeat_limit: int = 3  # 같은 호출이 같은 오류로 반복되면 중단하는 횟수
+    git_executable: str = ""  # 비우면 PATH 에서 찾는다
+
     # 뉴스 수집 도구(rss.fetch / news.search / web.fetch)
     web_fetch_max_bytes: int = 1_500_000  # 원문 HTML 응답 크기 상한
     web_fetch_timeout_seconds: float = 10.0

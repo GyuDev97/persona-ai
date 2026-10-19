@@ -142,14 +142,14 @@ export interface SuggestionRow {
 export interface ReminderRow { id: number; topic_key: string; due_at: string; status: string; attempts: number; note: string }
 export interface WorkerRow {
   id: number; name: string; role: string; description: string; model: string; allowed_tools: string[];
-  permission_level: "read_only" | "write_with_approval"; max_cost_usd: number; enabled: boolean;
+  permission_level: "read_only" | "write_with_approval" | "developer"; max_cost_usd: number; enabled: boolean;
   task_count: number; awaiting_approval: number; running: number; state: "idle" | "working" | "waiting_approval" | "disabled";
   last_run: { id: number; status: string; ended_at: string | null } | null;
 }
 export interface WorkerTaskRow {
   id: number; worker_id: number; title: string; instructions: string; completion_criteria: string[];
-  checks: { min_chars?: number; required_sections?: string[]; required_keys?: string[]; max_age_hours?: number; min_items?: number };
-  max_tool_calls: number; tool_rounds: number; report_kind: "generic" | "news"; mode: "manual" | "scheduled";
+  checks: { min_chars?: number; required_sections?: string[]; required_keys?: string[]; max_age_hours?: number; min_items?: number; require_changes?: boolean; require_tests?: boolean; required_reads?: string[]; min_files_read?: number };
+  max_tool_calls: number; tool_rounds: number; report_kind: "generic" | "news" | "dev"; mode: "manual" | "scheduled";
   interval_minutes: number | null; tools: string[]; max_seconds: number; max_cost_usd: number; output_type: "markdown" | "text" | "json";
   requires_approval: boolean; allow_agents: boolean; requires_materials: boolean; materials: { name: string; content: string }[];
   input_files: string[]; status: "active" | "paused"; next_run_at: string | null; last_run_at: string | null;
@@ -167,8 +167,19 @@ export interface WorkerRunRow {
 }
 export interface WorkerOptions {
   models: string[]; output_types: string[]; permission_levels: string[]; min_interval_minutes: number;
-  tools: { name: string; description: string; risk: string; available_read_only: boolean; available_with_write: boolean; unavailable_reason: string }[];
+  tools: { name: string; description: string; risk: string; group: string; available_read_only: boolean; available_with_write: boolean; available_developer: boolean; unavailable_reason: string }[];
   templates: { id: string; label: string; worker: Partial<WorkerRow>; task: Partial<WorkerTaskRow> }[];
+}
+export interface ExecProfile { name: string; kind: "test" | "build" | "lint" | "other"; argv: string[]; timeout_seconds: number; allow_args: boolean; allowed_flags: string[] }
+export interface ProjectRow {
+  id: number; name: string; root_path: string; description: string; allow_read: boolean; allow_write: boolean; allow_exec: boolean; allow_git: boolean;
+  exec_profiles: ExecProfile[]; enabled: boolean; worker_count: number; change_count: number; created_at: string; updated_at: string;
+}
+export interface ProjectGrant { project_id: number; can_read: boolean; can_write: boolean; can_exec: boolean }
+export interface WorkerProjects { grants: ProjectGrant[]; effective: { project_id: number; name: string; root_path: string; permissions: { read: boolean; write: boolean; exec: boolean; git: boolean } }[] }
+export interface ProjectChangeRow {
+  id: number; project_id: number; worker_id: number; run_id: number | null; path: string; action: "create" | "modify"; tool: string; before_sha256: string | null; after_sha256: string;
+  diff: string; added_lines: number; removed_lines: number; created_at: string;
 }
 export interface Topic { id: number; title: string; source: string; status: string; debate_id: number | null }
 
