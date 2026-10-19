@@ -36,7 +36,7 @@ export default function Workers({ version, nav }: { version: number; nav: Nav })
   const [listError, setListError] = useState<string | null>(null);
   const tpl = opts.data?.templates[0];
   const openNew = (from?: Partial<WorkerForm>) => setEditor({ form: { ...emptyWorker(opts.data), ...from } });
-  const toForm = (w: WorkerRow | WorkerDetailT): WorkerForm => ({ name: w.name, role: w.role, description: w.description, model: w.model, permission_level: w.permission_level, max_cost_usd: w.max_cost_usd, allowed_tools: w.allowed_tools, enabled: w.enabled });
+  const toForm = (w: WorkerRow | WorkerDetailT): WorkerForm => ({ name: w.name, role: w.role, description: w.description, model: opts.data && !opts.data.models.includes(w.model) ? opts.data.models[0] : w.model, /* 서버가 모델을 바꾼 뒤에도 옛 모델 값을 보내지 않는다(드롭다운에 보이는 값과 같게) */ permission_level: w.permission_level, max_cost_usd: w.max_cost_usd, allowed_tools: w.allowed_tools, enabled: w.enabled });
   const setEnabled = async (w: WorkerRow, enabled: boolean) => {
     try { await api(`/workers/${w.id}`, { method: "PUT", json: { enabled } }); setListError(null); } catch (e) { setListError((e as Error).message); }
     list.reload(); setBump((b) => b + 1);

@@ -389,6 +389,8 @@ class WorkerService:
         if not isinstance(desc, str) or len(desc) > 4000:
             errors.append("설명은 4000자 이하여야 합니다")
         model = merged.get("model") or self.llm.model
+        if current is not None and model == current.model and model != self.llm.model:
+            model = self.llm.model  # 서버의 LLM 모델이 바뀐 뒤 옛 모델이 저장된 직원을 수정하면 현재 모델로 옮긴다(실행은 항상 현재 모델을 쓴다)
         if model not in [self.llm.model]:
             errors.append(f"사용할 수 없는 모델입니다: {model} (사용 가능: {self.llm.model})")
         level = merged.get("permission_level", "read_only")
@@ -714,7 +716,8 @@ class WorkerService:
 
     def _estimate(self, messages: list[dict], max_tokens: int) -> float:
         chars = sum(len(m["content"]) for m in messages)
-        return (chars / 1.5 * self.settings.price_in_per_m + max_tokens * self.settings.price_out_per_m) / 1_000_000
+        out_tokens = max_tokens + (self.settings.openai_reasoning_headroom if self.settings.reasoning_model else 0)  # 추론 토큰도 출력으로 과금된다
+        return (chars / 1.5 * self.settings.price_in_per_m + out_tokens * self.settings.price_out_per_m) / 1_000_000
 
     async def _llm(self, ctx: RunCtx, purpose: str, messages: list[dict], max_tokens: int) -> dict:
         est = self._estimate(messages, max_tokens)
@@ -1006,16 +1009,24 @@ class WorkerService:
             out = await self._llm(ctx, "worker_dev_step", self._dev_messages(task, worker, desc, projects, materials, log, step_no, max_steps, state), 1400)
             state["steps"] = step_no
             calls = out.get("calls") if isinstance(out.get("calls"), list) else []
+            pending = self._unread(task, state)
+            auto = self._auto_reads(pending, state, projects) if not calls else []  # 모델이 읽기를 진행하지 않을 때 시스템이 대신 읽는다
             if out.get("done") is True and not calls:
-                pending = self._unread(task, state)
                 if pending and nudges < 2:  # 필수 파일을 다 읽기 전의 완료 선언은 받아들이지 않고 돌려보낸다
                     nudges += 1
                     log.append({"n": len(log) + 1, "tool": "(완료 선언)", "args": {}, "status": "거부", "text": f"아직 끝까지 읽지 않은 필수 파일이 있습니다: {pending[:6]}. code.read 의 start_line/end_line 으로 끝까지 읽은 뒤 완료하세요"})
                     ctx.step("dev_tool", ok=False, tool="(done)", error_kind="required_reads_pending", pending=pending[:6])
                     continue
-                state["stop_reason"] = "done"
-                ctx.step("dev_done", note=redact(str(out.get("summary", ""))[:300]), steps=step_no)
-                break
+                if pending and auto:
+                    calls = auto
+                    ctx.step("dev_auto_read", note="모델이 필수 파일을 읽지 않고 완료를 선언해 시스템이 대신 읽음", files=[c["args"]["path"] for c in auto])
+                else:
+                    state["stop_reason"] = "done"
+                    ctx.step("dev_done", note=redact(str(out.get("summary", ""))[:300]), steps=step_no)
+                    break
+            if not calls and auto:
+                calls = auto
+                ctx.step("dev_auto_read", note="모델이 도구를 호출하지 않아 시스템이 필수 파일을 대신 읽음", files=[c["args"]["path"] for c in auto])
             if not calls:
                 idle += 1
                 if idle >= 2:
@@ -1130,6 +1141,21 @@ class WorkerService:
                 out.append(path)
         return out
 
+    def _auto_reads(self, pending: list[str], state: dict, projects: list[dict]) -> list[dict]:
+        """필수 파일 중 아직 덮이지 않은 첫 구간을 읽는 code.read 호출(파일당 1회, 최대 3개). 프로젝트가 하나일 때만 만든다(어느 프로젝트인지 모호하지 않도록)."""
+        if len(projects) != 1 or not pending:
+            return []
+        cap = self.settings.dev_read_max_lines
+        out = []
+        for path in pending[:3]:
+            rng, total = state.get("reads", {}).get(path, ([], 0))
+            covered = set()
+            for a, b in rng:
+                covered.update(range(int(a or 1), int(b or 0) + 1))
+            start = next((i for i in range(1, (total or 1) + 1) if i not in covered), 1)
+            out.append({"tool": "code.read", "args": {"project": projects[0]["name"], "path": path, "start_line": start, "end_line": start + cap - 1}})
+        return out
+
     def _dev_checks(self, task: WorkerTask, ctx: RunCtx, draft: dict | None = None, content: str = "", evidence: list[dict] | None = None) -> list[dict]:
         """개발 업무의 완료 판정(코드). 모델의 선언이 아니라 기록된 변경·테스트·읽은 범위로 정한다."""
         s = ctx.dev
@@ -1153,7 +1179,7 @@ class WorkerService:
             if absent.search(content or "") and files_read < 3 and s.get("changes", 0) == 0:
                 s["warnings"].append(f"읽은 파일이 {files_read}개뿐인데 '없음·미구현'류의 결론이 있습니다. 충분히 읽지 않고 내린 결론일 수 있습니다")
         reason = s.get("stop_reason")
-        partial_ok = reason in ("no_progress", "max_steps", "budget_reserved") and s.get("changes", 0) == 0 and not task.checks.get("require_changes") and not task.checks.get("require_tests")
+        partial_ok = reason in ("no_progress", "max_steps", "budget_reserved", "idle") and s.get("changes", 0) == 0 and not task.checks.get("require_changes") and not task.checks.get("require_tests")
         out.append({"name": "dev_loop", "passed": reason == "done" or partial_ok, "detail": "작업 루프가 정상적으로 끝남" if reason == "done" else f"분석이 도중에 끝남({reason}) — 코드 변경이 없어 부분 결과로 보고(경고)" if partial_ok else f"작업이 끝나지 못함({reason}: 턴 {s.get('steps')}, 변경 {s.get('changes')}건)"})
         if partial_ok:
             s["warnings"].append(f"분석이 도중에 멈췄습니다({reason}). 읽지 못한 부분이 있을 수 있으니 결과를 그대로 신뢰하지 말고 검토하세요")

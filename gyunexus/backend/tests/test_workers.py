@@ -668,3 +668,14 @@ def test_existing_features_untouched_by_workers(client):
     client.app_state.tools.get("notes.write")  # 직원 확정용 내부 승인 항목은 도구 목록에 노출되지 않는다
     assert client.app_state.tools.get("worker.finalize") is None
     assert "worker.finalize" not in client.app_state.tools.describe()
+
+
+def test_editing_a_worker_saved_with_an_old_model_migrates_it_to_the_current_model(client):
+    w = client.post("/api/workers", json=worker_body(name="옛 모델 직원")).json()
+    with client.app_state.db.session() as s:  # 서버 모델이 바뀌기 전에 저장된 직원
+        from gyunexus.models import Worker
+        s.get(Worker, w["id"]).model = "gpt-4o-mini"
+    r = client.put(f"/api/workers/{w['id']}", json={"name": "옛 모델 직원", "model": "gpt-4o-mini", "description": "수정"})
+    assert r.status_code == 200 and r.json()["model"] == "fake-model" and r.json()["description"] == "수정"
+    # 아무 직원이나 존재하지 않는 모델로 바꾸는 것은 여전히 거부된다
+    assert client.put(f"/api/workers/{w['id']}", json={"model": "gpt-4o-mini"}).status_code == 422

@@ -667,11 +667,15 @@ def test_required_reads_are_enforced_before_done_and_unread_analysis_fails(dev, 
     provider.overrides["worker_draft"] = nochange_report
     (root / "app" / "long.py").write_bytes(("\n".join(f"x{i} = {i}" for i in range(1, 701)) + "\n").encode())  # 700줄: 한 번에(400줄) 다 못 읽는다
     checks = {"require_tests": False, "require_changes": False, "required_reads": ["app/calc.py", "app/long.py"], "min_files_read": 2}
-    # 아무 것도 읽지 않고 완료를 선언하면 두 번 돌려보내고, 그래도 안 읽으면 실패한다
-    st = script(provider, [{"done": True}, {"done": True}, {"done": True}])
+    # 아무 것도 읽지 않고 완료를 선언하면 두 번 돌려보내고, 그래도 안 읽으면 시스템이 대신 끝까지 읽은 뒤 완료한다
+    st = script(provider, [{"done": True}] * 8)
     r = run_task(c, dev_task(c, w, checks=checks))
-    assert r["status"] == "failed" and r["error_kind"] == "dev_incomplete" and "app/long.py" in r["error"]
-    assert "거부" in st["prompts"][1] and "필수 파일" in st["prompts"][1] and st["n"] == 3
+    assert r["status"] == "completed", (r["status"], r["error"])
+    assert "거부" in st["prompts"][1] and "필수 파일" in st["prompts"][1] and any(s["kind"] == "dev_auto_read" for s in r["steps"])
+    # 읽을 수 없는 필수 파일(존재하지 않음)은 시스템이 대신 읽으려 해도 채울 수 없으므로 실패한다
+    script(provider, [{"done": True}] * 10)
+    r_bad = run_task(c, dev_task(c, w, checks=checks | {"required_reads": ["app/calc.py", "app/missing.py"]}))
+    assert r_bad["status"] == "failed" and r_bad["error_kind"] == "dev_incomplete" and "app/missing.py" in r_bad["error"]
     # 끝까지(줄 범위를 이어서) 읽으면 완료된다. 남은 필수 파일은 프롬프트에 계속 보인다
     st2 = script(provider, [{"calls": [call_step("code.read", path="app/calc.py"), call_step("code.read", path="app/long.py", start_line=1, end_line=400)]},
                             {"done": True},  # 아직 long.py 를 다 읽지 않았으므로 거부된다
@@ -704,3 +708,28 @@ def test_absence_claims_from_zero_search_results_get_a_warning_and_no_auto_appro
     assert any("검색 결과 0건" in x and "부재" in x for x in r["verification"]["warnings"])  # 자동 승인 대상에서 빠진다
     # 읽은 파일이 적은데 '없음' 결론이 있으면 경고
     assert any("읽은 파일이" in x for x in r["verification"]["warnings"])
+
+
+def test_system_reads_required_files_when_the_model_goes_idle_or_declares_done_early(dev, provider):
+    c, p, w, root = dev
+    setup_llm(provider)
+    provider.overrides["worker_draft"] = nochange_report
+    (root / "app" / "long.py").write_bytes(("\n".join(f"x{i} = {i}" for i in range(1, 701)) + "\n").encode())
+    checks = {"require_tests": False, "require_changes": False, "required_reads": ["app/calc.py", "app/long.py"]}
+    # 모델이 도구도 완료 선언도 내지 않는(빈 JSON) 약한 응답: 시스템이 필수 파일을 대신 끝까지 읽고, 그 뒤 모델이 done 을 낸다
+    st = script(provider, [{}, {}, {}, {}, {"done": True}])
+    r = run_task(c, dev_task(c, w, checks=checks))
+    assert r["status"] == "completed", (r["status"], r["error"])
+    auto = [s for s in r["steps"] if s["kind"] == "dev_auto_read"]
+    assert auto and "app/long.py" in auto[0]["files"]
+    reads = [s for s in r["steps"] if s["kind"] == "dev_tool" and s.get("tool") == "code.read"]
+    assert len(reads) >= 3  # calc.py 1회 + long.py 400줄 단위 2회 이상
+    assert [x for x in r["verification"]["checks"] if x["name"] == "dev_coverage"][0]["passed"]
+    # 읽을 필수 파일이 없는데 모델이 계속 아무 것도 하지 않으면(분석은 끝난 것으로 보고) 부분 결과로 남고 경고가 붙는다
+    script(provider, [{"calls": [call_step("code.read", path="app/calc.py")]}, {}, {}, {}])
+    r2 = run_task(c, dev_task(c, w, checks={"require_tests": False, "require_changes": False}))
+    assert r2["status"] == "completed" and any("분석이 도중에 멈췄습니다(idle)" in x for x in r2["verification"]["warnings"])
+    # 변경이 요구된 업무에서는 idle 이 완료로 인정되지 않는다
+    script(provider, [{}, {}, {}])
+    r3 = run_task(c, dev_task(c, w, checks={"require_changes": True}))
+    assert r3["status"] == "failed"

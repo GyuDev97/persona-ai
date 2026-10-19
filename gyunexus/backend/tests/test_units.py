@@ -41,3 +41,30 @@ def test_policy_decisions_and_notes_path_safety(settings):
 
     asyncio.run(go())
     assert not settings.notes_dir.exists()
+
+
+def test_reasoning_models_get_effort_and_token_headroom_but_others_do_not():
+    import asyncio
+    from types import SimpleNamespace
+
+    from gyunexus.config import Settings
+    from gyunexus.llm import OpenAIProvider, build_gateway
+
+    assert Settings(openai_model="gpt-5-mini").reasoning_model and Settings(openai_model="o3").reasoning_model and not Settings(openai_model="gpt-4o-mini").reasoning_model
+    seen = []
+
+    async def fake_create(**kw):
+        seen.append(kw)
+        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="{}"))], usage=SimpleNamespace(prompt_tokens=1, completion_tokens=1))
+
+    def provider(model):
+        s = Settings(openai_api_key="test-key-not-real", openai_model=model, database_url="sqlite:///:memory:")
+        p = build_gateway(s, db=None).provider
+        p._client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=fake_create)))
+        return p
+
+    asyncio.run(provider("gpt-5-mini").complete([{"role": "user", "content": "x"}], json_mode=True, max_tokens=1400, purpose="t"))
+    asyncio.run(provider("gpt-4o-mini").complete([{"role": "user", "content": "x"}], json_mode=True, max_tokens=1400, purpose="t"))
+    r, n = seen
+    assert r["reasoning_effort"] == "low" and r["max_completion_tokens"] == 1400 + 2500 and r["response_format"] == {"type": "json_object"}
+    assert "reasoning_effort" not in n and n["max_completion_tokens"] == 1400  # 기존 모델의 호출은 그대로다

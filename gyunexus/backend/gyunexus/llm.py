@@ -49,16 +49,19 @@ class LLMProvider(Protocol):
 
 
 class OpenAIProvider:
-    def __init__(self, api_key: str, model: str, base_url: str = ""):
+    def __init__(self, api_key: str, model: str, base_url: str = "", reasoning_effort: str = "", reasoning_headroom: int = 0):
         from openai import AsyncOpenAI
 
         self.model = model
+        self.reasoning_effort, self.reasoning_headroom = reasoning_effort, reasoning_headroom  # 추론 모델일 때만 값이 채워진다(build_gateway)
         self._client = AsyncOpenAI(api_key=api_key, base_url=base_url or None, timeout=60, max_retries=2)
 
     async def complete(self, messages, *, json_mode, max_tokens, purpose) -> Completion:
         from openai import OpenAIError
 
-        kwargs: dict = {"model": self.model, "messages": messages, "max_completion_tokens": max_tokens}
+        kwargs: dict = {"model": self.model, "messages": messages, "max_completion_tokens": max_tokens + self.reasoning_headroom}
+        if self.reasoning_effort:
+            kwargs["reasoning_effort"] = self.reasoning_effort
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
         try:
@@ -150,5 +153,6 @@ class LLMGateway:
 
 def build_gateway(settings: Settings, db: Database, provider: LLMProvider | None = None) -> LLMGateway:
     if provider is None and settings.openai_api_key:
-        provider = OpenAIProvider(settings.openai_api_key, settings.openai_model, settings.openai_base_url)
+        provider = OpenAIProvider(settings.openai_api_key, settings.openai_model, settings.openai_base_url,
+                                  settings.openai_reasoning_effort if settings.reasoning_model else "", settings.openai_reasoning_headroom if settings.reasoning_model else 0)
     return LLMGateway(provider, db, settings)

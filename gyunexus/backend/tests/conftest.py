@@ -106,6 +106,9 @@ def settings(tmp_path):
     return Settings(
         data_dir=tmp_path,
         openai_api_key="",
+        openai_model="gpt-4o-mini",  # 사용자의 .env 모델·단가에 테스트가 영향받지 않도록 고정
+        price_in_per_m=0.15,
+        price_out_per_m=0.60,
         latitude=None,  # 사용자의 .env 값에 테스트가 영향받지 않도록 고정
         longitude=None,
         autonomous_enabled=True,
