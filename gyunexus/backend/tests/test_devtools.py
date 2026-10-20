@@ -757,3 +757,222 @@ def test_model_sees_the_whole_code_it_read_not_just_the_first_lines(dev, provide
     assert r2["status"] == "completed"
     assert "y1 = " not in st2["prompts"][2] and "w1 = " in st2["prompts"][2]  # big.py 는 생략됨
     assert not [s for s in r2["steps"] if s["kind"] == "dev_tool" and s.get("error_kind") == "duplicate_call"]  # 생략된 구간의 재읽기는 중복으로 막지 않는다
+
+
+# ---------------------------------------------------------------- 직원 삭제
+
+def test_delete_worker_without_history_removes_it_with_tasks_and_grants(client, proj_root):
+    p = mkproj(client, proj_root)
+    w = mkdev(client, p, name="지울 직원")
+    dev_task(client, w)
+    im = client.get(f"/api/workers/{w['id']}/delete-impact").json()
+    assert im["tasks"] == 1 and im["runs"] == 0 and im["has_history"] is False and im["project_grants"] == 1
+    r = client.delete(f"/api/workers/{w['id']}")
+    assert r.status_code == 200 and r.json()["deleted"] is True
+    assert client.get(f"/api/workers/{w['id']}").status_code == 404 and client.get("/api/workers").json() == []
+    assert client.get(f"/api/workers/{w['id']}/projects").json()["grants"] == []  # 프로젝트 권한도 함께 사라진다
+    assert client.get("/api/projects").json()[0]["worker_count"] == 0  # 프로젝트 자체는 남는다
+    assert client.delete(f"/api/workers/{w['id']}").status_code == 404
+    assert "worker.deleted" in {x["event"] for x in client.get("/api/logs?limit=100").json()}
+
+
+def test_delete_worker_with_history_needs_purge_and_removes_runs_artifacts_files_and_approvals(dev, provider, settings):
+    c, p, w, root = dev
+    setup_llm(provider)
+    other = mk(c, "남길 직원", approval=False)
+    provider.overrides["worker_draft"] = good_report
+    script(provider, [{"calls": [call_step("code.patch", path="app/calc.py", old="return a - b", new="return a + b")]}, {"calls": [call_step("terminal.run", profile="test")]}, {"done": True}])
+    r = run_task(c, dev_task(c, w, approval=True))
+    assert r["status"] == "awaiting_approval"
+    # 승인 대기 중인 실행이 있으면 purge 여도 삭제할 수 없다
+    blocked = c.delete(f"/api/workers/{w['id']}?purge=true")
+    assert blocked.status_code == 409 and "승인 대기" in blocked.json()["detail"]
+    assert approve_pending(c) == 1
+    wait_for(lambda: c.get(f"/api/workers/runs/{r['id']}").json()["status"] == "completed")
+    art = c.get(f"/api/workers/runs/{r['id']}").json()["artifact"]
+    art_file = settings.workspace_dir / art["rel_path"].replace("/", os.sep)
+    assert art_file.exists()
+    im = c.get(f"/api/workers/{w['id']}/delete-impact").json()
+    assert im["runs"] == 1 and im["artifacts"] == 1 and im["project_changes_kept"] == 1 and im["has_history"]
+    # 이력이 있으면 purge 없이는 삭제되지 않는다
+    refused = c.delete(f"/api/workers/{w['id']}")
+    assert refused.status_code == 409 and "purge" in refused.json()["detail"] and c.get(f"/api/workers/{w['id']}").status_code == 200
+    ok_ = c.delete(f"/api/workers/{w['id']}?purge=true")
+    assert ok_.status_code == 200, ok_.text
+    assert c.get(f"/api/workers/{w['id']}").status_code == 404 and c.get("/api/workers/runs").json() == []
+    assert c.get(f"/api/artifacts/{art['id']}").status_code == 404  # 결과물 기록
+    assert not art_file.exists() and not (settings.workspace_dir / f"w{w['id']}").exists()  # 결과물 파일과 직원 작업 공간 폴더
+    assert [a for a in c.get("/api/approvals").json() if a["tool"] == "worker.finalize"] == []  # 이 직원의 승인 기록
+    # 다른 직원과 프로젝트 파일 변경 기록은 그대로다
+    assert [x["name"] for x in c.get("/api/workers").json()] == ["남길 직원"] and other[0]["id"]
+    assert len(c.get("/api/projects/changes").json()) == 1 and (root / "app" / "calc.py").read_text(encoding="utf-8") == FIXED
+
+
+def test_delete_is_blocked_while_the_worker_is_in_an_unfinished_workflow(client, provider):
+    setup_llm(provider)
+    a = mk(client, "조사 직원")
+    b = mk(client, "작성 직원", materials=False)
+    provider.overrides["workflow_plan"] = plan_json([step("r", *a), step("w", *b, ["r"])])
+    wf = client.post("/api/workflows", json={"goal": "개발 기록을 조사해 정리해 줘", "budget_usd": 0.5}).json()
+    assert client.get(f"/api/workers/{b[0]['id']}/delete-impact").json()["blocking_workflows"][0]["id"] == wf["id"]
+    r = client.delete(f"/api/workers/{b[0]['id']}?purge=true")
+    assert r.status_code == 409 and "끝나지 않은 워크플로" in r.json()["detail"]
+    client.post(f"/api/workflows/{wf['id']}/cancel")  # 취소하면 삭제할 수 있고, 워크플로 화면은 깨지지 않는다
+    assert client.delete(f"/api/workers/{b[0]['id']}?purge=true").status_code == 200
+    d = client.get(f"/api/workflows/{wf['id']}")
+    assert d.status_code == 200 and d.json()["status"] == "cancelled" and {s["key"] for s in d.json()["steps"]} == {"r", "w"}
+    assert [x["name"] for x in client.get("/api/workers").json()] == ["조사 직원"]
+
+
+def test_tasks_using_dev_tools_are_promoted_to_dev_kind_so_they_cannot_fail_with_no_context(client, proj_root):
+    p = mkproj(client, proj_root)
+    w = mkdev(client, p)
+    body = task_body(title="분석", requires_materials=False, materials=[], completion_criteria=[], checks={"min_chars": 100}, tools=["project.list", "code.read"], report_kind="generic")
+    r = client.post(f"/api/workers/{w['id']}/tasks", json=body)
+    assert r.status_code == 201 and r.json()["report_kind"] == "dev"  # 일반 문서로 저장해도 개발 업무로 승격된다
+    r2 = client.post(f"/api/workers/{w['id']}/tasks", json=body | {"title": "뉴스", "report_kind": "news"})
+    assert r2.status_code == 422 and "개발 업무" in r2.json()["detail"]
+    # 개발 도구가 없는 일반 업무는 그대로 일반 문서다
+    plain = client.post(f"/api/workers/{w['id']}/tasks", json=body | {"title": "일반", "tools": []})
+    assert plain.status_code == 201 and plain.json()["report_kind"] == "generic"
+    # 이미 일반 문서로 저장된 업무를 수정해도 개발 도구가 있으면 승격된다
+    with client.app_state.db.session() as s:
+        from gyunexus.models import WorkerTask
+        s.get(WorkerTask, r.json()["id"]).report_kind = "generic"
+    up = client.put(f"/api/workers/tasks/{r.json()['id']}", json={"title": "분석(수정)"})
+    assert up.status_code == 200 and up.json()["report_kind"] == "dev"
+
+
+def test_invalid_json_from_the_model_is_retried_instead_of_failing_the_whole_run(dev, provider):
+    c, p, w, root = dev
+    setup_llm(provider)
+    provider.overrides["worker_draft"] = nochange_report
+    # 한 번 JSON 이 아닌(또는 끊긴) 응답이 와도 되돌려 보내고 계속한다
+    st = script(provider, ['{"thought": "너무 길게 생각하다가 끊긴 응답', {"calls": [call_step("code.read", path="app/calc.py")]}, {"done": True}])
+    r = run_task(c, dev_task(c, w, checks={"require_tests": False, "require_changes": False}))
+    assert r["status"] == "completed", (r["status"], r["error"])
+    assert "올바른 JSON 이 아니었습니다" in st["prompts"][1] and any(s.get("error") == "invalid_json_retry" for s in r["steps"])
+    # 세 번 연속 깨지면 중단한다. 이미 읽은 것이 있고 코드 변경이 없으면 경고가 붙은 부분 결과, 읽은 것이 없으면 실패
+    script(provider, [{"calls": [call_step("code.read", path="app/calc.py")]}, "깨진1", "깨진2", "깨진3"])
+    r2 = run_task(c, dev_task(c, w, checks={"require_tests": False, "require_changes": False}))
+    assert r2["status"] == "completed" and any("llm_invalid" in x for x in r2["verification"]["warnings"])
+    script(provider, ["깨진1", "깨진2", "깨진3"])
+    r3 = run_task(c, dev_task(c, w, checks={"require_tests": False, "require_changes": False}))
+    assert r3["status"] == "failed" and r3["error_kind"] == "dev_incomplete"
+    # JSON 이 깨진 호출이 개발 루프 밖(보고서 작성)에서 나면 기존처럼 llm_error 로 실패한다(숨기지 않는다)
+    script(provider, [{"calls": [call_step("code.read", path="app/calc.py")]}, {"done": True}])
+    provider.overrides["worker_draft"] = "이것은 JSON 이 아닙니다"
+    r4 = run_task(c, dev_task(c, w, checks={"require_tests": False, "require_changes": False}))
+    assert r4["status"] == "failed" and r4["error_kind"] == "llm_error"
+
+
+def test_citation_format_variants_are_normalized_but_fabricated_sources_still_fail(dev, provider):
+    c, p, w, root = dev
+    setup_llm(provider)
+
+    def report(fake_source):
+        def draft(messages):
+            ids = {name: eid for eid, name in re.findall(r"<<<(E\d+) ([^\n]+)", messages[-1]["content"])}
+            e_read = next(e for n, e in ids.items() if n.startswith("code.read"))
+            body = ("# 분석\n## 원인\napp/calc.py 의 add 함수는 a - b 를 반환한다 (calc.py(%s))\n## 수정 내용\n코드 변경 없음 (변경 요약(코드 기록))\n## 테스트 결과\n실행하지 않았다 (테스트·실행 결과(코드 기록))\n" % e_read)
+            claims = [{"text": "app/calc.py 의 add 함수는 a - b 를 반환한다", "evidence": []},  # 근거를 안 적은 주장: 같은 문장의 본문 인용(E)을 코드가 읽는다
+                      {"text": "코드 변경 없음", "evidence": ["변경 요약(코드 기록)"]}]  # 자료 이름으로 적은 근거
+            return {"title": "분석", "body": body, "sources": [f"calc.py({e_read})", fake_source], "missing": [], "claims": claims}
+        return draft
+
+    for fake, expect in (("code.read(E1)", "completed"), ("E99", "failed"), ("만들어낸 문서.md", "failed")):
+        provider.overrides["worker_draft"] = report(fake)
+        script(provider, [{"calls": [call_step("code.read", path="app/calc.py")]}, {"done": True}])
+        r = run_task(c, dev_task(c, w, checks={"require_tests": False, "require_changes": False}))
+        assert r["status"] == expect, (fake, r["status"], r["error"], [x for x in r["verification"]["checks"] if not x["passed"]])
+        if expect == "failed":
+            assert any(x["name"] == "source_ids" and not x["passed"] for x in r["verification"]["checks"])  # 지어낸 근거 번호·이름은 여전히 잡힌다
+
+
+def test_dev_reports_do_not_fail_on_line_numbers_or_example_values_but_still_fail_on_invented_percentages(dev, provider):
+    c, p, w, root = dev
+    setup_llm(provider)
+
+    def report(extra):
+        def draft(messages):
+            ids = {name: eid for eid, name in re.findall(r"<<<(E\d+) ([^\n]+)", messages[-1]["content"])}
+            e_read = next(e for n, e in ids.items() if n.startswith("code.read"))
+            body = ("# 분석\n## 원인\napp/calc.py:1-2 의 add 함수는 a - b 를 반환한다 (calc.py(%s)) 줄 2 와 파일 전체 910-999 범위의 주변 코드도 같다\n"
+                    "## 수정 내용\n코드 변경 없음 (변경 요약(코드 기록)). %s\n## 테스트 결과\n실행하지 않았다 (테스트·실행 결과(코드 기록))\n" % (e_read, extra))
+            return {"title": "분석", "body": body, "sources": [e_read], "missing": [], "claims": [{"text": "app/calc.py 의 add 함수는 a - b 를 반환한다", "evidence": [e_read]}]}
+        return draft
+
+    # 줄 번호·범위(910-999 는 근거에 없는 숫자)와 제안 속 예시 값(0.05, 0.15)은 실패가 아니라 경고
+    provider.overrides["worker_draft"] = report("테스트 예시: 필요량이 0.05 또는 0.15 부근인 경우")
+    script(provider, [{"calls": [call_step("code.read", path="app/calc.py")]}, {"done": True}])
+    r = run_task(c, dev_task(c, w, checks={"require_tests": False, "require_changes": False}))
+    assert r["status"] == "completed", (r["status"], r["error"], [x for x in r["verification"]["checks"] if not x["passed"]])
+    assert any("예시 값일 수 있음" in x and "0.05" in x for x in r["verification"]["warnings"]) and not any("910" in x for x in r["verification"]["warnings"])
+    # 지어낸 퍼센트 통계는 여전히 실패한다
+    provider.overrides["worker_draft"] = report("이 수정으로 연비 계산 속도가 73% 향상된다")
+    script(provider, [{"calls": [call_step("code.read", path="app/calc.py")]}, {"done": True}])
+    r2 = run_task(c, dev_task(c, w, checks={"require_tests": False, "require_changes": False}))
+    assert r2["status"] == "failed" and any(x["name"] == "numbers_grounded" and not x["passed"] and "73%" in x["detail"] for x in r2["verification"]["checks"])
+
+
+# ---------------------------------------------------------------- 실행 이력 삭제
+
+def test_delete_single_run_removes_record_artifact_file_and_approval_but_keeps_project_change_log(dev, provider, settings):
+    c, p, w, root = dev
+    setup_llm(provider)
+    provider.overrides["worker_draft"] = good_report
+    script(provider, [{"calls": [call_step("code.patch", path="app/calc.py", old="return a - b", new="return a + b")]}, {"calls": [call_step("terminal.run", profile="test")]}, {"done": True}])
+    r = run_task(c, dev_task(c, w, approval=True))
+    assert r["status"] == "awaiting_approval"
+    chk = c.get(f"/api/workers/runs/{r['id']}/delete-check").json()
+    assert chk["deletable"] is False and "승인 대기" in chk["reason"]  # 진행 중·승인 대기 실행은 지울 수 없다
+    assert c.delete(f"/api/workers/runs/{r['id']}").status_code == 409
+    assert approve_pending(c) == 1
+    wait_for(lambda: c.get(f"/api/workers/runs/{r['id']}").json()["status"] == "completed")
+    art = c.get(f"/api/workers/runs/{r['id']}").json()["artifact"]
+    art_file = settings.workspace_dir / art["rel_path"].replace("/", os.sep)
+    assert art_file.exists() and c.get(f"/api/workers/runs/{r['id']}/delete-check").json()["deletable"] is True
+    ok_ = c.delete(f"/api/workers/runs/{r['id']}")
+    assert ok_.status_code == 200 and ok_.json()["artifacts"] == 1
+    assert c.get(f"/api/workers/runs/{r['id']}").status_code == 404 and c.get(f"/api/artifacts/{art['id']}").status_code == 404
+    assert not art_file.exists() and not art_file.parent.exists()
+    assert [a for a in c.get("/api/approvals").json() if a["tool"] == "worker.finalize"] == []
+    assert len(c.get("/api/projects/changes").json()) == 1  # 프로젝트 파일 변경 기록은 감사용으로 남는다
+    assert c.delete(f"/api/workers/runs/{r['id']}").status_code == 404
+    assert "run.deleted" in {x["event"] for x in c.get("/api/logs?limit=100").json()}
+
+
+def test_purge_unsuccessful_runs_only_removes_failed_ones_and_keeps_good_ones(dev, provider):
+    c, p, w, root = dev
+    setup_llm(provider)
+    provider.overrides["worker_draft"] = nochange_report
+    script(provider, [{"calls": [call_step("code.read", path="app/calc.py")]}, {"done": True}])
+    good = run_task(c, dev_task(c, w, checks={"require_tests": False, "require_changes": False}))
+    assert good["status"] == "completed"
+    script(provider, [{"done": True}])
+    bad1 = run_task(c, dev_task(c, w, checks={"require_changes": True}))  # 변경이 요구됐지만 없음 -> 실패
+    bad2 = run_task(c, dev_task(c, w, checks={"require_changes": True}))
+    assert bad1["status"] == bad2["status"] == "failed"
+    res = c.post(f"/api/workers/{w['id']}/runs/purge-unsuccessful", json={}).json()
+    assert sorted(res["deleted"]) == sorted([bad1["id"], bad2["id"]]) and res["skipped"] == []
+    left = [x["id"] for x in c.get("/api/workers/runs").json()]
+    assert left == [good["id"]]  # 성공한 실행은 그대로다
+    assert c.post("/api/workers/999/runs/purge-unsuccessful", json={}).status_code == 404
+
+
+def test_runs_in_workflows_or_used_as_inputs_cannot_be_deleted(client, provider):
+    setup_llm(provider)
+    a = mk(client, "조사 직원", approval=False)
+    b = mk(client, "작성 직원", approval=False, materials=False)
+    provider.overrides["workflow_plan"] = plan_json([step("r", *a), step("w", *b, ["r"])])
+    wf = client.post("/api/workflows", json={"goal": "개발 기록을 조사해 정리해 줘", "budget_usd": 0.5}).json()
+    client.post(f"/api/workflows/{wf['id']}/start")
+    done = wait_wf(client, wf["id"], lambda x: x["status"] == "completed")
+    run_a = by_key(done)["r"]["run_id"]
+    chk = client.get(f"/api/workers/runs/{run_a}/delete-check").json()
+    assert chk["deletable"] is False and "워크플로" in chk["reason"]
+    assert client.delete(f"/api/workers/runs/{run_a}").status_code == 409
+    # 같은 직원의 단독 수동 실행은 지울 수 있다
+    rid = client.post(f"/api/workers/tasks/{a[1]['id']}/run").json()["run_id"]
+    wait_for(lambda: client.get(f"/api/workers/runs/{rid}").json()["status"] in ("completed", "failed"))
+    assert client.delete(f"/api/workers/runs/{rid}").status_code == 200

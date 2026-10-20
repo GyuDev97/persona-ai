@@ -32,6 +32,7 @@ export default function Workers({ version, nav }: { version: number; nav: Nav })
   }, [list.data, sel]);
 
   const [deact, setDeact] = useState<{ id: number; name: string; task_count: number } | null>(null);
+  const [del, setDel] = useState<{ id: number; name: string } | null>(null);
   const [bump, setBump] = useState(0); // 목록에서 바꾼 뒤 상세도 다시 읽게 하는 신호
   const [listError, setListError] = useState<string | null>(null);
   const tpl = opts.data?.templates[0];
@@ -61,6 +62,7 @@ export default function Workers({ version, nav }: { version: number; nav: Nav })
                     actions={(w) => [
                       { label: "수정", onClick: () => setEditor({ id: w.id, form: toForm(w) }) },
                       w.enabled ? { label: "비활성화", danger: true, onClick: () => setDeact({ id: w.id, name: w.name, task_count: w.task_count }) } : { label: "활성화", onClick: () => void setEnabled(w, true) },
+                      { label: "삭제…", danger: true, onClick: () => setDel({ id: w.id, name: w.name }), hint: "직원과 실행 이력을 영구 삭제합니다(영향 범위를 먼저 보여 드립니다)" },
                     ]}
                     renderCard={(w) => (
                       <>
@@ -79,6 +81,7 @@ export default function Workers({ version, nav }: { version: number; nav: Nav })
           )
         }
       </Async>
+      <DeleteWorkerDialog target={del} onCancel={() => setDel(null)} onDone={() => { setDel(null); setSel(null); list.reload(); setBump((b) => b + 1); }} />
       <DeactivateDialog target={deact} onCancel={() => setDeact(null)} onDone={() => (setDeact(null), list.reload(), setBump((b) => b + 1))} />
       {editor && opts.data && <WorkerModal opts={opts.data} id={editor.id} initial={editor.form} onClose={() => setEditor(null)} onSaved={(id) => (setEditor(null), list.reload(), setSel(id))} />}
     </div>
@@ -214,6 +217,27 @@ function WorkerModal({ opts, initial, id, onClose, onSaved }: { opts: WorkerOpti
 }
 
 /** 직원 비활성화 확인. 영향 범위는 목록·상세가 이미 가진 값(업무 수)과 기존 화면 문구에서 확인된 사실만 보여 준다. */
+/** 직원 영구 삭제 확인. 서버가 알려 주는 실제 영향 범위(업무·실행·결과물·워크플로)와 삭제를 막는 조건을 그대로 보여 준다. */
+interface DeleteImpact { worker: string; tasks: number; runs: number; artifacts: number; active_runs: number; workflow_steps: number; workflows: number; blocking_workflows: { id: number; title: string; status: string }[]; project_grants: number; project_changes_kept: number; has_history: boolean }
+function DeleteWorkerDialog({ target, onDone, onCancel }: { target: { id: number; name: string } | null; onDone: () => void; onCancel: () => void }) {
+  const [im, setIm] = useState<DeleteImpact | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => {
+    setIm(null); setErr(null);
+    if (target) api<DeleteImpact>(`/workers/${target.id}/delete-impact`).then(setIm).catch((e: Error) => setErr(e.message));
+  }, [target]);
+  const blocked = im ? (im.active_runs > 0 ? `진행 중이거나 승인 대기 중인 실행 ${im.active_runs}건이 있습니다. 먼저 취소하거나 끝내세요.` : im.blocking_workflows.length > 0 ? `아직 끝나지 않은 워크플로에 속해 있습니다: ${im.blocking_workflows.map((b) => `#${b.id} ${b.title}`).join(", ")}. 먼저 취소하거나 완료하세요.` : undefined) : err ?? "영향 범위를 불러오는 중입니다";
+  return (
+    <DeleteConfirmDialog open={!!target} title="직원을 영구 삭제할까요?" itemName={target?.name ?? ""} action="영구 삭제" confirmLabel="영구 삭제" blockedReason={blocked}
+      impact={im ? [`담당 업무 ${im.tasks}개가 삭제됩니다`, `실행 기록 ${im.runs}건과 결과물 ${im.artifacts}건(파일 포함)이 삭제됩니다`, `이 직원의 승인 기록이 삭제됩니다`,
+        ...(im.workflows > 0 ? [`워크플로 ${im.workflows}건은 남지만, 이 직원의 단계에 연결된 실행 기록과 비용은 사라집니다`] : []),
+        ...(im.project_grants > 0 ? [`프로젝트 접근 권한 ${im.project_grants}건이 사라집니다(프로젝트 폴더와 파일은 그대로)`] : []),
+        ...(im.project_changes_kept > 0 ? [`프로젝트 파일 변경 기록 ${im.project_changes_kept}건은 감사용으로 남습니다`] : [])] : []}
+      recovery={{ reversible: false, note: "삭제한 직원과 이력은 되돌릴 수 없습니다. 잠시 멈추려면 '비활성화'를 쓰세요." }}
+      onCancel={onCancel} onConfirm={async () => { await api(`/workers/${target!.id}?purge=true`, { method: "DELETE" }); onDone(); }} />
+  );
+}
+
 function DeactivateDialog({ target, onDone, onCancel }: { target: { id: number; name: string; task_count: number } | null; onDone: () => void; onCancel: () => void }) {
   return (
     <DeleteConfirmDialog open={!!target} title="직원을 비활성화할까요?" itemName={target?.name ?? ""} action="비활성화" confirmLabel="비활성화"
@@ -241,6 +265,8 @@ function WorkerDetail({ id, opts, version, nav, onBack, onChanged, onEdit, onDea
     runs.reload();
     onChanged();
   };
+  const [delRun, setDelRun] = useState<number | null>(null);
+  const [purgeAsk, setPurgeAsk] = useState(false);
   const stats = useMemo(() => {
     const r = runs.data ?? [];
     return { done: r.filter((x) => x.status === "completed").length, failed: r.filter((x) => x.status === "failed").length, wait: r.filter((x) => x.status === "awaiting_approval").length,
@@ -322,7 +348,11 @@ function WorkerDetail({ id, opts, version, nav, onBack, onChanged, onEdit, onDea
 
       {tab === "runs" && (
         <div className="stack tight">
-          {runs.data?.length === 0 && <div className="card"><EmptyState title="아직 실행 기록이 없습니다" desc="담당 업무 탭에서 ‘지금 실행’을 눌러 보세요." /></div>}
+          {runs.data?.length === 0 && <div className="card"><EmptyState title="아직 실행 기록이 없습니다" desc="담당 업무 탭에서 지금 실행을 눌러 보세요." /></div>}
+          {(runs.data ?? []).some((r) => ["failed", "cancelled", "rejected", "needs_input"].includes(r.status)) && (
+            <div className="row between wrap"><span className="small muted">실패·취소·반려·자료 부족으로 끝난 실행 {(runs.data ?? []).filter((r) => ["failed", "cancelled", "rejected", "needs_input"].includes(r.status)).length}건</span>
+              <button className="secondary sm" onClick={() => setPurgeAsk(true)}>실패·취소 이력 모두 삭제…</button></div>
+          )}
           {runs.data?.map((r) => (
             <details key={r.id} className="collapse" open={r.status === "awaiting_approval"}>
               <summary>
@@ -332,9 +362,13 @@ function WorkerDetail({ id, opts, version, nav, onBack, onChanged, onEdit, onDea
               <div className="collapse-body">
                 {r.error_kind && <div className="notice bad">{ERR[r.error_kind] ?? r.error_kind}{r.error ? `: ${r.error}` : ""}</div>}
                 <RunDetail id={r.id} version={version} nav={nav} onChanged={() => (runs.reload(), detail.reload(), onChanged())} />
+                <div><button className="ghost sm danger" onClick={() => setDelRun(r.id)}>이 실행 이력 삭제…</button></div>
               </div>
             </details>
           ))}
+          <DeleteRunDialog id={delRun} onCancel={() => setDelRun(null)} onDone={() => { setDelRun(null); runs.reload(); detail.reload(); onChanged(); }} />
+          <PurgeRunsDialog open={purgeAsk} workerId={w.id} count={(runs.data ?? []).filter((r) => ["failed", "cancelled", "rejected", "needs_input"].includes(r.status)).length}
+            onCancel={() => setPurgeAsk(false)} onDone={() => { setPurgeAsk(false); runs.reload(); detail.reload(); onChanged(); }} />
         </div>
       )}
 
@@ -502,6 +536,30 @@ function TaskModal({ worker, opts, task, onClose, onSaved }: { worker: WorkerDet
     </CrudDialog>
   );
 }
+/** 실행 이력 1건 삭제 확인. 지울 수 없는 경우(진행 중·워크플로 소속·결과물이 다른 실행의 입력)는 서버가 알려 주는 이유를 그대로 보여 준다. */
+function DeleteRunDialog({ id, onDone, onCancel }: { id: number | null; onDone: () => void; onCancel: () => void }) {
+  const [chk, setChk] = useState<{ deletable: boolean; reason: string | null } | null>(null);
+  useEffect(() => {
+    setChk(null);
+    if (id !== null) api<{ deletable: boolean; reason: string | null }>(`/workers/runs/${id}/delete-check`).then(setChk).catch((e: Error) => setChk({ deletable: false, reason: e.message }));
+  }, [id]);
+  return (
+    <DeleteConfirmDialog open={id !== null} title="실행 이력을 삭제할까요?" itemName={id !== null ? `실행 #${id}` : ""} action="이력 삭제" confirmLabel="삭제" blockedReason={chk === null ? "확인 중입니다" : chk.deletable ? undefined : chk.reason ?? "삭제할 수 없습니다"}
+      impact={["이 실행의 기록과 단계 추적이 삭제됩니다", "결과물 파일과 결과물 기록이 삭제됩니다", "이 실행의 승인 기록이 삭제됩니다", "프로젝트 파일 변경 기록(diff)은 감사용으로 남습니다"]}
+      recovery={{ reversible: false, note: "삭제한 이력은 되돌릴 수 없습니다." }} onCancel={onCancel}
+      onConfirm={async () => { await api(`/workers/runs/${id}`, { method: "DELETE" }); onDone(); }} />
+  );
+}
+
+function PurgeRunsDialog({ open, workerId, count, onDone, onCancel }: { open: boolean; workerId: number; count: number; onDone: () => void; onCancel: () => void }) {
+  return (
+    <DeleteConfirmDialog open={open} title="실패·취소 이력을 모두 삭제할까요?" itemName={`실패·취소·반려·자료 부족 실행 ${count}건`} action="이력 삭제" confirmLabel="모두 삭제"
+      impact={["실패·취소·반려·자료 부족으로 끝난 실행만 삭제됩니다(완료·승인 대기·진행 중인 실행은 그대로)", "각 실행의 결과물 파일(미확정 결과물 포함)과 승인 기록이 삭제됩니다", "워크플로에 속한 실행과, 결과물이 다른 실행의 입력으로 쓰인 실행은 건너뜁니다"]}
+      recovery={{ reversible: false, note: "삭제한 이력은 되돌릴 수 없습니다." }} onCancel={onCancel}
+      onConfirm={async () => { await api(`/workers/${workerId}/runs/purge-unsuccessful`, { method: "POST", json: {} }); onDone(); }} />
+  );
+}
+
 /** 개발 업무가 프로젝트 파일에 적용한 변경(변경 전후 해시와 diff). 변경이 없으면 아무것도 그리지 않는다. */
 function RunChanges({ runId, version }: { runId: number; version: number }) {
   const q = useApi<ProjectChangeRow[]>(`/projects/changes?run_id=${runId}`, version);

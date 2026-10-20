@@ -102,6 +102,26 @@ async def cancel_run(run_id: int, request: Request):
     return _run_row(v.db, r)
 
 
+@router.get("/runs/{run_id}/delete-check")
+async def run_delete_check(run_id: int, request: Request):
+    """이 실행을 지울 수 있는가(없으면 막는 이유). 삭제 확인 화면이 쓴다."""
+    why = _call(svc(request).run_delete_block, run_id)
+    return {"deletable": why is None, "reason": why}
+
+
+@router.delete("/runs/{run_id}")
+async def delete_run(run_id: int, request: Request):
+    """실행 이력 1건 삭제(결과물 파일·승인 기록 포함). 진행 중이거나 워크플로에 속하거나 결과물이 다른 실행의 입력으로 쓰인 경우는 409."""
+    return _call(svc(request).delete_run, run_id)
+
+
+@router.post("/{worker_id}/runs/purge-unsuccessful")
+async def purge_unsuccessful(worker_id: int, request: Request, body: dict = Body(default={})):
+    """이 직원의 실패·취소·반려·자료 부족 실행을 한꺼번에 삭제한다(task_id 로 업무를 좁힐 수 있다). 완료·승인 대기 실행은 건드리지 않는다."""
+    _call(svc(request).get_worker, worker_id)
+    return _call(svc(request).delete_unsuccessful_runs, worker_id, body.get("task_id"))
+
+
 @router.put("/tasks/{task_id}")
 async def update_task(task_id: int, request: Request, body: dict = Body(...)):
     return row_dict(_call(svc(request).update_task, task_id, body))
@@ -125,6 +145,18 @@ async def run_task(task_id: int, request: Request):
     except WorkerError as e:
         raise HTTPException(STATUS.get(e.code, 400), str(e)) from e
     return {"run_id": run_id}
+
+
+@router.get("/{worker_id}/delete-impact")
+async def delete_impact(worker_id: int, request: Request):
+    """삭제하면 사라지는 것(업무·실행·결과물·워크플로 단계)과 삭제를 막는 조건. 삭제 확인 화면이 쓴다."""
+    return _call(svc(request).delete_impact, worker_id)
+
+
+@router.delete("/{worker_id}")
+async def delete_worker(worker_id: int, request: Request, purge: bool = False):
+    """직원 삭제. 이력이 있으면 purge=true 를 명시해야 하며 이력까지 영구 삭제된다(되돌릴 수 없음)."""
+    return _call(svc(request).delete_worker, worker_id, purge)
 
 
 @router.get("/{worker_id}")

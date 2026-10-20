@@ -66,5 +66,5 @@ def test_reasoning_models_get_effort_and_token_headroom_but_others_do_not():
     asyncio.run(provider("gpt-5-mini").complete([{"role": "user", "content": "x"}], json_mode=True, max_tokens=1400, purpose="t"))
     asyncio.run(provider("gpt-4o-mini").complete([{"role": "user", "content": "x"}], json_mode=True, max_tokens=1400, purpose="t"))
     r, n = seen
-    assert r["reasoning_effort"] == "low" and r["max_completion_tokens"] == 1400 + 2500 and r["response_format"] == {"type": "json_object"}
+    assert r["reasoning_effort"] == "low" and r["max_completion_tokens"] == 1400 + Settings().openai_reasoning_headroom and r["response_format"] == {"type": "json_object"}
     assert "reasoning_effort" not in n and n["max_completion_tokens"] == 1400  # 기존 모델의 호출은 그대로다

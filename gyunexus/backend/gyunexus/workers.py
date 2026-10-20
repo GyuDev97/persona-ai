@@ -236,7 +236,7 @@ def derive_claims(content: str, evidence: list[dict]) -> list[dict]:
     return out
 
 
-def verify_draft(*, output_type: str, checks: dict, draft: dict, content: str, evidence: list[dict], context_text: str) -> dict:
+def verify_draft(*, output_type: str, checks: dict, draft: dict, content: str, evidence: list[dict], context_text: str, numbers_strict: bool = True) -> dict:
     """결과물이 완료 기준을 충족하는지 코드가 검사한다. LLM의 자기 평가는 쓰지 않는다."""
     results: list[dict] = []
 
@@ -285,13 +285,18 @@ def verify_draft(*, output_type: str, checks: dict, draft: dict, content: str, e
         add("claims_grounded", not claims or len(weak) * 2 <= len(claims), f"인용한 근거와 거의 겹치지 않는 주장: {weak[:3]}" if weak else "주장이 인용한 근거와 일치함")
 
     allowed_digits = _digits(context_text + " " + " ".join(e["text"] for e in evidence))
+    scan = content
+    if not numbers_strict:  # 코드 분석 보고서: 줄 번호·범위(예: 49-66, 줄 95)는 수치 주장이 아니므로 검사에서 뺀다
+        scan = re.sub(r"(?:줄|행|lines?|:)\s*\d+(?:\s*[-~–]\s*\d+)?|\b\d+\s*[-~–]\s*\d+\b|\d+\s*(?:줄|행)", " ", content)
     unsupported = []
-    for m in NUMBER.findall(content):
+    for m in NUMBER.findall(scan):
         d = _digits(m)
         if (m.strip().endswith("%") or len(d.replace(".", "")) >= 3) and d and d not in allowed_digits:
             unsupported.append(m.strip())
-    add("numbers_grounded", not unsupported, f"근거에서 확인되지 않는 수치: {sorted(set(unsupported))[:5]}" if unsupported else "본문의 수치가 모두 근거나 지시문에 있음")
-    return {"passed": all(r["passed"] for r in results), "checks": results}
+    hard = unsupported if numbers_strict else [u for u in unsupported if u.endswith("%")]  # 개발 보고서는 퍼센트 수치만 엄격히 막는다(성능 향상 N% 같은 지어낸 통계)
+    soft = [u for u in unsupported if u not in hard]  # 제안 속 테스트 예시 값 등: 실패시키지 않고 경고로 남긴다
+    add("numbers_grounded", not hard, f"근거에서 확인되지 않는 수치: {sorted(set(hard))[:5]}" if hard else "본문의 수치가 모두 근거나 지시문에 있음" + (f" (근거에 없는 예시 수치 {sorted(set(soft))[:5]}는 경고)" if soft else ""))
+    return {"passed": all(r["passed"] for r in results), "checks": results, "soft_warnings": [f"근거에서 확인되지 않는 수치(예시 값일 수 있음): {sorted(set(soft))[:5]}"] if soft else []}
 
 
 def check_criteria(criteria: list[str], review: dict, content: str, numbers: list[int] | None = None) -> list[dict]:
@@ -453,6 +458,11 @@ class WorkerService:
         if not isinstance(cost, (int, float)) or isinstance(cost, bool) or not (0 < cost <= 5):
             errors.append("최대 비용은 0 초과 5 이하(USD)여야 합니다")
         calls, rounds, kind = m.get("max_tool_calls", 4), m.get("tool_rounds", 1), m.get("report_kind", "generic")
+        if any((self.tools.get(n) is not None and self.tools.get(n).risk == "project") for n in tools):
+            if kind == "generic":
+                kind = "dev"  # 개발 도구(project.*/code.*/terminal.run/git.*)는 개발 업무 파이프라인에서만 쓸 수 있다: 일반 문서로 저장돼 'no_context' 로 실패하는 것을 막는다
+            elif kind != "dev":
+                errors.append("개발 도구는 보고서 종류가 '개발 업무'인 업무에서만 쓸 수 있습니다")
         if not isinstance(calls, int) or isinstance(calls, bool) or not (1 <= calls <= 30):
             errors.append("도구 호출 상한은 1~30건이어야 합니다")
         if not isinstance(rounds, int) or isinstance(rounds, bool) or not (1 <= rounds <= 3):
@@ -582,6 +592,142 @@ class WorkerService:
         return t
 
     # ---------------------------------------------------------- 실행 시작·중복 차단·복구
+
+    # ---------------------------------------------------------- 실행 이력 삭제(다른 기록이 깨지지 않는 경우만)
+
+    def run_delete_block(self, run_id: int) -> str | None:
+        """이 실행을 지울 수 없는 이유(없으면 None). 진행 중인 실행, 워크플로에 속한 실행, 결과물이 다른 실행의 입력으로 쓰인 실행은 지우지 않는다."""
+        with self.db.session() as s:
+            run = s.get(WorkerRun, run_id)
+            if run is None:
+                raise WorkerError("not_found", "run not found")
+            if run.status in ACTIVE:
+                return f"진행 중이거나 승인 대기 중인 실행입니다({run.status}). 먼저 취소하거나 끝내세요"
+            if run.workflow_id is not None or run.workflow_step_id is not None:
+                return "워크플로에 속한 실행입니다. 워크플로 이력을 보존하기 위해 지울 수 없습니다"
+            art_ids = set(s.scalars(select(WorkerArtifact.id).where(WorkerArtifact.run_id == run_id)))
+            if art_ids:
+                for other in s.scalars(select(WorkerRun).where(WorkerRun.id != run_id, WorkerRun.inputs.is_not(None))):
+                    if any(isinstance(ref, dict) and ref.get("artifact_id") in art_ids for ref in (other.inputs or [])):
+                        return f"이 실행의 결과물이 다른 실행 #{other.id}의 입력으로 쓰였습니다. 입력 계보를 보존하기 위해 지울 수 없습니다"
+        return None
+
+    def delete_run(self, run_id: int) -> dict:
+        """실행 1건과 그 결과물(DB·파일)·승인 기록을 삭제한다. 프로젝트 파일 변경 기록(ProjectChange)은 감사용이라 남는다."""
+        import shutil
+
+        from sqlalchemy import delete
+
+        from .models import Approval
+
+        why = self.run_delete_block(run_id)
+        if why:
+            raise WorkerError("conflict", why)
+        with self.db.session() as s:
+            run = s.get(WorkerRun, run_id)
+            worker_id, task_id, status = run.worker_id, run.task_id, run.status
+            arts = s.scalars(select(WorkerArtifact).where(WorkerArtifact.run_id == run_id)).all()
+            n_art = len(arts)
+            for ap in s.scalars(select(Approval).where(Approval.tool == "worker.finalize")):
+                if int((ap.args or {}).get("run_id", 0)) == run_id:
+                    s.delete(ap)
+            s.execute(delete(WorkerRun).where(WorkerRun.id == run_id))  # 결과물(Artifact)은 FK cascade 로 함께 삭제
+        rdir = self.workspace.run_dir(worker_id, run_id)
+        if rdir.exists():
+            try:
+                self.workspace._inside(rdir)
+                shutil.rmtree(rdir)
+            except (WorkspaceError, OSError) as e:
+                logger.warning("run workspace cleanup failed: %s", e)
+        self.activity.record("worker", "run.deleted", level="warn", run_id=run_id, worker_id=worker_id, task_id=task_id, was=status, artifacts=n_art)
+        self._emit("worker.run", run_id=run_id, status="deleted")
+        return {"deleted": True, "run_id": run_id, "artifacts": n_art}
+
+    def delete_unsuccessful_runs(self, worker_id: int, task_id: int | None = None) -> dict:
+        """실패·취소·반려·자료 부족으로 끝난 실행을 한꺼번에 정리한다(완료·승인 대기·진행 중·워크플로 소속·입력으로 쓰인 실행은 건드리지 않는다)."""
+        with self.db.session() as s:
+            q = select(WorkerRun.id).where(WorkerRun.worker_id == worker_id, WorkerRun.status.in_(("failed", "cancelled", "rejected", "needs_input")))
+            if task_id is not None:
+                q = q.where(WorkerRun.task_id == task_id)
+            ids = list(s.scalars(q.order_by(WorkerRun.id)))
+        deleted, skipped = [], []
+        for rid in ids:
+            try:
+                self.delete_run(rid)
+                deleted.append(rid)
+            except WorkerError:
+                skipped.append(rid)
+        return {"deleted": deleted, "skipped": skipped}
+
+    # ---------------------------------------------------------- 직원 삭제(이력 포함 영구 삭제는 purge 로만)
+
+    def delete_impact(self, worker_id: int) -> dict:
+        """삭제하면 사라지는 것과 삭제를 막는 조건. 삭제 확인 화면과 delete_worker 가 같은 값을 쓴다."""
+        from sqlalchemy import func
+
+        from .models import AutonomyRun, DevProject, ProjectChange, Workflow, WorkflowStep, WorkerProjectGrant  # noqa: F401
+
+        with self.db.session() as s:
+            w = s.get(Worker, worker_id)
+            if w is None:
+                raise WorkerError("not_found", "worker not found")
+            run_ids = list(s.scalars(select(WorkerRun.id).where(WorkerRun.worker_id == worker_id)))
+            steps = list(s.scalars(select(WorkflowStep).where(WorkflowStep.worker_id == worker_id, WorkflowStep.status != "removed")))
+            wf_ids = {st.workflow_id for st in steps}
+            blocking = [{"id": wf.id, "title": wf.title or wf.goal[:40], "status": wf.status} for wf in s.scalars(select(Workflow).where(Workflow.id.in_(wf_ids), Workflow.status.in_(("planned", "running", "paused"))))] if wf_ids else []
+            return {
+                "worker": w.name,
+                "tasks": s.scalar(select(func.count()).select_from(WorkerTask).where(WorkerTask.worker_id == worker_id)) or 0,
+                "runs": len(run_ids),
+                "artifacts": (s.scalar(select(func.count()).select_from(WorkerArtifact).where(WorkerArtifact.worker_id == worker_id)) or 0),
+                "active_runs": s.scalar(select(func.count()).select_from(WorkerRun).where(WorkerRun.worker_id == worker_id, WorkerRun.status.in_(ACTIVE))) or 0,
+                "workflow_steps": len(steps), "workflows": len(wf_ids), "blocking_workflows": blocking,
+                "project_grants": s.scalar(select(func.count()).select_from(WorkerProjectGrant).where(WorkerProjectGrant.worker_id == worker_id)) or 0,
+                "project_changes_kept": s.scalar(select(func.count()).select_from(ProjectChange).where(ProjectChange.worker_id == worker_id)) or 0,
+                "has_history": bool(run_ids or steps),
+            }
+
+    def delete_worker(self, worker_id: int, purge: bool = False) -> dict:
+        """직원을 삭제한다. 이력(실행·결과물·승인·워크플로 단계)이 없으면 그냥 삭제, 있으면 purge=True 일 때만 이력까지 영구 삭제한다.
+
+        진행 중인 실행이 있거나 아직 끝나지 않은 워크플로에 속한 직원은 삭제할 수 없다(먼저 취소·완료). 프로젝트 파일 변경 기록(ProjectChange)은
+        프로젝트 감사 기록이라 직원을 지워도 남긴다. 완료·취소·실패한 워크플로 자체는 남지만 이 직원의 단계에 연결된 실행 기록과 비용은 사라진다.
+        """
+        import shutil
+
+        from sqlalchemy import delete
+
+        from .models import Approval
+
+        im = self.delete_impact(worker_id)
+        if im["active_runs"]:
+            raise WorkerError("conflict", f"진행 중이거나 승인 대기 중인 실행 {im['active_runs']}건이 있습니다. 먼저 취소하거나 끝낸 뒤 삭제하세요")
+        if im["blocking_workflows"]:
+            names = ", ".join(f"#{b['id']} {b['title']}({b['status']})" for b in im["blocking_workflows"][:3])
+            raise WorkerError("conflict", f"아직 끝나지 않은 워크플로에 속한 직원입니다: {names}. 먼저 취소하거나 완료하세요")
+        if im["has_history"] and not purge:
+            raise WorkerError("conflict", f"실행 {im['runs']}건·워크플로 단계 {im['workflow_steps']}건의 이력이 있어 삭제할 수 없습니다. 이력까지 영구 삭제하려면 purge 를 지정하세요(되돌릴 수 없음)")
+        with self.db.session() as s:
+            run_ids = list(s.scalars(select(WorkerRun.id).where(WorkerRun.worker_id == worker_id)))
+            if run_ids:
+                for ap in s.scalars(select(Approval).where(Approval.tool == "worker.finalize")):
+                    if int((ap.args or {}).get("run_id", 0)) in run_ids:
+                        s.delete(ap)
+                s.execute(delete(WorkerRun).where(WorkerRun.worker_id == worker_id))  # 결과물(Artifact)은 FK cascade 로 함께 삭제
+            s.delete(s.get(Worker, worker_id))  # 업무·프로젝트 부여는 FK cascade
+        wdir = (self.workspace.root / f"w{int(worker_id)}")
+        removed_files = 0
+        if wdir.exists():
+            try:
+                self.workspace._inside(wdir)  # 작업 공간 안인지 다시 확인한 뒤에만 지운다
+                removed_files = sum(1 for p in wdir.rglob("*") if p.is_file())
+                shutil.rmtree(wdir)
+            except (WorkspaceError, OSError) as e:
+                logger.warning("worker workspace cleanup failed: %s", e)
+        self.activity.record("worker", "worker.deleted", level="warn", worker_id=worker_id, name=im["worker"], purge=bool(purge), runs=im["runs"], artifacts=im["artifacts"],
+                             tasks=im["tasks"], files_removed=removed_files)
+        self._emit("worker.updated", worker_id=worker_id, deleted=True)
+        return {**im, "deleted": True, "files_removed": removed_files}
 
     def effective_tools(self, task: WorkerTask, worker: Worker) -> list[str]:
         """업무 허용 목록 ∩ 직원 허용 목록 ∩ 현재 사용 가능한 도구. LLM이 무엇을 요청하든 이 목록이 상한이다."""
@@ -892,6 +1038,9 @@ class WorkerService:
                     ctx.step("tool_denied", ok=False, tool=name, reason="이 업무의 허용 도구가 아님")
                     self.activity.record("worker", "tool.denied", level="warn", run_id=ctx.run_id, tool=str(name)[:60])
                     continue
+                if self.tools.get(name) is not None and self.tools.get(name).risk == "project":  # 방어: 개발 도구는 개발 업무에서만(서버 컨텍스트가 필요함)
+                    ctx.step("tool_denied", ok=False, tool=name, reason="개발 도구는 보고서 종류가 '개발 업무'인 업무에서만 쓸 수 있음")
+                    continue
                 if name == "web.fetch":
                     key = canonical_url(str(args.get("url", "")))
                     if key not in task_urls and idx.find(str(args.get("url", ""))) is None:
@@ -1003,12 +1152,25 @@ class WorkerService:
         done_calls: set[str] = set()  # 같은 상태에서 이미 성공한 호출(다시 실행하지 않는다)
         idle = 0
         nudges = 0
+        bad_json = 0
         for step_no in range(1, max_steps + 1):
             if ctx.cost > ctx.cap * 0.65:  # 보고서 작성에 쓸 예산을 남겨 둔다
                 state["stop_reason"] = "budget_reserved"
                 ctx.step("dev_stop", ok=False, reason="budget_reserved", spent_usd=round(ctx.cost, 6), cap_usd=ctx.cap)
                 break
-            out = await self._llm(ctx, "worker_dev_step", self._dev_messages(task, worker, desc, projects, materials, log, step_no, max_steps, state), 1400)
+            try:
+                out = await self._llm(ctx, "worker_dev_step", self._dev_messages(task, worker, desc, projects, materials, log, step_no, max_steps, state), 1400)
+            except LLMError as e:
+                if "invalid JSON" not in str(e):
+                    raise
+                bad_json += 1  # 응답이 JSON 이 아니거나 도중에 끊김(출력 한도). 실행 전체를 실패시키지 않고 짧게 다시 답하게 한다(비용은 이미 기록됨)
+                ctx.step("llm", ok=False, purpose="worker_dev_step", error="invalid_json_retry", attempt=bad_json)
+                if bad_json >= 3:
+                    state["stop_reason"] = "llm_invalid"
+                    ctx.step("dev_stop", ok=False, reason="llm_invalid", note="모델 응답이 3번 JSON 형식이 아니어서 중단")
+                    break
+                log.append({"n": len(log) + 1, "tool": "(응답 오류)", "args": {}, "status": "무시", "text": "직전 응답이 올바른 JSON 이 아니었습니다(너무 길어 끊겼을 수 있음). 생각을 짧게 하고, 한 번에 도구 호출 1~2개만 담은 JSON 만 다시 출력하세요"})
+                continue
             state["steps"] = step_no
             calls = out.get("calls") if isinstance(out.get("calls"), list) else []
             pending = self._unread(task, state)
@@ -1128,7 +1290,7 @@ class WorkerService:
         changes = self.dev.changes(run_id=ctx.run_id, limit=200, with_diff=False)[::-1]
         ch_text = (f"적용된 코드 변경 {len(changes)}건\n" + "\n".join(f"- {c['path']} ({c['action']}, +{c['added_lines']}/-{c['removed_lines']})" for c in changes)) if changes else "이 실행에서 적용된 코드 변경 없음"
         t_text = "\n".join(f"- {t['profile']}({t['kind']}) 종료코드={t['exit_code']} 통과={t['passed']}" + ("" if t["version"] == state["state_version"] else " (이후 코드가 바뀜)") for t in state["tests"]) or "terminal.run 실행 없음"
-        reason = {"done": "모델이 작업 완료를 선언", "max_steps": "턴 한도 도달", "budget_reserved": "비용 예비분 보호로 중단", "repeated_failure": "같은 실패 반복으로 중단", "no_progress": "진전 없는 반복으로 중단", "idle": "도구 호출 없이 종료"}[state["stop_reason"]]
+        reason = {"done": "모델이 작업 완료를 선언", "max_steps": "턴 한도 도달", "budget_reserved": "비용 예비분 보호로 중단", "repeated_failure": "같은 실패 반복으로 중단", "no_progress": "진전 없는 반복으로 중단", "idle": "도구 호출 없이 종료", "llm_invalid": "모델 응답 형식 오류로 중단"}[state["stop_reason"]]
         for name, text in (("변경 요약(코드 기록)", ch_text), ("테스트·실행 결과(코드 기록)", t_text), ("루프 종료 사유(코드 기록)", f"{reason} (턴 {state['steps']}, 도구 실행 {len(log)}건)")):
             evidence.append({"id": f"E{len(evidence) + 1}", "kind": "system", "name": name, "text": text})
         ctx.step("dev_summary", changes=len(changes), tests=len(state["tests"]), stop_reason=state["stop_reason"], steps=state["steps"])
@@ -1193,7 +1355,7 @@ class WorkerService:
             if absent.search(content or "") and files_read < 3 and s.get("changes", 0) == 0:
                 s["warnings"].append(f"읽은 파일이 {files_read}개뿐인데 '없음·미구현'류의 결론이 있습니다. 충분히 읽지 않고 내린 결론일 수 있습니다")
         reason = s.get("stop_reason")
-        partial_ok = reason in ("no_progress", "max_steps", "budget_reserved", "idle") and s.get("changes", 0) == 0 and not task.checks.get("require_changes") and not task.checks.get("require_tests")
+        partial_ok = reason in ("no_progress", "max_steps", "budget_reserved", "idle", "llm_invalid") and s.get("changes", 0) == 0 and not task.checks.get("require_changes") and not task.checks.get("require_tests")
         out.append({"name": "dev_loop", "passed": reason == "done" or partial_ok, "detail": "작업 루프가 정상적으로 끝남" if reason == "done" else f"분석이 도중에 끝남({reason}) — 코드 변경이 없어 부분 결과로 보고(경고)" if partial_ok else f"작업이 끝나지 못함({reason}: 턴 {s.get('steps')}, 변경 {s.get('changes')}건)"})
         if partial_ok:
             s["warnings"].append(f"분석이 도중에 멈췄습니다({reason}). 읽지 못한 부분이 있을 수 있으니 결과를 그대로 신뢰하지 말고 검토하세요")
@@ -1303,16 +1465,44 @@ class WorkerService:
             content = json.dumps(body, ensure_ascii=False, indent=2) if isinstance(body, (dict, list)) else str(body or "")
         else:
             content = body if isinstance(body, str) else json.dumps(body, ensure_ascii=False) if body else ""
+        by_name = {str(e.get("name") or e.get("tool")): e["id"] for e in evidence if e.get("name") or e.get("tool")}
+        known = {e["id"] for e in evidence}
+
+        def norm_ids(v: Any) -> list[str]:
+            """모델이 근거를 'file.dart(E7)' 같은 형태로 적어도 번호(E7)만 뽑는다. 번호가 없는 문자열은 자료 이름으로 찾고, 그래도 없으면 원문을 남겨 검증이 잡게 한다(지어낸 근거는 통과시키지 않는다)."""
+            out: list[str] = []
+            for s in (v if isinstance(v, list) else [v] if isinstance(v, str) else []):
+                s = str(s)
+                found = re.findall(r"\b([MED]\d+)\b", s)
+                if not found and s.strip() in by_name:
+                    found = [by_name[s.strip()]]
+                out += found or [s]
+            return list(dict.fromkeys(out))
+
+        def line_ids(text: str) -> list[str]:
+            """claims 에 근거를 안 적었어도, 같은 문장이 본문에서 인용한 번호는 코드가 읽어 준다(본문의 출처 표기는 검증 대상이므로 우회가 아니다)."""
+            key = re.sub(r"\s+", " ", text).strip()[:24]
+            if len(key) < 8:
+                return []
+            for line in content.splitlines():
+                if key in re.sub(r"\s+", " ", line):
+                    ids = [i for i in re.findall(r"\b([MED]\d+)\b", line) if i in known]
+                    if ids:
+                        return list(dict.fromkeys(ids))
+            return []
+
         claims = []
         for c in raw.get("claims") or []:
             if isinstance(c, dict):
-                ev = c.get("evidence") or c.get("evidence_ids") or []
-                claims.append({"text": str(c.get("text", "")), "evidence": [str(i) for i in ev] if isinstance(ev, list) else []})
+                ev = norm_ids(c.get("evidence") or c.get("evidence_ids") or [])
+                if not ev:
+                    ev = line_ids(str(c.get("text", "")))
+                claims.append({"text": str(c.get("text", "")), "evidence": ev})
         derived = False
         if not claims and evidence and task.output_type != "json":  # 모델이 claims 필드를 비웠어도 본문에 직접 단 출처 표기는 코드가 읽어 검증한다
             claims, derived = derive_claims(content, evidence), True
         draft = {"title": str(raw.get("title") or task.title)[:200], "claims": claims, "claims_derived": derived,
-                 "sources": [str(i) for i in raw.get("sources") or []] if isinstance(raw.get("sources"), list) else [],
+                 "sources": norm_ids(raw.get("sources")) if isinstance(raw.get("sources"), list) else [],
                  "missing": [str(m) for m in raw.get("missing") or []] if isinstance(raw.get("missing"), list) else []}
         return draft, content.strip()
 
@@ -1425,7 +1615,7 @@ class WorkerService:
             content = content[: self.settings.worker_output_max_chars]
             self._set(run_id, status="reviewing")
             self._emit("worker.run", run_id=run_id, status="reviewing")
-            v = verify_draft(output_type=task.output_type, checks=task.checks, draft=draft, content=content, evidence=evidence, context_text=context_text)
+            v = verify_draft(output_type=task.output_type, checks=task.checks, draft=draft, content=content, evidence=evidence, context_text=context_text, numbers_strict=task.report_kind != "dev")
             if news_meta is not None:
                 v["checks"] += self._news_checks(task, news_meta, content, idx)
                 v["passed"] = all(c["passed"] for c in v["checks"])
@@ -1447,7 +1637,7 @@ class WorkerService:
             if v["passed"] and semantic:  # 코드 검사를 모두 통과한 경우에만 의미 기준 검수 호출(비용 절약)
                 v["checks"] += await self._review(task, content, ctx, semantic)
                 v["passed"] = all(r["passed"] for r in v["checks"])
-            v["warnings"] = [f"작성자가 부족하다고 보고한 정보: {m}" for m in draft["missing"]] + (["자료 안에 지시문처럼 보이는 문구가 있었음(데이터로만 취급)"] if any(s["kind"] == "injection_suspected" for s in ctx.steps) else [])
+            v["warnings"] = list(v.pop("soft_warnings", [])) + [f"작성자가 부족하다고 보고한 정보: {m}" for m in draft["missing"]] + (["자료 안에 지시문처럼 보이는 문구가 있었음(데이터로만 취급)"] if any(s["kind"] == "injection_suspected" for s in ctx.steps) else [])
             if task.report_kind == "dev":  # 코드가 기록한 사실(변경·테스트)로 완료를 판정한다: 모델이 '다 했다'고 써도 통과하지 못한다
                 v["checks"] += self._dev_checks(task, ctx, draft, content, evidence)
                 v["warnings"] = list(v.get("warnings") or []) + ctx.dev.get("warnings", [])

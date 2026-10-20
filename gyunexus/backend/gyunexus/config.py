@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     price_out_per_m: float = 0.60  # 응답 100만 토큰당 USD
     # 추론 모델(gpt-5*, o1/o3/o4*): 내부 추론도 출력 토큰으로 과금·소모된다. 한도가 작으면 답이 비므로 여유분을 더하고 추론 강도를 낮춘다.
     openai_reasoning_effort: str = "low"  # minimal | low | medium | high (추론 모델에서만 사용)
-    openai_reasoning_headroom: int = 2500  # 추론 모델의 max_completion_tokens 에 더하는 추론용 여유 토큰
+    openai_reasoning_headroom: int = 6000  # 추론 모델의 max_completion_tokens 에 더하는 추론용 여유 토큰
 
     # 저장소
     database_url: str = ""  # 비우면 data/ 아래 SQLite 파일 사용
