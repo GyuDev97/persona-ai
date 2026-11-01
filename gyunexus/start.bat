@@ -3,7 +3,7 @@ rem GyuNexus launcher: installs/builds if needed, starts the server, opens the b
 rem URL: http://127.0.0.1:8000   (ASCII only on purpose: cmd breaks on UTF-8 text in .bat files)
 setlocal
 cd /d "%~dp0"
-set "PY=D:\python\venv\Scripts\python.exe"
+set "PY=%~dp0.venv\Scripts\python.exe"
 
 if not exist "%PY%" (
   echo [ERROR] Python not found: %PY%
