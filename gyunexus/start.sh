@@ -7,7 +7,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 # venv: GYUNEXUS_VENV 로 바꿀 수 있다. 없으면 만든다.
-VENV="${GYUNEXUS_VENV:-$HOME/Desktop/python/.venv}"
+VENV="${GYUNEXUS_VENV:-$HOME/Desktop/python/venv}"
 if [ ! -f "$VENV/bin/activate" ]; then
   echo "[GyuNexus] venv 가 없어 새로 만듭니다: $VENV"
   python3 -m venv "$VENV"
